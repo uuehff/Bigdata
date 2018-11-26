@@ -6,6 +6,7 @@ log-bin=mysql-bin #添加这一行就ok    #先注释，民法更新数据量太
 binlog-format=ROW #选择row模式
 server_id=1
 
+
 开启后，对数据库的增删改查都会保存到日志中：/data/mysql/mysql-bin.0000*、
 /data/mysql/mysql-bin.index,日志文件越来越大！
 
