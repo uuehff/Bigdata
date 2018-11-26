@@ -1,0 +1,44 @@
+参考：http://huboss.blog.51cto.com/9883568/1754890
+http://blog.csdn.net/alzone/article/details/52247845
+
+本地集群：local-master-slave1/local-slave2/local-slave3网络配置：
+
+网卡改名及配置静态IP：
+1、关机情况下，在VMware中删除网卡，再添加网卡
+
+2、开机，编辑vi /etc/default/grub，添加两句： net.ifnames=0 biosdevname=0，如下：
+GRUB_CMDLINE_LINUX="rd.lvm.lv=centos/root rd.lvm.lv=centos/swap net.ifnames=0 biosdevname=0 rhgb quiet"
+
+3、执行：grub2-mkconfig -o /boot/grub2/grub.cfg
+
+4、mv /etc/sysconfig/network-scripts/ifcfg-eno16777736   /etc/sysconfig/network-scripts/ifcfg-eth0
+
+5、删除/etc/sysconfig/network-scripts/ifcfg-eno16777736_auto文件
+   编辑：vi /etc/sysconfig/network-scripts/ifcfg-eth0
+内容如下：
+TYPE=Ethernet
+BOOTPROTO=static
+IPV6INIT=no
+
+NAME=eth0
+DEVICE=eth0    #或： HWADDR=mac地址
+ONBOOT=yes
+NM_CONTROLLED=no
+
+IPADDR=192.168.20.24
+NETMASK=255.255.255.0
+GATEWAY=192.168.20.2
+DNS1=192.168.20.2
+DNS2=8.8.8.8
+
+6、重启网络或机器：systemctl restart network
+=================
+#注意1：这里的DEVICE相当于HWADDR=mac地址，一定要写上，指明这个配置文件加载哪个网卡。这里起关键性作用，不写的话，这个配置文件/etc/sysconfig/network-scripts/ifcfg-eth0就不会生效！会给网卡分配动态IP！
+#而这个配置文件的名称ifcfg-eth0可以是其他，不一定要和网卡名称保一致，但为了对应方便理解，名称最好一致。
+
+#注意2：local-slave2/local-slave3都没有/etc/udev/rules.d/70-persistent-ipoib.rules文件
+===========================================================================================
+ifconfig：
+inet:   是IPV4的地址
+inet6： 是IPV6的地址，不显示说明禁用了IPV6
+ether:  是 mac地址

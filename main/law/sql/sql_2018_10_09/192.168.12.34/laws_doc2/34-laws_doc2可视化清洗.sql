@@ -1,0 +1,1 @@
+CREATE table judgment2_visualization_v2 like laws_doc.judgment_visualization_v2;

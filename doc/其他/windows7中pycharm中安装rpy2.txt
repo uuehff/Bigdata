@@ -1,0 +1,9 @@
+1、配置环境变量：
+	R_HOME	D:\Program Files\R\R-3.3.2
+2、下载：rpy2-2.7.8-cp27-none-win_amd64.whl，在pycharm的cmd中，进入到该文件所在目录：
+	pip install rpy2-2.7.8-cp27-none-win_amd64.whl
+	下载地址：http://www.lfd.uci.edu/~gohlke/pythonlibs/#rpy2
+3、配置环境变量：
+	R_USER	C:\Python27\Lib\site-packages\rpy2
+	
+4、可直接在pycharm中导入rpy2包，进行画图。

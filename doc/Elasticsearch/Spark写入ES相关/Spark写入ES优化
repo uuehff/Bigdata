@@ -1,0 +1,16 @@
+spark写入ES的三个类：
+sca.SparkSaveES：最原始的写入方式，10w条，40分钟。
+sca.SparkSaveES_Socket: 简单进行自定义分区，key也就是es的id进行取余分区，一个分区的数据会发送到一个shard，分区对
+主分片是1对1 关系，是数据的挑拣放在了spark端！10w条，10分钟。
+sca.SparkSaveES_Socket:  进行自定义分区，是SparkSaveES_Socket的进一步优化，每个分区的数据通过指定shardId写入到ES，多个分区的数据会发送到一个shard，分区对
+主分片是多对1 关系，100w条，80分钟。
+
+
+优化参考：https://github.com/elastic/elasticsearch-hadoop/issues/745
+http://www.jianshu.com/p/cccc56e39429
+
+需修改源码包：elasticsearch-spark-13_2.10-5.4.3.jar
+替换其中的：org.elasticsearch.hadoop.rest.RestService相关的四个class文件，上传到服务器，如下命令提交任务！
+
+提交命令：
+spark-submit --master spark://cdh-master:7077 --class sca.SparkSaveES_PartsToShard --driver-memory 10g --executor-cores 12 --executor-memory 24g --total-executor-cores 24 --jars elasticsearch-spark-13_2.10-5.4.3.jar  sparkstreaming-kafka-1.0-SNAPSHOT.jar

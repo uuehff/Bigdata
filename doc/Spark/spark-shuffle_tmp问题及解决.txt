@@ -1,0 +1,46 @@
+spark程序中有大量groupBy、reduceBy*等操作时，会有许多shuffle过程，shuffle过程包括: shuffle write 和 shuffle read。
+一个stage的开始是shuffle read，结束是shuffle write。因此可能下一个stage还没有完全执行完shuffle write时，下一个stage已经开始
+尝试拉取所需数据了。
+下一个stage的shuffle read tasks会尝试拉取上一个stage的tasks的shuffle write结果，尝试的次数和间隔用参数设置：	
+	spark.shuffle.io.maxRetries=10
+	spark.shuffle.io.retryWait=5s
+	如果超过3次，则会报如下错：问题及解决参考：http://www.jianshu.com/p/edd3ccc46980
+Caused by: java.io.FileNotFoundException: /tmp/spark-8a41d414-bda5-41fa-8230-f5085be21307/executor-7d9d649a-f125-43a0-935b-a9f5fecf0bc9
+/blockmgr-53e53523-c003-4c0f-a239-e6d3c67f5b67/0d/shuffle_1_2_0.index (Permission denied)
+
+解决方法：
+1、调整spark.shuffle.io.maxRetries=10和spark.shuffle.io.retryWait=10s两个参数没有生效，spark ui界面中还是retry 了3次，然后报错,而非10次，此法不可行。
+2、使用spark on yarn 的方式提交，一样的代码顺利执行，一次也没有retry。(开启动态资源或否都可以)
+3、使用spark standalone方式时，关闭动态资源分配方式，一样的代码顺利执行，一次也没有retry。开启动态资源分配方式时，
+	一样的代码，会retry 3次，然后报错。因此需关闭动态分配模式，进行如下设置：
+	注释如下：必须同时注释该三行
+	#spark.dynamicAllocation.enabled=true
+	#spark.shuffle.service.enabled=true    #开启额外的shuffle服务，因为动态分配会动态增加或删除Executor，该服务就是确保Executor进行remove时，上面的shuffle files不会丢失
+	#spark.shuffle.service.port=7337
+4、提交时进行参数调整，尽量减少数据传输的时间，比如：整个应用程序就启动一个Executor,提交命令如下：
+spark-submit --master spark://cdh-master-slave1:7077 --executor-cores 6  --total-executor-cores 6 --executor-memory 4g 
+5、改动源码，编译，替换原有jar中的类；shuffle read执行流程(经测试好像不行)：
+1)org.apache.spark.network.netty.NettyBlockTransferService 中主要包括：
+	private val transportConf = SparkTransportConf.fromSparkConf(conf, "shuffle", numCores)
+	fetchBlocks()
+
+spark-shuffle调优：http://blog.csdn.net/u011007180/article/details/51932466
+spark配置页面,shuffle参数：Shuffle Behavior
+优化，并行度：http://blog.csdn.net/camu7s/article/details/50524145
+http://blog.csdn.net/lsshlsw/article/details/49155087
+
+确定Partition数量的原则(优先级)：
+参数中的numPartitions参数(比如parallelize方法的第二个参数,reduceByKey、groupByKey等方法中的第二个参数)
+spark.default.parallelism参数
+父RDD切片数
+
+shuffle简单理解：
+
+groupBy的参数numPartitions，指定我要在几个（task）分区上执行groupBy操作！groupBy操作首先要考虑的事情就是
+使用几个分区，去执行groupBy操作。分区数可由以上分区优先级确定，确定好分区（task），就会有几个task去拉取
+上一个stage的每个task的shuffle write中的相同key的数据，然后才进行groupBy操作。
+shuffle过程分为shuffle write,shuffle read：
+shuffle write发生在上一个stage的结束，write发生在下一个stage的开始，之后才能执行groupBy操作。
+
+
+===================================================================================================

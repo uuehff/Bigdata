@@ -1,0 +1,35 @@
+plot.j2中引入的echarts.js路径：https://cdnjs.com/libraries/echarts/3.6.1，echarts-python支持echarts3.1.6,但这里可引入最新的echarts.js。
+echarts2参考手册：  http://echarts.baidu.com/echarts2/doc/doc.html
+echarts3参考手册：  http://echarts.baidu.com/option.html#title
+echarts3官方实例：  http://echarts.baidu.com/examples.html#chart-type-graph
+
+echarts3中官方不支持wordCloud，但可以使用第三方的echarts-wordcloud.min.js！
+echarts3画词云图流程如下：
+1、在Echarts官方的实例下的GL实例中，在tag中搜索关键词：词云图，以下列出demo，点进去可看到demo的代码，以及它依赖的第三方js。
+demo地址之一：http://gallery.echartsjs.com/editor.html?c=xBJ11Hguze
+2、数据可视化网站：http://data-visual.cn/，其中可搜索到‘词云图’的demo，点进去可看到源工程。例如以下工程：
+https://github.com/ecomfe/echarts-wordcloud，将该工程中的dist下的echarts-wordcloud.min.js引入plot.j2，
+且要引入3.6.1版本（引入较新版本的，不然画的图保存后，google打开，进入开发者模式，看到js报错r.List等等）的echarts.min.js
+
+可使用上面工程中example中的*.html的配置或http://gallery.echartsjs.com/diff.html?c=xBJ11Hguze&v=2&v2=3
+或工程页面中的Usage。
+
+===================================================
+
+python调用Echarts：（不再需要创建Geo对象画地图，网上有说需要改源码创建Geo什么的）
+注意：
+1.画地图时，需在/usr/lib/python2.7/site-packages/echarts/plot.j2中引入：
+	<script type="text/javascript" src="http://echarts.baidu.com/asset/map/js/china.js"></script>
+2. 在_init_.py中添加title的参数。
+3. 调用_html函数，在里面读取plot.j2文件，将其中的"{{ opt }}"字符串替换为，用use(对象)传入的json参数，然后组合成一个html，进行打开或save。
+
+
+处理流程：
+1、使用chart = Echart('iphone销量','纯属虚构', axis=False)进行实例化。
+2、例如：chart.use(Tooltip(trigger='item'))，use方法中可以传入多个对象，如：
+		Series,Toolbox,Tooltip,Legend,VisualMap，其中Series对象中的type，决定了要画什么样的图！
+		可以多次使用use(Series)，例如画地图时。
+3、http://echarts.baidu.com/option.html#title中的属性，都可配置在python对应的对象里面！
+4、对Echart进行初始化时调用_init_.py，其中的title是接受Echart的前两个参数，然后构造title，其实title参数很多，
+	因此这里可以修改_init_.py的源码，参考官方文档，在构造title时添加其他的参数。也可以在源码中添加一些变量，外面传入。
+5、画图时可以参考官方实例的json代码，然后改成python对应的对象！

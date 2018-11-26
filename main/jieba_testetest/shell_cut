@@ -1,0 +1,27 @@
+命令行分词：
+
+python -m jieba -h :查看帮助
+
+1、默认使用' / '分割，结果覆盖到water.result：
+python -m jieba  water.txt > water.result
+
+2、使用空格分割：
+python -m jieba -d " " water.txt > water.result
+
+3、使用|线分割：
+python -m jieba -d "|" water.txt > water.result
+
+4、-d 指定词之间的连接符。-p "_"指定词与词性之间的连接符。-a,全模式分词。-n, --no-hmm不使用隐含马尔可夫模型
+python -m jieba -d " | " -p "_" -n -a  water.txt > water.result
+
+
+注意：如果不指定要分词的文件，则从命令行读取内容！
+5、从命令行读取内容：
+python -m jieba -d " | " -p "_" -n -a   > water.result
+输入：u'我们要下班了'
+
+查看分词结果: cat water.result
+
+
+
+

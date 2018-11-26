@@ -1,0 +1,49 @@
+问题描述：在数据库、表等都使用utf-8的编码情况下，由于文本中使用了比较特殊的表情或其他字符，
+在spark写入mysql时会报错如下：
+java.sql.BatchUpdateException: Incorrect string value: '\xF3\xB0\x80\xA1\x0A\xEF...' for column 'party_info' at row 1
+
+解决：
+修改数据库、表的编码由utf-8为utf8mb4：参考：https://www.cnblogs.com/shihaiming/p/5855616.html
+https://blog.csdn.net/yumushui/article/details/49153525
+https://blog.csdn.net/woslx/article/details/49685111
+
+
+1、在/etc/my.cnf中添加如下：
+[mysqld]
+character-set-client-handshake=FALSE
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+init_connect='SET NAMES utf8mb4'
+[client]
+default-character-set=utf8mb4
+[mysql]
+default-character-set=utf8mb4
+
+2、修改在之前创建且现在要写入的数据库、表的编码：
+更改数据库编码：ALTER DATABASE  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+更改表编码：ALTER TABLE  CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+3、重启数据库
+进入要写入数据的库，查看编码，如下即可。（注意：在服务器上直接登录，查看编码是更改掉的，但在navicat工具中查看编码未改过来，是工具的问题）
+mysql> SHOW VARIABLES WHERE Variable_name LIKE 'character_set_%' OR Variable_name LIKE 'collation%';
++--------------------------+----------------------------+
+| Variable_name            | Value                      |
++--------------------------+----------------------------+
+| character_set_client     | utf8mb4                    |
+| character_set_connection | utf8mb4                    |
+| character_set_database   | utf8mb4                    |
+| character_set_filesystem | binary                     |
+| character_set_results    | utf8mb4                    |
+| character_set_server     | utf8mb4                    |
+| character_set_system     | utf8                       |
+| character_sets_dir       | /usr/share/mysql/charsets/ |
+| collation_connection     | utf8mb4_unicode_ci         |
+| collation_database       | utf8mb4_unicode_ci         |
+| collation_server         | utf8mb4_unicode_ci         |
++--------------------------+----------------------------+
+
+切记在配置文件中添加如下配置，否则会导致mysql启动失败：
+#character-set-client=utf8mb4
+#character-set-connection=utf8mb4
+#character-set-database=utf8mb4
+#character-set-results=utf8mb4

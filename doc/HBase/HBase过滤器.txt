@@ -1,0 +1,144 @@
+scan 't5','a1', {ROWPREFIXFILTER => 'row2', FILTER => "(QualifierFilter (>=, 'binary:xyz')) AND (TimestampsFilter ( 123, 456))"}
+scan 't5', {ROWPREFIXFILTER => 'row2', FILTER => "(QualifierFilter (>=, 'binary:xyz')) AND (TimestampsFilter ( 123, 456))"}
+get 't5', 'a1', {FILTER => "ValueFilter(=, 'binary:123')"}
+================================
+
+过滤器参考：http://sanwen.net/a/flmdsoo.html
+http://www.tuicool.com/articles/fyYR7by
+http://sanwen.net/a/atglypo.html
+
+统计hbase表行数：效率比使用count高；
+hbase  org.apache.hadoop.hbase.mapreduce.RowCounter "laws_doc:judgment_civil_all_v2"
+
+hbase(main):057:0> get 't5', 'a1', {FILTER => "ValueFilter(=, 'binary:123')"}
+In [284]: q = t.scan('a1','a3')
+In [285]: for (k,v) in q:
+     ...:     print k,v
+     ...:     
+a1 {'data:name': '\xe5\xa5\xbd', 'data:name2': '123', 'data:name4~': '123'}
+a2 {'data:name': '\xc3\xa5\xc2\xa5\xc2\xbd'}
+后：
+In [287]: q = t.scan('a1','a3',filter="ValueFilter(=, 'binary:123')")
+In [288]: for (k,v) in q:
+     ...:     print k,v
+     ...:     
+a1 {'data:name2': ' 123', 'data:name4~': '123'}
+============================================================
+比较器及其对应字符串的简写：具体参考文档Filter Language(3).docx
+BinaryComparator - binary
+BinaryPrefixComparator - binaryprefix
+RegexStringComparator - regexstring
+SubStringComparator – substring
+可用的关系运算符：
+(<, <=, =, !=, >, >=)
+==============
+在过滤器中使用：
+>,  'binary:abc' 将匹配所有大于“abc”的字符
+=,  'binaryprefix:abc' 将匹配所有的前3个字母等于“abc”的字符
+!=,  'regexstring:ab*yz' 将匹配不以“ab”打头和以“yz”结尾的字符
+=,  'substring:abc123' 将匹配一切始于substring“abc123”的字符
+============================================================
+regexstring ：参考正则表达式
+问题？：表达式：
+	[a-z]\d 可匹配到：'value2'     #很奇怪？
+	[a-z]{5}\d 能匹配到：'value2'
+	[a-z]{6}\d 不能匹配到：'value2'
+	[a-z]\d{2} 不能匹配到：'value2'
+=============================================
+过滤器可使用，AND,OR等组合，可使用多个AND,OR,进行多个过滤器的组合使用，AND\OR必须大写！如：
+q = t.scan(filter="RowFilter(<, 'binary:c6') AND RowFilter(>, 'binary:a3')")
+
+过滤器：
+
+1、RowFilter：针对rowkey进行处理过滤
+q = t.scan('a1','a3',filter="RowFilter(=, 'binary:a1')")
+q = t.scan('a1','a3',filter="RowFilter(>, 'binary:a1')")
+=====
+q = t.scan('a1','a3',filter="RowFilter(=, 'binaryprefix:a')")
+q = t.scan('a1','a3',filter="RowFilter(!=, 'binaryprefix:a12')")
+======
+q = t.scan('a1','a3',filter="RowFilter(=, 'regexstring:[a-z]\d')")
+q = t.scan('a1',filter="RowFilter(=, 'regexstring:[a-z]{2}')")
+q = t.scan('a1',filter="RowFilter(=, 'regexstring:[a-z]\d')")
+q = t.scan('a1',filter="RowFilter(!=, 'regexstring:[a-z]\d')")
+========
+q = t.scan('a1',filter="RowFilter(=, 'substring:key')")
+q = t.scan('a1',filter="RowFilter(=, 'regexstring:^row-[\d]+')")
+
+2、FamilyFilter（列族过滤器）
+q = t.scan(columns=['f1','data'])  #使用参数columns过滤
+q = t.scan(filter="FamilyFilter(=, 'regexstring:[a-z]*\d+')")
+
+3、QualifierFilter（列名过滤器）,比如：data:name，这里针对name处理过滤
+q = t.scan(filter="QualifierFilter(=, 'binary:name')")
+q = t.scan(filter="QualifierFilter(=, 'binary:col2")
+
+4、ValueFilter（值过滤器）
+q = t.scan(filter="ValueFilter(=, 'binary:value_1')")
+q = t.scan(filter="ValueFilter(=, 'regexstring:[a-z]\d')")    
+
+5、SingleColumnValueFilter （专用过滤器）用一列的值决定是否一行数据是否被过滤
+SingleColumnValueFilter有两个构造函数：4参数和6参数的，6参数多了两个参数：boolean filterIfMissing, boolean latestVersionOnly
+	filterIfMissing 默认false,意为当不存在指定的 "列族：列"时，是否过滤掉，false不过滤。
+	latestVersionOnly 默认为true
+
+使用构造函数1：q = t.scan(filter="SingleColumnValueFilter('f1','name',=, 'binary:v6')")
+使用构造函数2：q = t.scan(filter="SingleColumnValueFilter('f1','name',!=,'binary:v6',true,true)")
+=============
+SingleColumnValueFilter应用：
+
+1、删除public_sentiment表中微博汉字字段的数据（37行）：
+q = t.scan(row_prefix = '嫘祖杯02',filter="SingleColumnValueFilter('d','info',=,'binary:0')")
+for k,v in q:
+    t.delete(k)
+2、删除public_sentiment表中微博的数据（37行，）：
+q = t.scan(row_prefix = '嫘祖杯02',filter="SingleColumnValueFilter('d','info',!=,'binary:0',true,true)") 
+for k,v in q:
+    t.delete(k)
+	 
+6、PrefixFilter（前缀过滤器）只接收一个参数（前缀字符串）,与scan参数中的row_prefix 作用一样。
+q = t.scan(filter="PrefixFilter('a')")
+q = t.scan(filter="PrefixFilter('row')")
+
+7、KeyOnlyFilter（行键过滤器），参数为空。
+	只返回每行的key，不返回value。对于只关注于行键的应用常见来说非常合适，不返回值，可以减少传递到客户端的数据量，
+	能起到一定的优化作用。
+例如：q1 = t1.scan(filter="KeyOnlyFilter()")
+row-0000 {'f1:c2': '', 'f1:c1': ''}
+row-0001 {'f1:c2': '', 'f1:c1': ''}
+row-0002 {'f1:c2': '', 'f1:c1': ''}
+row-0003 {'f1:c2': '', 'f1:c1': ''}
+row-0004 {'f1:c2': '', 'f1:c1': ''}
+row-0005 {'f1:c2': '', 'f1:c1': ''}
+8、FirstKeyOnlyFilter（行键过滤器，且返回第一列的value），参数为空。
+例如：q1 = t1.scan(filter="FirstKeyOnlyFilter()")
+row-0000 {'f1:c1': 'v1'}
+row-0001 {'f1:c1': 'v1'}
+row-0002 {'f1:c1': 'v1'}
+row-0003 {'f1:c1': 'v1'}
+row-0004 {'f1:c1': 'v1'}
+row-0005 {'f1:c1': 'v1'}
+====================================================================
+还有如下其他过滤器：
+PageFilter（分页过滤器）
+可以使用这个过滤器对结果按行分页。当用户创建PageFilter的实例的时候，指定了pageSize，这个参数可以控制每页返回的行数。
+InclusiveStopFilter（包含结束的过滤器）
+开始行被包含在结果中，单终止行被排除在外，使用这个过滤器，也可以将结束行包含在结果中。
+TimestampsFilter（时间戳过滤器）
+使用时间戳过滤器可以对扫描结果中对版本进行细粒度的控制。
+ColumnCountGetFilter（列计数过滤器）
+确定每行最多返回多少列，并在遇到一定的列数超过我们锁设置的限制值的时候，结束扫描操作
+ColumnPaginationFilter（列分页过滤器）
+与PageFilter类似，列分页过滤器可以对一行的所有列进行分页。
+ColumnPrefixFilter（列前缀过滤器）
+类似PrefixFilter，列前缀过滤器通过对列名进行前缀匹配过滤
+RandomRowFilter（随机行过滤器）
+随机行过滤器可以让结果中包含随机行。
+附加过滤器
+SkipFilter（跳转过滤器）
+与ValueFilter结合使用，如果发现一行中的某一列不符合条件，那么整行都会被过滤掉。
+WhileMatchFilter（全匹配过滤器）
+如果你想想要在遇到某种条件数据之前的数据时，就可以使用这个过滤器，当遇到不符合设定条件的数据的时候，整个扫描也结束了。
+自定义过滤器
+可以通过实现Filter接口或者直接竭诚FilterBase类来实现自定义过滤器。
+====================================================================

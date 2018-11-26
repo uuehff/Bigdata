@@ -1,0 +1,8 @@
+注意：".*"匹配任意字符，可以用在开头、中间、结尾，可使用多次！
+hbase> disable_all 't.*'
+hbase> disable_all 'ns:t.*'
+hbase> disable_all 'ns:.*'
+disable_all ".*t.*all_v2"
+disable_all ".*all_v2"
+
+drop_all、enable_all类似；

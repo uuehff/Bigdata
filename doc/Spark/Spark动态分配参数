@@ -1,0 +1,7 @@
+#spark.dynamicAllocation.enabled=true
+#spark.shuffle.service.enabled=true
+#spark.shuffle.service.port=7337
+
+
+spark.driver.extraClassPath=/usr/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar
+spark.executor.extraClassPath=/usr/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar

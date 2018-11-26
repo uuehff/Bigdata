@@ -1,0 +1,183 @@
+spark_angel编译信息：https://github.com/Tencent/angel/blob/master/LICENSE.TXT
+
+spark on angel下载:   http://www.mvnjar.com/com.tencent.angel/spark-on-angel-mllib/1.0.0/detail.html
+
+angel编译：https://github.com/Tencent/angel/blob/master/docs/deploy/source_compile.md
+angel安装：https://github.com/Tencent/angel/blob/master/docs/tutorials/spark_on_angel_quick_start.md
+
+spark-on-angel只需要在一台机器上安装配置即可。编译后的angel-1.4.0-bin.zip文件可以拷贝直接用。
+
+源码安装，angel编译环境依赖：
+scala 依赖2.11.8
+1、Jdk >= 1.8
+2、Maven >= 3.0.5
+3、Python >=3.6
+如果要运行PyAngel
+Protobuf >= 2.5.0
+需与hadoop环境自带的protobuf版本保持一致。目前hadoop官方发布包使用的是2.5.0版本，所以推荐使用2.5.0版本，除非你自己使用更新的protobuf版本编译了hadoop
+
+find / -name protobuf*
+找到类似jar包: /data/yarn/nm/usercache/weiwc/filecache/1584/protobuf-java-2.5.0.jar,即可知道protobuf对应的是2.5.0版本。
+
+安装protobuf，需使用root用户编译。安装包在windowsE盘,angel目录下。
+安装参考：http://blog.csdn.net/mircosheng/article/details/70141704
+
+
+编译angel:在35的虚拟环境中编译angel，source /home/weiwc/py36env/bin/activate
+参考官网的文档，需使用root用户编译。
+
+配置：上传/home/weiwc/angel/dist/target/angel-1.4.0-bin文件夹到HDFS的/angel/下；
+编辑修改：spark-on-angel-env.sh
+
+export ANGEL_VERSION=1.4.0       #angel版本
+export SPARK_HOME=/data/opt/cloudera/parcels/SPARK2-2.1.0.cloudera2-1.cdh5.7.0.p0.171658/lib/spark2  #CDH集成Spark2后的Spark2路径。
+export ANGEL_HOME=/home/weiwc/angel/dist/target/angel-1.4.0-bin   #编译后会生成angel-1.4.0-bin.zip，同时也解压了。
+export ANGEL_HDFS_HOME=hdfs://cdh-master:8020/angel/angel-1.4.0-bin    #HDFS路径
+
+提交例子：/home/weiwc/angel/dist/target/angel-1.4.0-bin/bin/SONA-example,内容如下：
+其中，参数格式spark.ps.instances=4，=号前后不能有空格。
+参数中，核数，实例数，内存大小，根据集群具体情况，分配要合理，否则任务会一直卡在那里。
+
+$SPARK_HOME/bin/spark-submit \
+    --master yarn-cluster \
+    --conf spark.ps.jars=$SONA_ANGEL_JARS \
+    --conf spark.ps.instances=4 \
+    --conf spark.ps.cores=2 \
+    --conf spark.ps.memory=3g \
+    --jars $SONA_SPARK_JARS \
+    --name "BreezeSGD-spark-on-angel" \
+    --driver-memory 2g \
+    --num-executors 4 \
+    --executor-cores 1 \
+    --executor-memory 2g \
+    --class com.tencent.angel.spark.examples.ml.BreezeSGD \
+    ./../lib/spark-on-angel-examples-${ANGEL_VERSION}.jar
+
+任务提交之后，8088监控中会先启动Spark任务，接着再启动Angel任务，其中scala代码中打印的信息在Spark任务的日志中可以看到。
+spark-on-angel任务中的8088日志中angel 任务如下报错可以忽略:
+2018-02-01 12:07:57,277 ERROR [main] com.tencent.angel.master.metrics.MetricsService: init log writter failed
+java.io.IOException: log directory is null. you must set angel.log.path
+	at com.tencent.angel.master.metrics.DistributeLog.init(DistributeLog.java:67)
+	at com.tencent.angel.master.metrics.MetricsService.serviceInit(MetricsService.java:111)
+	at org.apache.hadoop.service.AbstractService.init(AbstractService.java:163)
+	at org.apache.hadoop.service.CompositeService.serviceInit(CompositeService.java:107)
+	at org.apache.hadoop.service.AbstractService.init(AbstractService.java:163)
+	at com.tencent.angel.master.AngelApplicationMaster.initAndStart(AngelApplicationMaster.java:747)
+	at com.tencent.angel.master.AngelApplicationMaster$1.run(AngelApplicationMaster.java:595)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at javax.security.auth.Subject.doAs(Subject.java:422)
+	at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1920)
+	at com.tencent.angel.master.AngelApplicationMaster.main(AngelApplicationMaster.java:592)
+2018-02-01 12:08:07,950 ERROR [app-state-writter] com.tencent.angel.master.oplog.AppStateStorage: write task meta file failed.
+java.io.IOException: Mkdirs failed to create file:/tmp/root/application_1517366186123_0011_0e65ab7e-acfc-4d0a-9eea-c51c7431f776/app (exists=false, cwd=file:/data/yarn/nm/usercache/root/appcache/application_1517366186123_0011/container_1517366186123_0011_01_000001)
+	at org.apache.hadoop.fs.ChecksumFileSystem.create(ChecksumFileSystem.java:447)
+	at org.apache.hadoop.fs.ChecksumFileSystem.create(ChecksumFileSystem.java:433)
+	at org.apache.hadoop.fs.FileSystem.create(FileSystem.java:925)
+	at org.apache.hadoop.fs.FileSystem.create(FileSystem.java:906)
+	at org.apache.hadoop.fs.FileSystem.create(FileSystem.java:803)
+	at org.apache.hadoop.fs.FileSystem.create(FileSystem.java:792)
+	at com.tencent.angel.master.oplog.AppStateStorage.writeTaskMeta(AppStateStorage.java:362)
+	at com.tencent.angel.master.oplog.AppStateStorage$Writter.run(AppStateStorage.java:300)
+
+=====================================================================================
+spark-on-angel架构、代码概览：https://github.com/Tencent/angel/tree/9e033a150a61ae8b45cf99ba6c0bc9df0b89ca3d/docs/overview
+Angel本身是一个PS-Worker架构的分布式机器学习框架;本身有Ps和Worker，但它也支持单独的Ps-service，兼容第三方(没有PS)的框架比如Spark。本身实现了
+Spark中的部分算法，也可以自己使用Angel的API实现其他的算法。
+
+使用Spark-on-angel开发新的算法：算法库切换,https://github.com/Tencent/angel/blob/9e033a150a61ae8b45cf99ba6c0bc9df0b89ca3d/docs/overview/spark_on_angel.md
+
+为了支持Spark中MLLib的现有的大部分算法包轻松跑在Spark on Angel上，项目采用了一种很巧妙的实现方式，这就是：透明替换。
+Spark中MLlib算法的核心是Breeze库，所有核心算法，最终都是通过混入了NumericOps特征的BreezeVector来实现的。例如，LBFGS算法用到了BreezeVector的dot、scal等操作。
+因此，如果我们实现了一个混入相同特征的PSVector，支持了这些操作，我们就可以无缝的，将调用Breeze的LBFGS算法，将其在BreezeVector上的优化求解过程，透明化的迁移到Angel上，让这些计算发生在Angel之上，而无须对RDD进行任何侵入性修改。
+
+
+运行模式，目前支持“ANGEL_PS_WORKER”和“ANGEL_PS”两种模式。“ANGEL_PS_WORKER”表示启动PS和Worker组件，
+即Angel自己就可以完成整个任务的计算；“ANGEL_PS”表示PS-Service，即只启动PS，向第三方计算平台（例如spark）提供PS服务。
+
+因此：spark-on-angel借助spark的executor进行计算，借助Angel的PS进行更新参数。不用PS的Worker。
+
+启动两个任务，8088监控中：
+1）spark任务中占用的资源包含：一个driver和设置的executors。一般driver会占用一个container，其中包含一个core。
+2）Angel中的任务占用的资源：一个Master(Angel会为PS启动一个Master进程，类似于Spark的Driver,协调多个PS）和设置的PS的spark.ps.instances实例数占用的资源。
+
+spark-submit提交，spark-ps相关参数：
+资源参数：
+num-executors：executor个数
+executor-cores：executor的核数
+executor-memory：executor的内存
+driver-memory：driver端内存
+spark.ps.instances:Angel PS实例数（多个实例可以在一台物理机）
+spark.ps.cores:每个PS实例的Core数
+spark.ps.memory：每个PS实例的Memory大小
+
+--conf spark.hadoop.angel.ps.ha.replication.number=2 \
+    --conf fs.default.name=hdfs://tl-nn-tdw.tencent-distribute.com:54310 \
+    --conf spark.yarn.allocation.am.maxMemory=55g \
+    --conf spark.yarn.allocation.executor.maxMemory=55g \
+    --conf spark.ps.jars=$SONA_ANGEL_JARS \
+    --conf spark.ps.instances=20 \
+    --conf spark.ps.cores=2 \
+    --conf spark.ps.memory=6g \
+    --conf spark.ps.log.level=ERROR   # 这里的参数只影响Angel PS任务的日志信息。
+    --jars $SONA_SPARK_JARS \
+    --name $name \
+    --driver-memory 5g \
+    --num-executors 10 \
+    --executor-cores 2 \
+    --executor-memory 12g \
+    --class com.tencent.angel.spark.ml.online_learning.FTRLRunner \
+    spark-on-angel-mllib-2.2.0.jar \
+
+使用spark.ps.设置的参数影响的是Yarn中Angel ps任务节点数，核数，内存大小。
+spark.ps开头的参数可以使用--conf提交时设置，也可以在程序中设置。
+代码：spark-on-angel/core/src/test/scala/com/tencent/angel/spark/SharedPSContext.scala
+设置的参数如下：（以下参数可以）
+val psConf = new SparkConf()
+	      .set("spark.ps.mode", "LOCAL")
+	      .set("spark.ps.jars", "None")
+	      .set("spark.ps.tmp.path", "file:///tmp/stage")
+	      .set("spark.ps.out.path", "file:///tmp/output")
+          .set("spark.ps.log.level", "INFO")
+
+========================================================
+测试逻辑回归、线性回归：源码：
+/home/weiwc/angel/spark-on-angel/examples/src/main/scala/com/tencent/angel/spark/examples/ml
+进入/home/weiwc/angel/dist/target/angel-1.4.0-bin/bin，root用户运行如下命令：
+
+线性回归：其中训练的数据在代码中生成；
+source /home/weiwc/angel/dist/target/angel-1.4.0-bin/bin/spark-on-angel-env.sh  #使下面用到的的环境变量生效，调用spark2。
+$SPARK_HOME/bin/spark-submit \
+    --master yarn-cluster \
+    --conf spark.ps.jars=$SONA_ANGEL_JARS \
+    --conf spark.ps.instances=4 \
+    --conf spark.ps.cores=2 \
+    --conf spark.ps.memory=3g \
+    --jars $SONA_SPARK_JARS \
+    --name "AngelLR-spark-on-angel" \
+    --driver-memory 2g \
+    --num-executors 4 \
+    --executor-cores 1 \
+    --executor-memory 2g \
+    --class com.tencent.angel.spark.examples.ml.AngelLR \
+    ./../lib/spark-on-angel-examples-${ANGEL_VERSION}.jar
+
+================================
+逻辑回归：
+source /home/weiwc/angel/dist/target/angel-1.4.0-bin/bin/spark-on-angel-env.sh
+$SPARK_HOME/bin/spark-submit \
+    --master yarn-cluster \
+    --conf spark.ps.jars=$SONA_ANGEL_JARS \
+    --conf spark.ps.instances=4 \
+    --conf spark.ps.cores=2 \
+    --conf spark.ps.memory=3g \
+    --jars $SONA_SPARK_JARS \
+    --name "LogisticRegression-spark-on-angel" \
+    --driver-memory 2g \
+    --num-executors 4 \
+    --executor-cores 1 \
+    --executor-memory 2g \
+    --class com.tencent.angel.spark.examples.ml.LogisticRegression \
+    ./../lib/spark-on-angel-examples-${ANGEL_VERSION}.jar
+
+
+

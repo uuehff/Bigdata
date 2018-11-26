@@ -1,0 +1,176 @@
+自己编译的jar包：spark_hbase_2.10-1.0.jar
+cp /opt/spark_hbase_2.10-1.0.jar /opt/cloudera/parcels/CDH-5.14.2-1.cdh5.14.2.p0.3/jars/
+/etc/spark/conf/spark-defaults.conf下面：
+
+spark.driver.extraClassPath=/usr/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar:/opt/cloudera/parcels/CDH-5.14.2-1.cdh5.14.2.p0.3/jars/spark_hbase_2.10-1.0.jar
+spark.executor.extraClassPath=/usr/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar:/opt/cloudera/parcels/CDH-5.14.2-1.cdh5.14.2.p0.3/jars/spark_hbase_2.10-1.0.jar
+
+
+1）用Spark存：
+
+	使用如下：汉字使用u'好'这种方式才能和hbase shell中存汉字一样。这里存的过程是将u'好'进行编码，
+如果使用'好'的话，是将'好'进行编码，'好'本身是字节串，就得不到正确的编码'\xE5\xA5\xBD'。
+host = '192.168.10.23'
+hbase_table = 't5'
+conf = {"hbase.zookeeper.quorum": host,
+        "hbase.mapred.outputtable": hbase_table,
+        "mapreduce.outputformat.class": "org.apache.hadoop.hbase.mapreduce.TableOutputFormat",
+        "mapreduce.job.output.key.class": "org.apache.hadoop.hbase.io.ImmutableBytesWritable",
+        "mapreduce.job.output.value.class": "org.apache.hadoop.io.Writable"
+        }
+keyConv = "hbase.pythonconverters.StringToImmutableBytesWritableConverter"
+valueConv = "hbase.pythonconverters.StringListToPutConverter"
+
+# sparkrow1:行关键字; 'd':列族;  'line_name':列名; 'value1':值
+dl= [['a03', 'data', 'line_name', 'value1'], ['a04', 'data', 'web_name', u'好']]
+sc.parallelize(dl).map(lambda x: (x[0], x))\
+    .saveAsNewAPIHadoopDataset(conf, keyConv, valueConv)
+
+2）用Spark取：
+
+host = '192.168.10.23'
+hbase_table = 't5'
+rkeyConv = "hbase.pythonconverters.ImmutableBytesWritableToStringConverter"
+rvalueConv = "hbase.pythonconverters.HBaseResultToStringConverter"
+rconf = {"hbase.zookeeper.quorum": host,"hbase.mapreduce.inputtable": hbase_table}
+ps_data = sc.newAPIHadoopRDD(
+    "org.apache.hadoop.hbase.mapreduce.TableInputFormat",
+    "org.apache.hadoop.hbase.io.ImmutableBytesWritable",
+    "org.apache.hadoop.hbase.client.Result",
+    keyConverter=rkeyConv,
+    valueConverter=rvalueConv,
+    conf=rconf
+)	
+ps_data1 = ps_data.flatMapValues(lambda v: v.split("\n")).mapValues(json.loads).cache()
+ps_data1.take(5)
+
+注意：rconf中，可以指定条件参数，限制读取的数据，其中可用的参数都在表org.apache.hadoop.hbase.mapreduce.TableInputFormat中，
+参考：http://www.itnose.net/news/152/6270785
+如：rconf = {"hbase.zookeeper.quorum": host,
+             "hbase.mapreduce.inputtable": hbase_table,
+             # 03代表微信数据
+             "hbase.mapreduce.scan.row.start": u'嫘祖杯030000',  #按字典进行比较后取范围
+             "hbase.mapreduce.scan.row.stop": u'嫘祖杯039999',
+             "hbase.mapreduce.scan.columns":"d:uuid_old"   #找出包含uuid_old，且只返回uuid_old这个字段数据的记录。
+             }
+    private static final Log LOG = LogFactory.getLog(TableInputFormat.class);
+    public static final String INPUT_TABLE = "hbase.mapreduce.inputtable";
+    private static final String SPLIT_TABLE = "hbase.mapreduce.splittable";
+    public static final String SCAN = "hbase.mapreduce.scan";
+    public static final String SCAN_ROW_START = "hbase.mapreduce.scan.row.start";
+    public static final String SCAN_ROW_STOP = "hbase.mapreduce.scan.row.stop";
+    public static final String SCAN_COLUMN_FAMILY = "hbase.mapreduce.scan.column.family";
+    public static final String SCAN_COLUMNS = "hbase.mapreduce.scan.columns";
+    public static final String SCAN_TIMESTAMP = "hbase.mapreduce.scan.timestamp";
+    public static final String SCAN_TIMERANGE_START = "hbase.mapreduce.scan.timerange.start";
+    public static final String SCAN_TIMERANGE_END = "hbase.mapreduce.scan.timerange.end";
+    public static final String SCAN_MAXVERSIONS = "hbase.mapreduce.scan.maxversions";
+    public static final String SCAN_CACHEBLOCKS = "hbase.mapreduce.scan.cacheblocks";
+    public static final String SCAN_CACHEDROWS = "hbase.mapreduce.scan.cachedrows";
+    public static final String SCAN_BATCHSIZE = "hbase.mapreduce.scan.batchsize";
+    public static final String SHUFFLE_MAPS = "hbase.mapreduce.inputtable.shufflemaps";
+=====================================================================================================
+3）用Spark读取后，转换为DataFrame进行操作：
+
+1、
+hbase_rdd1 = hbase_rdd.flatMapValues(lambda v: v.split("\n")).mapValues(json.loads)
+take(1)
+hbase_rdd1.take(3)
+2、此种方式输出标准格式：
+hbase_rdd2 = hbase_rdd.flatMapValues(lambda v: v.split("\n"))
+tt=sqlContext.jsonRDD(hbase_rdd2.values())
+tt.take(1)
+tt.take(2)
+tt.printSchema() 
+root              #所有字段类型都是string的！
+ |-- columnFamily: string (nullable = true)
+ |-- qualifier: string (nullable = true)
+ |-- row: string (nullable = true)
+ |-- timestamp: string (nullable = true)
+ |-- type: string (nullable = true)
+ |-- value: string (nullable = true)
+ 
+tt.select("columnFamily").show()
+tt.select("columnFamily").distinct().show()
+tt.select("row","value").show()
+
+tt.select(tt['columnFamily'], tt.columnFamily).show()
+tt.filter(tt['qualifier'] == 'url').count()
+tt.groupBy("qualifier").count().show()
++------------+-----+
+|   qualifier|count|
++------------+-----+
+|    web_from|  212|
+|      source|  212|
+|        time|  212|
+|comment_list|   32|
+|         url|  212|
+|         bad|   16|
+|           a|    1|
+|    web_name|  212|
+|       title|  212|
+|        good|   19|
+|    read_num|    7|
++------------+-----+
+Column:
+# 1. Select a column out of a DataFrame
+df.colName
+df["colName"]
+ROW：
+from pyspark.sql import Row
+row = Row(name="Alice", age=11)
+In [8]: row
+Out[8]: Row(age=11, name='Alice')
+In [9]: row.name,row.age
+Out[9]: ('Alice', 11)
+Row(name="Alice", age=11).asDict() == {'name': 'Alice', 'age': 11}
+======================================
+优先选择使用DataFrame,不行再用sql，或RDD。
+tt.registerTempTable("people")
+results = sqlContext.sql("SELECT qualifier FROM people")
+type(results)
+results.show()
+======================
+# Load a text file and convert each line to a Row.
+lines = sc.textFile("examples/src/main/resources/people.txt")
+parts = lines.map(lambda l: l.split(","))
+people = parts.map(lambda p: Row(name=p[0], age=int(p[1])))
+
+# Infer the schema, and register the DataFrame as a table.
+schemaPeople = sqlContext.createDataFrame(people)
+schemaPeople.registerTempTable("people")
+
+# SQL can be run over DataFrames that have been registered as a table.
+teenagers = sqlContext.sql("SELECT name FROM people WHERE age >= 13 AND age <= 19")
+
+# The results of SQL queries are RDDs and support all the normal RDD operations.
+teenNames = teenagers.map(lambda p: "Name: " + p.name)
+for teenName in teenNames.collect():
+  print(teenName)
+===================
+# Load a text file and convert each line to a tuple.
+lines = sc.textFile("examples/src/main/resources/people.txt")
+parts = lines.map(lambda l: l.split(","))
+people = parts.map(lambda p: (p[0], p[1].strip()))
+
+# The schema is encoded in a string.
+schemaString = "name age"
+
+fields = [StructField(field_name, StringType(), True) for field_name in schemaString.split()]
+schema = StructType(fields)
+
+# Apply the schema to the RDD.
+schemaPeople = sqlContext.createDataFrame(people, schema)
+
+# Register the DataFrame as a table.
+schemaPeople.registerTempTable("people")
+
+# SQL can be run over DataFrames that have been registered as a table.
+results = sqlContext.sql("SELECT name FROM people")
+
+# The results of SQL queries are RDDs and support all the normal RDD operations.
+names = results.map(lambda p: "Name: " + p.name)
+for name in names.collect():
+  print(name)
+====================
+

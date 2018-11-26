@@ -1,0 +1,92 @@
+python编码：	http://python.jobbole.com/82107/
+
+严格意义上说，str其实是字节串，它是unicode经过编码后的字节组成的序列。
+unicode才是真正意义上的字符串，对字节串str使用正确的字符编码进行解码后获得
+
+>>> print u'\u597d'
+好
+>>> print '\xE5\xA5\xBD'
+好
+>>> '\xE5\xA5\xBD'.decode('utf-8')
+u'\u597d'
+>>> u'\u597d'.encode('utf-8')
+'\xe5\xa5\xbd'
+>>> '\xC3\xA5\xC2\xA5\xC2\xBD'.decode('utf-8')
+u'\xe5\xa5\xbd'
+
+
+================================
+存：string/unicode -> 字节
+取：字节 ->  string/unicode
+
+host = '192.168.10.23'
+hbase_table = 't5'
+rkeyConv = "hbase.pythonconverters.ImmutableBytesWritableToStringConverter"
+rvalueConv = "hbase.pythonconverters.HBaseResultToStringConverter"
+rconf = {"hbase.zookeeper.quorum": host,"hbase.mapreduce.inputtable": hbase_table}
+ps_data = sc.newAPIHadoopRDD(
+    "org.apache.hadoop.hbase.mapreduce.TableInputFormat",
+    "org.apache.hadoop.hbase.io.ImmutableBytesWritable",
+    "org.apache.hadoop.hbase.client.Result",
+    keyConverter=rkeyConv,
+    valueConverter=rvalueConv,
+    conf=rconf
+)	
+
+ps_data1 = ps_data.flatMapValues(lambda v: v.split("\n")).mapValues(json.loads).cache()
+>>> ps_data1.map(lambda x:(x[1]['value'])).saveAsTextFile("/user/weiwc/o1") #这里从HBase读出来，存取hdfs是汉字，以下两种不行！
+>>> ps_data1.map(lambda x:(x[0],x[1]['value'])).saveAsTextFile("/user/weiwc/o2")
+>>> ps_data1.map(lambda x:(x[0],x[1]['value'].encode('utf-8'))).saveAsTextFile("/user/weiwc/o3")
+=============================================================
+HBase存储、读取总结：
+
+1、hbase shell 命令行：与happybase存一样，直接用汉字存取，直接用汉字scan（使用到的汉字会转换为字节去查），
+返回结果为字节串：value=hao\xE5\xA5\xBD
+
+2、总结：happybase、habse shell存取直接使用汉字，取出的汉字是二进制，可用happybase的print打印出汉字。
+程序存储，汉字使用u'好'格式，取出的是unicode,比如u'好',取出结果：u'\u597d'
+
+=============================================================================================================================
+
+注意:在happybase和hbase shell中都可直接使用过滤器！
+在python中读取文件中的汉字，会自动转成类似u'\u597d'的格式，因此直接存是OK的。
+但直接定义 a = '好'不行，需要定义为：a = u'好'，这样存入Hbase才是正确的汉字。
+
+HBase存取编码总结：
+1）HBase中的数据存的都是字节，因此存的值和取到的结果都要进行转换，happybase、hbase shell和 
+spark程序中对存取的值，使用的转换方法不一样，happybase、hbase shell使用hbase内置的转换，取到的结果使用
+org.apache.hadoop.hbase.util.Bytes.toStringBinary()转换，因此存的'好'字，
+scan结果为：value=\xE5\xA5\xBD，返回的是字节串，就像python中定义了一个a = '好' 的变量。
+可通过自定义格式进行转换，显示汉字，如：get 't5', 'a1' ,{COLUMN => 'data:name:toString'}，只能针对具体："列族+列" 
+使用自定义格式，不能直接用在“列族”上。
+返回结果：data:name   timestamp=1494405029169, value=好
+
+2）python中默认使用如下key、value：
+keyConv = "org.apache.spark.examples.pythonconverters.ImmutableBytesWritableToStringConverter"
+valueConv = "org.apache.spark.examples.pythonconverters.HBaseResultToStringConverter"
+进行结果的转换，HBaseResultToStringConverter中默认也使用了Bytes.toStringBinary方法，
+HBaseResultToStringConverter.scala源码如下（需要对源码修改才能正确返回汉字，即返回u'\u597d'）：
+val output = result.listCells.asScala.map(cell =>
+        Map(
+          "row" -> Bytes.toStringBinary(CellUtil.cloneRow(cell)),
+          "columnFamily" -> Bytes.toStringBinary(CellUtil.cloneFamily(cell)),
+          "qualifier" -> Bytes.toStringBinary(CellUtil.cloneQualifier(cell)),
+          "timestamp" -> cell.getTimestamp.toString,
+          "type" -> Type.codeToType(cell.getTypeByte).toString,
+          "value" -> Bytes.toStringBinary(CellUtil.cloneValue(cell))
+        )
+    )
+3）scala中读取到的结果也需要进行转换：
+
+ResultScanner scanner1 = table.getScanner(scan1);  
+        for(Result res : scanner1){  
+            for(Cell cell : res.rawCells()){  
+                System.out.println(Bytes.toString(CellUtil.cloneValue(cell)));  
+            }  
+        } 
+
+hbase_rdd2 = hbase_rdd.flatMapValues(lambda v: v.split("\n"))
+tt=sqlContext.jsonRDD(hbase_rdd2.values())
+
+
+

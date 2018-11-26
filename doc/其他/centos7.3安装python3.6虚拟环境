@@ -1,0 +1,68 @@
+参考：https://www.cnblogs.com/MikeZhang/p/virtualenvPython_20150607.html
+http://blog.csdn.net/qingche456/article/details/65465760
+
+由于原centos7.3系统自带的是python2.7.5的版本，现需要使用python3版本，因此在
+个人目录下创建python3的虚拟环境，并且不影响系统python2.7.5的使用。
+
+其中以下使用root权限：
+./configure --enable-shared --prefix=/usr/local
+make && make altinstall
+
+pip install virtualenv
+
+切换到自己目录，执行：
+virtualenv -p /usr/local/bin/python3.6 py36env
+其中：ipython在真实环境中已经安装，不必再安装，虚拟环境中可以直接使用！
+-p 参数指定使用哪个python编译器
+
+查看包是否存在： rpm -qa | grep openssl
+必须有如下包：openssl-devel 和 openssl*包才可以，否则进入虚拟环境，使用pip search * 报错如下：
+yum install  openssl-devel  openssl098e
+
+openssl-devel-1.0.1e-60.el7.x86_64
+openssl098e-0.9.8e-29.el7.centos.3.x86_64
+openssl-libs-1.0.1e-60.el7.x86_64
+openssl-1.0.1e-60.el7.x86_64
+
+报错：SSLError: Can't connect to HTTPS URL because the SSL module is not available
+
+===============================================================================
+=========================================================================================
+由于原centos7.3系统自带的是python2.7.5的版本，现需要使用python3版本，因此在
+个人目录下创建python3的虚拟环境，并且不影响系统python2.7.5的使用。
+
+virtualenv 用法：
+Usage: virtualenv [OPTIONS] DEST_DIR
+
+  [OPTIONS]：
+-p PYTHON_EXE, --python=PYTHON_EXE
+--no-site-packages
+--system-site-packages
+
+virtualenv  -p /usr/local/bin/python3.6 --no-site-packages  py36env  （使用python3.6）
+virtualenv --system-site-packages ~/tensorflow   （使用python2.7，默认使用/usr/bin/python2.7）
+virtualenv --no-site-packages ~/tensorflow   （使用python2.7，默认使用/usr/bin/python2.7）
+
+参数:
+-p:指定使用哪个python编译器版本创建虚拟环境，不指定-p参数的话会使用系统的python版本。
+--no-site-packages : 创建的虚拟环境将不继承系统python的site-packages中的包（即虚拟环境中不能使用系统中已有的包），进入虚拟环境中安装新包时（不管系统中有或无），会再安装到自己虚拟环境
+                    目录的site-packages中，而系统的对应目录下不会有。例如（tensorflow为自己的虚拟环境目录）：/home/weiwc/tensorflow/lib/python2.7/site-packages/
+--system-site-packages:  创建的虚拟环境将继承系统的site-packages中的包（在虚拟环境中可以使用系统已有的包，但并非是将系统的包复制到虚拟目录的site-packages中，可以理解为，内置了环境变量），但
+        虚拟环境中安装新包时，也仅仅安装在虚拟环境中的site-packages中，系统不能用！
+
+创建虚拟环境的原理：就是把安装好的python环境复制一份到指定的目录中（py36env），该目录就是创建好的虚拟环境。
+可以为每个用户创建一个虚拟环境，满足统一包名不同版本的需求，当不需要时可以直接删除虚拟环境目录即可。
+
+
+
+
+
+
+
+
+
+
+
+
+
+

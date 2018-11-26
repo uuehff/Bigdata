@@ -1,0 +1,69 @@
+shuffle调优经典： http://www.cnblogs.com/arachis/p/Spark_Shuffle.html
+
+调优建议：如果的确不需要SortShuffleManager的排序机制，那么除了使用bypass机制，还可以尝试将spark.shffle.manager参数手动指定为hash，使用HashShuffleManager，同时开启consolidate机制。在实践中尝试过，发现其性能比开启了bypass机制的SortShuffleManager要高出10%~30%。
+spark-defaults.conf
+Spark-defaults.conf的作用范围要搞清楚，编辑driver所在机器上的spark-defaults.conf，该文件会影响 到driver所提交运行的application，及专门为该application提供计算资源的executor的启动参数
+只需要在driver所在的机器上编辑该文件，不需要在worker或master所运行的机器上编辑该文件
+
+$SPARK_HOME/bin/submit --help
+有几个选项可以用来指定所依赖的库，分别为
+
+--driver-class-path driver所依赖的包，多个包之间用冒号(:)分割
+--jars   driver和executor都需要的包，多个包之间用逗号(,)分割
+
+
+
+spark-submit --master spark://cdh-master-slave1:7077 --name group_url_.py \
+--executor-cores 2 --executor-memory 4g --total-executor-cores 6 \
+group_url.py  cdh-master-slave1 test
+
+spark-submit --master spark://cdh-master-slave1:7077 --name tieBa_to_HBase.py \
+--executor-cores 2 --executor-memory 4g --total-executor-cores 6 tieBa_to_HBase.py \
+cdh-slave2 tieba2
+
+==============================================
+==============================================
+在spark-shell中使用scala任务提交：
+spark-shell --master spark://cdh-master-slave1:7077 --name test_.py \
+--executor-cores 2 --executor-memory 4g --total-executor-cores 6 
+
+val data = sc.textFile("/user/weiwc/data/t1.txt", 3)
+    data.glom().collect()
+    val t = (x: String) => x.toString.split(" ").length
+//    val m1 = data.groupBy(t, 2).cache()       
+    val m1 = data.groupBy(t, 2)   
+    m1.saveAsTextFile("hdfs://cdh-master-slave1:8020/user/weiwc/sort104")
+
+说明：如果m1 = data.groupBy(t, 2)加上cache(),界面Storage中可看到有缓存ShuffleRDD,第一次执行m1.saveAsTextFile时由于
+/tmp问题，会报错，第二次再执行时就成功，groupBy的结果已返回且已缓存，再执行m1.saveAsTextFile时，数据都已准备好。
+如果m1 = data.groupBy(t, 2)不加cache()，则每次执行m1.saveAsTextFile时，都会重新生成data，然后进行groupBy，因此每次都会
+因为/tmp问题失败。
+=======================================
+======================================
+
+
+pyspark  --master spark://cdh-master-slave1:7077 --name suanziPart \
+--executor-cores 2 --executor-memory 4g --total-executor-cores 6 
+
+conf = SparkConf().setAppName('test').set("spark.shuffle.file.buffer","64k").set("spark.shuffle.io.maxRetries","5")
+org.apache.spark.network.netty.NettyBlockTransferService
+org.apache.spark.SparkEnv
+
+.set("spark.shuffle.file.buffer","32k")
+.set("spark.shuffle.io.maxRetries","1")
+.set("spark.shuffle.io.retryWait","4s")
+
+cd /opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/jars
+rm -f spark-network-common_2.10-1.6.0-cdh5.10.1.jar
+mv spark-network-common_2.10-1.6.0-cdh5.10.1.jar.bak spark-network-common_2.10-1.6.0-cdh5.10.1.jar
+
+方案选型：
+1、使用R，R中统计分析的函数不需要自己写、画图，现在用Excel画图。
+2、R读取HBase，可能兼容不是很好。
+3、CDH5不支持SparkR,可能需要自己集成SparkR.
+4、python 调用R， 安装rpy2包。
+5、spark 读取HBase数据，使用python结合R语言包。
+
+
+
+

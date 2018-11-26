@@ -1,0 +1,57 @@
+7zip的压缩率为：压缩为源文件的1/7大小！
+
+参考：http://zctou.com/?p=1539
+Centos7.3安装：
+1、wget https://nchc.dl.sourceforge.net/project/p7zip/p7zip/16.02/p7zip_16.02_src_all.tar.bz2
+2、tar -xjvf p7zip_16.02_src_all.tar.bz2
+3、 cd p7zip_16.02
+4、make && make install
+
+命令语法：
+7za {a|d|l|e|u|x} 压缩包文件名 {文件列表或目录，可选}
+
+a  向压缩包里添加文件或创建压缩包，如向001.7z添加001.jpg，执行：7za a 001.7z 001.jpg；将001目录打包执行：7za a 001.7z 001；
+d  从压缩里删除文件，如将001.7z里的001.jpg删除，执行：7za d 001.7z 001.jpg
+l  列出压缩包里的文件，如列出001.7z里的文件，执行：7za l 001.7z
+e  解压到当前目录，目录结构会被破坏，如001.rar内有如下目录及文件123/456/789.html，
+执行：7za e 001.rar，目录123和456及文件789.html都会存放在当前目录下。
+x  以完整路径解压。
+
+
+解压到当前目录！
+7za x 文件
+
+压缩文件：
+7za a judgment.7z judgment.*
+
+7za a judgment_main_etl.7z judgment_main_etl.*
+7za a judgment_visualization_v2.7z judgment_visualization_v2.*
+7za a lawyer_picture.7z lawyer_picture.*
+
+二审：
+7za a judgment2_main_etl.7z judgment2_main_etl.*
+7za a judgment2_visualization_v2.7z judgment2_visualization_v2.*
+7za a lawyer_picture.7z lawyer_picture.*
+
+法条：
+7za a law_rule_result2.7z law_rule_result2.*
+7za a law_rule_result_article.7z law_rule_result_article.*
+
+在内网root用户下上传：scp -P 3333 features_30k_cn.pkl.7z cdh@119.147.149.35:/data/mysql_data_bak
+输入远程主机cdh密码：cdh@13322.com
+
+在内网root用户下上传：scp -P 3333 judgment_main_etl.7z cdh@119.147.149.35:/data/mysql_data_bak
+scp -P 3333 judgment_visualization_v2.7z cdh@119.147.149.35:/data/mysql_data_bak
+scp -P 3333 lawyer_picture.7z cdh@119.147.149.35:/data/mysql_data_bak
+二审：
+scp -P 3333 judgment2_main_etl.7z cdh@119.147.149.35:/data/mysql_data_bak
+scp -P 3333 judgment2_visualization_v2.7z cdh@119.147.149.35:/data/mysql_data_bak
+scp -P 3333 lawyer_picture.7z cdh@119.147.149.35:/data/mysql_data_bak
+法条：
+scp -P 3333 law_rule_result2.7z cdh@119.147.149.35:/data/mysql_data_bak
+scp -P 3333 law_rule_result_article.7z cdh@119.147.149.35:/data/mysql_data_bak
+
+
+
+线上服务器相互传输：
+scp -P 2222 lawyer_picture.7z cdh@cdh-slave1:/data/bak

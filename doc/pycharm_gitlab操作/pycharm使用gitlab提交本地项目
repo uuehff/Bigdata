@@ -1,0 +1,19 @@
+上传本地项目到GitLab：
+
+0、首先在浏览器中，登录GitLab，个人项目中，新建一个项目，名字为tt，其路径为：http://ai.git/weiwenchao/tt.git。目前该项目是一个
+   空项目，接下来创建本地工程，并同步到该工程下。
+1、在本地新建一个项目，命名test01。
+2、选中项目，点击菜单栏的VCS，选择：Import into version control,
+   再选择：Create Git Repository,再选择当前工程的路径，OK。这时可看到左下角的Version Control菜单栏中，发现Unversioned Files。
+3、选中项目，点击右键，Git -> Add ,将整个工程添加到版本控制中，add之后是绿色的。
+4、再点击菜单栏中的VCS，进入后，选择：Git, 再选择：Remotes。在打开的对话框中，新建一个GitLab工程的路径，比如：
+name:origin
+url:http://ai.git/weiwenchao/tt.git
+将本地test01下的内容上传至，Gitlab上的tt工程下面。注意：Gitlab上的工程名为tt,本地的工程名为test01。
+
+5、在Version Control中即可提交变化的文件。
+
+简单可理解为：1）本地创建工程，加入本地Git Repository中。2）远端的Gitlab中创建一个工程。3）在本地将本地的项目加入到版本控制中。
+============================
+clone项目到本地：
+点击VCS,checkout from version control -> Git: 输入Gitlab工程路径,和本地工程的父目录，工程名。

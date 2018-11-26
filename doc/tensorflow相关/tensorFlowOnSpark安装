@@ -1,0 +1,261 @@
+TensorflowOnSpark  YARN模式：https://www.cnblogs.com/heimianshusheng/p/6768019.html
+
+环境：在192.168.12.34上安装，/home/weiwc目录下有相关的包。
+Python2.7 + Spark1.6 + Hadoop2.6.0 + Tensorflow1.1.0
+
+安装参考：https://www.cnblogs.com/heimianshusheng/p/6768019.html
+http://www.360doc.com/content/17/0524/14/41381374_656767424.shtml
+
+官网:https://github.com/yahoo/TensorFlowOnSpark/wiki/GetStarted_YARN
+
+安装过程遇到的问题：
+1）安装pydoop时，代码基于CDH默认/opt/cloudera目录寻找相关文件，需要修改源码为/data/opt/cloudera
+2) 安装tensorflow-1.1.0.whl
+3）安装 TensorFlowOnSpark，将git clone下来的tensorflow的源码放到TensorFlowOnSpark目录下.
+    其中的目录结构为/home/weiwc/TensorFlowOnSpark/tensorflow目录下有configure、configure.py文件；
+    /home/weiwc/TensorFlowOnSpark/tensorflow/tensorflow目录下有c、cc等文件。
+4）安装编译 Hadoop InputFormat/OutputFormat for TFRecords
+真实环境中安装protobuf，protobuf-3.3.0.zip配置环境变量；
+
+export PYTHON_ROOT=~/Python
+1）配置python路径为/home/weiwc/Python，进入python解压路径: ./configure --prefix="${PYTHON_ROOT}" --enable-unicode=ucs4
+2）修改python.tg解压后的：Modules/Setup.dist，修改如下（据说是为了防止ps job任务挂起）：
+与ssl有关：
+_ssl _ssl.c \
+    -DUSE_SSL -I$(SSL)/include -I$(SSL)/include/openssl \
+    -L$(SSL)/lib -lssl -lcrypto
+#与 zlib 相关：
+zlib zlibmodule.c -I$(prefix)/include -L$(exec_prefix)/lib -lz
+3）编译，安装python2.7.12
+make
+make install
+4）安装pip到/home/weiwc/Python：/home/weiwc/Python/bin/python /home/weiwc/get-pip.py
+5）安装pydoop：
+tar -xvf pydoop-1.2.0.tar.gz
+cd pydoop-1.2.0
+/home/weiwc/Python/bin/python setup.py build
+/home/weiwc/Python/bin/python setup.py install
+6）安装tensorflow：
+/home/weiwc/Python/bin/pip install tensorflow-1.1.0-cp27-cp27mu-manylinux1_x86_64.whl
+
+7）为Spark准备Python.zip压缩包，提交任务时，配置--archives Python.zip，在运行时将Python.zip解压到每个Executor工作目录中，使用Python.zip的python库。
+也可以不准备,使用系统的python命令、python库。但在每个机器上都要装pydoop、tensorflow、tensorflowonspark。
+
+8）为Spark准备TensorFlowOnSpark压缩包：参考连接中有错误，命令应该是：
+cd TensorFlowOnSpark
+zip -r tfspark.zip tensorflowonspark
+也可以不准备，但每个机器都要pip 安装tensorflowonspark包。其实将使用pip安装后的tensorflowonspark文件夹打包成tfspark.zip是一样的。git clone下来的TensorFlowOnSpark
+中的tensorflowonspark中的内容与使用pip安装后的tensorflowonspark文件夹内容是一样的！！
+
+9）E:\PycharmProjects\tensorflow_project\t001\MNIST_data下的4个*.gz文件上传到服务器/home/weiwc/mnist目录下，
+注意一定要有mnist目录，进入mnist，打包: zip -r mnist.zip *
+上传到HDFS，后缀加#mnist，便于程序中解压用。
+
+10)上传文件、执行：
+    参考链接中的2) feed_dic方式运行，步骤如下,中的 "step 1 设置环境变量" 可以不用设置。
+
+转换数据命令提交，同时：
+参数--archives 中的Python.zip上传可以去掉;
+export SPARK_YARN_USER_ENV="PYSPARK_PYTHON=Python/bin/python"也不要设置；
+--jars hdfs:///user/${USER}/tensorflow-hadoop-1.0-SNAPSHOT.jar也用不到。
+===========================
+spark-submit \
+--master yarn \
+--deploy-mode client \
+--queue default2 \
+--num-executors 6 \
+--executor-memory 8G \
+--archives mnist/mnist.zip#mnist \
+TensorFlowOnSpark/examples/mnist/mnist_data_setup.py \
+--output mnist/csv \
+--format csv
+============================
+启动两个任务，8088监控中：
+spark任务中占用的资源包含：一个driver和设置的executors，（driver先启动，可以监控8088,看它占用的资源）。一般driver会占用一个container，其中包含一个core。
+=============
+训练：注意格式，从链接上复制下来的格式可以，改了些东西可能就不行了。
+线上提交：
+spark-submit \
+--master yarn \
+--deploy-mode cluster \
+--queue default2 \
+--num-executors 6 \
+--executor-memory 8G \
+--archives mnist.zip#mnist,Python.zip#Python \
+mnist_data_setup.py \
+--output mnist/csv \
+--format csv
+===========================
+spark-submit \
+--master yarn \
+--deploy-mode cluster \
+--num-executors 3 \
+--executor-cores 2 \
+--executor-memory 8G \
+--py-files tfspark.zip,mnist_dist.py \
+--conf spark.executorEnv.LD_LIBRARY_PATH="$LIB_JVM:$LIB_HDFS" \
+--conf spark.executorEnv.HADOOP_HDFS_HOME="$HADOOP_HDFS_HOME" \
+--conf spark.executorEnv.CLASSPATH="$($HADOOP_HOME/bin/hadoop classpath --glob):${CLASSPATH}" \
+--conf spark.dynamicAllocation.enabled=false \
+--conf spark.yarn.maxAppAttempts=1 \
+--conf spark.yarn.executor.memoryOverhead=2048 \
+--archives Python.zip#Python \
+mnist_spark.py \
+--steps 5 \
+--images mnist/csv/train/images \
+--labels mnist/csv/train/labels \
+--mode train \
+--model hdfs://cdh-master:8020/user/cdh/mnist_model
+============================================================
+35、225上提交：
+spark-submit \
+--master yarn \
+--deploy-mode cluster \
+--num-executors 4 \
+--executor-memory 4G \
+--py-files hdfs:///user/weiwc/tfspark.zip,mnist_dist.py \
+--conf spark.executorEnv.LD_LIBRARY_PATH=/data/opt/cloudera/parcels/CDH/lib64:$JAVA_HOME/jre/lib/amd64/server \
+--conf spark.dynamicAllocation.enabled=false \
+--conf spark.yarn.maxAppAttempts=1 \
+--conf spark.yarn.executor.memoryOverhead=2048 \
+--archives hdfs:///user/weiwc/Python.zip#Python \
+mnist_spark.py \
+--images mnist/csv/train/images \
+--labels mnist/csv/train/labels \
+--mode train \
+--model mnist_model
+==================================================================
+==================================================================
+==================================================================
+34上weiwc用户提交：(都是用本地目录，修改tfspark.zip和Python.zip内容后，不需要上传HDFS,方便测试)
+训练：
+spark-submit \
+--master yarn \
+--deploy-mode cluster \
+--num-executors 4 \
+--executor-memory 4G \
+--py-files /home/weiwc/TensorFlowOnSpark/tfspark.zip,/home/weiwc/TensorFlowOnSpark/examples/mnist/spark/mnist_dist.py \
+--conf spark.executorEnv.LD_LIBRARY_PATH=$LIB_JVM:$LIB_HDFS \
+--conf spark.dynamicAllocation.enabled=false \
+--conf spark.yarn.maxAppAttempts=1 \
+--conf spark.yarn.executor.memoryOverhead=4096 \
+--archives /home/weiwc/Python/Python.zip#Python \
+/home/weiwc/TensorFlowOnSpark/examples/mnist/spark/mnist_spark.py \
+--images mnist/csv/train/images \
+--labels mnist/csv/train/labels \
+--mode train \
+--model mnist_model
+
+==============
+预测：
+spark-submit \
+--master yarn \
+--deploy-mode cluster \
+--num-executors 4 \
+--executor-memory 4G \
+--py-files ${HOME}/TensorFlowOnSpark/tfspark.zip,${HOME}/TensorFlowOnSpark/examples/mnist/spark/mnist_dist.py \
+--conf spark.dynamicAllocation.enabled=false \
+--conf spark.yarn.maxAppAttempts=1 \
+--conf spark.yarn.executor.memoryOverhead=6144 \
+--archives hdfs:///user/${USER}/Python.zip#Python \
+--conf spark.executorEnv.LD_LIBRARY_PATH=$LIB_JVM:$LIB_HDFS \
+${HOME}/TensorFlowOnSpark/examples/mnist/spark/mnist_spark.py \
+--images mnist/csv/test/images \
+--labels mnist/csv/test/labels \
+--mode inference \
+--model mnist_model \
+--output predictions
+
+一般只配置以下三个变量就可以了：
+export SPARK_YARN_USER_ENV="PYSPARK_PYTHON=Python/bin/python"
+export LIB_HDFS=/data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib64
+export LIB_JVM=$JAVA_HOME/jre/lib/amd64/server
+==============
+可能用到的变量：yarn方式提交，参数配置可参考：http://blog.csdn.net/u010824946/article/details/78850459
+export HADOOP_HOME=/data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/hadoop
+export HADOOP_HDFS_HOME=/data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/hadoop-hdfs
+--conf spark.executorEnv.CLASSPATH="$(/data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/hadoop/bin/hadoop classpath --glob):${CLASSPATH}" \
+========================================
+其他需要注意的问题：TensorFlowOnSpark的GitHub上面有许多已解答的问题：https://github.com/yahoo/TensorFlowOnSpark/issues/
+1、HDFS上，/user/weiwc权限为，777。因为写入模型时使用的是yarn用户。
+2、设置环境变量：export SPARK_YARN_USER_ENV="PYSPARK_PYTHON=Python/bin/python"
+其中Python/bin/python中的Python目录就是--archives /home/weiwc/Python/Python.zip#Python中#号后面的路径！！注意：zip文件后的#号代表解压之后将内容放在该路径。
+--archives后的zip文件会被所有executor抽取到运行时工作目录下，放在#号后面的路径中，这里就是Python路径。因此到时可以执行Python/bin/python命令！
+3、
+--jars   用逗号隔开的driver本地jar包列表以及executor类路径
+--py-files    用逗号隔开的放置在Python应用程序PYTHONPATH上的.zip, .egg, .py文件列表
+--files   用逗号隔开的要放置在每个executor工作目录的文件列表
+--archives  被每个executor提取到工作目录的档案列表，用逗号隔开。
+======================================================================================================================
+Spark Yarn模式，cluster、client模式，日志说明：
+跑的过程中，在8088界面：
+1）例如点击ID：application_1519264075391_0171，进入logs中，这里查看的是driver的日志，有stderr，stdout。
+2）点击ApplicationMaster：进入Spark History界面，可查看每个Executor的日志，其中也有driver的日志，这里的driver日志跟8088中
+点击application_1519264075391_0171进去获取到的一样，都是driver的日志。
+注意：client模式driver（主）程序运行在本地，主程序中打印的日志都在driver命令行，所以这里没有driver日志,8088中也没有，cluster模式driver在一个container的executor中，所以8088和Spark History中都有driver打印的日志。
+3）程序结束后：
+8088界面中点击程序对应的History链接，也会进入Spark History界面查看Executor日志。只有Spark On Yarn启动或其History Server启动才可以进入。
+即使没启动Spark，也可使用yarn 模式提交任务，日志一样会写入Spark History Server，当启动该实例后，一样会看到之前程序的日志。日志的保存跟是否启动History Server无关。
+============================
+遇到的问题：
+1)直接pip安装pydoop：
+sudo bin/pip install pydoop
+报错：
+File "pydoop/hadoop_utils.py", line 82, in _cdh_hadoop_home
+        raise RuntimeError("unsupported CDH deployment")
+    RuntimeError: unsupported CDH deployment
+
+解决：只能使用源码安装，因为要改动下源码才可以。修改源码下的pydoop/hadoop_utils.py中的51行修改为如下：（就是修改下CDH默认安装路径/data/opt而非/opt）
+CDH_HADOOP_HOME_PARCEL = first_dir_in_glob(
+    '/data/opt/cloudera/parcels/CDH-*/lib/hadoop'  # Cloudera Manager
+)
+执行：
+sudo /home/weiwc/Python/bin/python setup.py build
+报错：File "/home/weiwc/pydoop-1.2.0/pydoop/utils/jvm.py", line 28, in get_java_home
+    raise RuntimeError("java home not found, try setting JAVA_HOME")
+RuntimeError: java home not found, try setting JAVA_HOME
+解决：使用root用户安装，source /etc/profile ,再安装。
+
+2）进行数据转换的时候
+Traceback (most recent call last):
+  File "mnist_data_setup.py", line 137, in <module>
+    writeMNIST(sc, "mnist/train-images-idx3-ubyte.gz", "mnist/train-labels-idx1-ubyte.gz", args.output + "/train", args.format, args.num_partitions)
+  File "mnist_data_setup.py", line 57, in writeMNIST
+    imageRDD = sc.parallelize(images.reshape(shape[0], shape[1] * shape[2]), num_partitions)
+AttributeError: 'NoneType' object has no attribute 'parallelize'
+
+解决：将133行的：sc = SparkContext(conf=SparkConf().setAppName("mnist_parallelize")).setLogLevel("WARN")
+替换为：
+conf = SparkConf().setAppName("mnist_parallelize")
+sc = SparkContext(conf=conf)
+sc.setLogLevel("WARN")
+
+
+=====================================================================
+执行训练遇到的问题：
+
+1）使用参数示例说明：
+--num-executors 4 \
+--executor-memory 4G \
+说明：--executor-cores 参数默认为1个，且只能设置为一个，因此默认即可。大于一个就报错：KeyError: 'input'。
+Tensorflow分布式是基于Executor构建的，一个executor充当一个ps或worker节点，且只允许有一个core，但一个executor可能会分配许多个task，这些task是串行计算的。
+cluster模式启动4个--num-executors的话，8088界面启动5个container，其中一个是driver用。其他4个是executor。
+4个executor中，1个是TF的ps node，另外三个是worker node。因此可以说，多一个executor就可以多一个worker node。
+一个executor只能充当一个ps/worker node，跟其多少个core没关系，也不允许有多个核。
+====================================
+2）训练时，准备模型时，卡在这里，查看Spark executor日志，发现所有tf的work job所在的executor都success，ps job所在的executor在继续执行等待：
+Waiting for model to be ready.  Ready_for_local_init_op:  None, ready: Variables not initialized: hid_w, hid_b, sm_w, sm_b, Variable, hid_w/Adagrad, hid_b/Adagrad, sm_w/Adagrad, sm_b/Adagrad
+I tensorflow/core/distributed_runtime/master_session.cc:993] Start master session 4954213a22368dbd with config:
+
+解决：ps job一直挂起是因为使用的tensorflow版本不对！！！Python.zip不要使用0.12.1,改为1.1.0之后就没问题了！！！
+配置以下两点即可执行：
+export SPARK_YARN_USER_ENV="PYSPARK_PYTHON=Python/bin/python"
+--conf spark.executorEnv.LD_LIBRARY_PATH=/data/opt/cloudera/parcels/CDH/lib64:$JAVA_HOME/jre/lib/amd64/server \
+
+===================================
+3）源码解读：TFCluster.py第308行，nodeRDD为[[0],[1],[2],[3]]。
+    TFCluster.py第308行，让保证下列三个条件，否则会报错。
+Please ensure that (1) the number of executors >= number of TensorFlow nodes, (2) the number of tasks per executors == 1, and (3) TFCluster.shutdown() is successfully invoked when done."
+就是一个executor只允许一个task，nodeRDD.foreachPartition()中，nodeRDD有4个分区，就会对应4个task，而一个executor只允许有一个task，
+所以4个executor中，都有一个task。都有对应的Executor日志。
+=======================================

@@ -1,0 +1,26 @@
+初级篇：1、http://tech.meituan.com/spark-tuning-basic.html
+高级篇：2、http://www.cnblogs.com/seaspring/p/5641950.html
+Spark的性能调优实际上是由很多部分组成的，不是调节几个参数就可以立竿见影提升作业性能的。
+我们需要根据不同的业务场景以及数据情况，对Spark作业进行综合性的分析，然后进行多个方面的调节和优化，才能获得最佳性能。
+
+    Spark优化方案主要分为开发调优、资源调优、数据倾斜调优、shuffle调优几个部分。开发调优和资源调优是所有Spark作业都需要注意和
+遵循的一些基本原则，是高性能Spark作业的基础；数据倾斜调优，主要讲解了一套完整的用来解决Spark作业数据倾斜的解决方案；shuffle调优，
+面向的是对Spark的原理有较深层次掌握和研究的同学，主要讲解了如何对Spark作业的shuffle运行过程以及细节进行调优。
+
+使用mapPartitions替代普通map
+使用foreachPartitions替代foreach
+wordCount的shuffle过程stage划分分析：
+
+val conf = new SparkConf()
+val sc = new SparkContext(conf)
+val lines = sc.textFile("hdfs://...")
+val words = lines.flatMap(_.split(" "))
+val pairs = words.map((_, 1))
+val wordCounts = pairs.reduceByKey(_ + _)
+wordCounts.collect().foreach(println(_))
+
+1、stage0，主要是执行从textFile到map操作，以及执行shuffle write操作。shuffle write操作，我们可以简单理解为对pairs RDD中的数据进行分区操作，
+每个task处理的数据中，相同的key会写入同一个磁盘文件内。
+2、stage1，主要是执行从reduceByKey到collect操作，stage1的各个task一开始运行，就会首先执行shuffle read操作。执行shuffle read操作的task，
+会从stage0的各个task所在节点拉取属于自己处理的那些key，然后对同一个key进行全局性的聚合或join等操作，在这里就是对key的value值进行累加。
+stage1在执行完reduceByKey算子之后，就计算出了最终的wordCounts RDD，然后会执行collect算子，将所有数据拉取到Driver上，供我们遍历和打印输出。

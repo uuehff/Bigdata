@@ -1,0 +1,53 @@
+centos7 YUM安装参考：http://blog.csdn.net/alex_bean/article/details/58016195
+http://junyiseo.com/linux/429.html
+https://docs.mongodb.com/master/tutorial/install-mongodb-on-red-hat/
+
+
+用户权限配置：   http://blog.csdn.net/jianlong727/article/details/53889990
+
+参数配置：http://blog.csdn.net/guoxingege/article/details/47339885
+
+API:https://docs.mongodb.com/getting-started/shell/
+
+注意：
+
+开启权限认证配置/etc/mongod.conf如下 :
+security:
+  authorization: enabled  #注意这里前面有两空格！！！
+
+1、操作单个数据库的用户及其权限，既可以在admin库中添加也可直接在要操作的库中添加，但必须使用当初创建该用户并赋权的库来进行连接、认证，
+之后再切换到相应的库。因此，由于Read，readWrite两种权限只涉及一个库，因此直接在要使用的库中进行创建用
+户并赋权（而不在admin库中），这样就可直接连接该库、并认证，直接操作库，不必再切换！
+Read：允许用户读取指定数据库
+readWrite：允许用户读写指定数据库
+
+2、涉及操作多个库的权限如下，必须在admin库中进行创建用户、赋权,且roles中为db:"admin",同时使用此类用户时，必须只能先连接到admin库，再切换要使用的库！
+backup,retore:在进行备份、恢复时可以单独指定的角色，在db.createUser()方法中roles里面的db必须写成是admin库，要不然会 报错
+dbAdmin：允许用户在指定数据库中执行管理函数，如索引创建、删除，查看统计或访问system.profile
+userAdmin：允许用户向system.users集合写入，可以找指定数据库里创建、删除和管理用户
+clusterAdmin：只在admin数据库中可用，赋予用户所有分片和复制集相关函数的管理权限。
+readAnyDatabase：只在admin数据库中可用，赋予用户所有数据库的读权限
+readWriteAnyDatabase：只在admin数据库中可用，赋予用户所有数据库的读写权限
+userAdminAnyDatabase：只在admin数据库中可用，赋予用户所有数据库的userAdmin权限，
+dbAdminAnyDatabase：只在admin数据库中可用，赋予用户所有数据库的dbAdmin权限。
+root：只在admin数据库中可用。超级账号，超级权限
+
+
+线上root超级用户：
+用户/密码：root/mongo@2017
+客户端连接：mongo admin -u root -p mongo@2017
+==========
+用户/密码：cdh/cdh@2017
+mongo admin -u cdh -p cdh@2017
+
+
+use admin
+db.createUser({user: "root",pwd: "mongo@2017",roles: [ { role: "root", db: "admin" } ]})
+db.createUser({user:"cdh",pwd:"cdh@2017",roles:[{role:"readWriteAnyDatabase",db:"admin"}]})
+db.createUser({user:"cdh_r",pwd:"cdh@2017",roles:[{role:"read",db:"cdh"}]})
+db.createUser({user:"cdh_rwany",pwd:"cdh@2017",roles:[{role:"readWriteAnyDatabase",db:"admin"}]})
+use cdh
+db.createUser({user:"cdh_rw",pwd:"cdh@2017",roles:[{role:"readWrite",db:"cdh"}]})
+
+
+db.createUser({user:"zy",pwd:"zy@13322.com",roles:[{role:"readWrite",db:"laws"}]})

@@ -1,0 +1,5 @@
+tensorflow官网：https://tensorflow.google.cn/install/install_windows
+
+windows中只支持基于python3.5.x 和 3.6.x 安装tensorflow！（TensorFlow supports Python 3.5.x and 3.6.x on Windows：）
+
+windows安装python多版本：http://www.jb51.net/article/110002.htm

@@ -1,0 +1,24 @@
+在python官网，进入PyPI选项卡（包目录）后，搜索tensorflow，得到whl的下载列表：https://pypi.python.org/pypi/tensorflow
+
+pip install https://pypi.python.org/packages/8a/de/1a8de6c1119cf595a38bedcb6072b5988ee92b0bf33b7b74b81aa7cffc49/tensorflow-1.4.1-cp27-cp27mu-manylinux1_x86_64.whl
+或下载whl文件后：pip install ./tensorflow-1.4.1-cp27-cp27mu-manylinux1_x86_64.whl
+
+创建虚拟环境后，进入虚拟环境：
+
+执行：pip install ./tensorflow-1.4.1-cp27-cp27mu-manylinux1_x86_64.whl
+
+注意：当在虚拟环境中使用ipython导入：import tensorflow as tf时报错：
+Exception: Versioning for this project requires either an sdist tarball, or access to an upstream git
+repository. It's also possible that there is a mismatch between the package name in setup.cfg and the
+argument given to pbr.version.VersionInfo. Project name mock was given, but was not able to be found.
+或
+ImportError: cannot import name pywrap_tensorflow
+
+是因为：创建虚拟环境时，使用了--system-site-packages参数，如此将使用系统中的ipython，使用系统ipython加载tensorflow时，会出错。
+因此想要使用virtualenv中的ipython操作tensorflow时，需要创建干净的虚拟环境，即加参数--no-site-packages（默认是这个参数），
+之后再在虚拟环境中：pip install ipython,然后退出虚拟环境，再进去，即可进入ipython使用tensorflow。
+wget https://pypi.python.org/packages/29/cf/594a131d3f4af2c9a783b433f58e76419a19047f3c2a62b72a01bd384db8/tensorflow_gpu-1.5.0rc0-cp36-cp36m-manylinux1_x86_64.whl#md5=04396374ae18eae481085239499b0571
+
+
+
+

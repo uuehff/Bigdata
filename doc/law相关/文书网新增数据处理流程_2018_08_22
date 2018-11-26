@@ -1,0 +1,12 @@
+1、数据全部分段处理之后，全字段处理，分四大类存储到四个表；
+
+2、针对每个表处理；
+1）lawid处理
+2）casedate、province、reason处理
+3）court_cate、judge、长文本特殊符号处理
+4）律师处理
+
+其中省份、判决日期原始爬虫提取的有，需要再处理一下，casedate大于2018、小于1970,省份有不带市的、用处理后的数据；
+judgment_zhangye_civil_v4_result
+
+casedate_lawlist_court_reason_province-74_100_wenshu_gov_add300w.py

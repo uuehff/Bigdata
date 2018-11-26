@@ -1,0 +1,11 @@
+select count(*) from uuid_court_history where history_origin is null or history_origin = '';
+5931665
+select count(*) from uuid_court_history;
+6717770
+select count(*) from judgment_etl_uuid_history_title_result;
+全部结果（包括一审、二审）：710010
+
+6717770- 5931665 = 786105
+
+有76095数据没有匹配到history:
+786105- 710010 = 76095

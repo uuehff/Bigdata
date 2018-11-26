@@ -1,0 +1,150 @@
+x-pack插件官网：
+https://www.elastic.co/guide/en/x-pack/5.4/installing-xpack.html
+
+
+申请free的license:	https://register.elastic.co/
+free,basic,gold，platinum,等版本描述：https://www.elastic.co/subscriptions
+
+
+查看x-pack证书过期时间：（一年，部分功能可用）
+curl -XGET -u elastic:changeme 'http://192.168.10.219:9200/_xpack/license'
+curl -XGET -u elastic:changeme 'http://192.168.10.219:9200/_xpack?pretty'
+
+查看x-pack证书过期时间：(一个月，功能都可以用)
+curl -XGET -u elastic:changeme 'http://10.33.52.2:8260/_xpack/license'
+查看哪些组件能用或启用？
+curl -XGET -u elastic:changeme 'http://10.33.52.2:8260/_xpack?pretty'
+
+
+elasticsearch.yml配置：如下三个参数，可使用head插件访问ES，否则，能看到head的主界面，但连接不了集群。报错如下：
+	Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://10.33.52.2:9200/_cluster/state. (Reason: missing token 'content-type' in CORS header 'Access-Control-Allow-Headers' from CORS preflight channel).
+	Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://10.33.52.2:9200/_cluster/health. (Reason: missing token 'authorization' in CORS header 'Access-Control-Allow-Headers' from CORS preflight channel).1 <unknown>
+
+三个属性的值前后都有空格！
+在219上需配置三个参数，其他节点只需配置前两个参数即可。
+
+http.cors.enabled: true   
+http.cors.allow-origin: "*"   
+http.cors.allow-headers: "Authorization,Content-Type"   
+=========================================================================
+kibana、head都安装在219上！
+
+
+
+ES启动：
+进入：/opt/elasticsearch
+切换用户：su elasticsearch
+./bin/elasticsearch &
+或nohup ./bin/elasticsearch &
+
+kibana启动：/opt/kibana/bin/kibana -Q &
+
+head启动：
+进入：/opt/elasticsearch/elasticsearch-head
+npm run start &
+或进入：/opt/elasticsearch/elasticsearch-head/node_modules/grunt
+nohup ./bin/grunt server &
+==================================================
+设置x-pack后：登录
+ES:	http://192.168.10.219:9200,会弹框输入用户密码。
+Kibana: http://192.168.10.219:5601,会弹框输入用户密码。
+head: http://192.168.10.219:9100?auth_user=elastic&auth_password=changeme，
+其中加上auth_user=elastic&auth_password=changeme后head才能连接集群。
+
+=============================
+kill进程：
+ES：ps aux | grep /opt/elasticsearch
+kibana: netstat -ntpl | grep 5601
+head:	netstat -ntpl | grep 9100
+
+默认：9200是ES实例端口、9300是实例之间通信端口、9100是head端口、5601是kibana访问端口。
+============================================
+
+
+http://localhost:9100/?auth_user=elastic&auth_password=changeme”
+
+破解试用版x-pack（license）：http://blog.csdn.net/mvpboss1004/article/details/65445023
+环境：
+之前所有节点在es,kibana中使用./bin/elasticsearch-plugin install x-pack安装的。
+现在只需修改在所有节点修改/opt/elasticsearch/plugins/x-pack/x-pack-5.4.3.jar中的LicenseVerifier.java，
+再从新上传到所有节点，重启，导入license.json即可。所有节点都会要求输密码！
+
+
+编译LicenseVerifier.java:
+javac -cp "/opt/elasticsearch/lib/elasticsearch-5.4.3.jar:/opt/elasticsearch/lib/lucene-core-6.5.1.jar:/opt/elasticsearch/plugins/x-pack/x-pack-5.4.3.jar" LicenseVerifier.java
+修改license中的type为platinum（白金），expiry_date_in_millis为2554387200000（2050年过期），其他字段不要改动或删除，特别是signature字段不要删除，否则启动ES就会报错：
+license文件（在项目当前目录，名称可以改变）：456-123-0df40ffd-3092-4fcd-a6bc-95718199492f-v5.json
+{"license":{"uid":"0df40ffd-3092-4fcd-a6bc-95718199492f","type":"platinum","issue_date_in_millis":1513641600000,"expiry_date_in_millis":2554387200000,"max_nodes":100,"issued_to":"456 123 (123)","issuer":"Web Form","signature":"AAAAAwAAAA25wj2PtKXPZm4ptfgSAAABmC9ZN0hjZDBGYnVyRXpCOW5Bb3FjZDAxOWpSbTVoMVZwUzRxVk1PSmkxaktJRVl5MUYvUWh3bHZVUTllbXNPbzBUemtnbWpBbmlWRmRZb25KNFlBR2x0TXc2K2p1Y1VtMG1UQU9TRGZVSGRwaEJGUjE3bXd3LzRqZ05iLzRteWFNekdxRGpIYlFwYkJiNUs0U1hTVlJKNVlXekMrSlVUdFIvV0FNeWdOYnlESDc3MWhlY3hSQmdKSjJ2ZTcvYlBFOHhPQlV3ZHdDQ0tHcG5uOElCaDJ4K1hob29xSG85N0kvTWV3THhlQk9NL01VMFRjNDZpZEVXeUtUMXIyMlIveFpJUkk2WUdveEZaME9XWitGUi9WNTZVQW1FMG1DenhZU0ZmeXlZakVEMjZFT2NvOWxpZGlqVmlHNC8rWVVUYzMwRGVySHpIdURzKzFiRDl4TmM1TUp2VTBOUlJZUlAyV0ZVL2kvVk10L0NsbXNFYVZwT3NSU082dFNNa2prQ0ZsclZ4NTltbU1CVE5lR09Bck93V2J1Y3c9PQAAAQBLnVoW6Imx5bqrSgZHU+PJr10n/zpgVADki92BTif04WiuAmg5f18xvV/9PAfgjDu41CbxSZ3ISyIohD+Jdegp4EIy0L3SNr/urbea5Imw6HWVzzvM9LRTfsN0y11pvbtP6G/fGB7FRDvwyrvpzhJfs9Q0mporw4xIPBGcjMLvHu8Vuf/R3Bymz5GgVCZ5ickhqaHOWKNHWf5Mc35sUfZuSzL4DtCItCsvrvW8qzPzCDPI2dXEsQSKOuzidQ2YA/ZuvESb53hMAmhJ374PBsv/zjrm6d53LFbvfnHDoiTCB/wxcWrZqjQQgELf1LfrReqDkaZMnNn2WpLfbX8bhjVR","start_date_in_millis":1513641600000}}
+
+更新license到集群：
+curl -XPUT -u elastic:changeme 'http://192.168.10.219:9200/_xpack/license?acknowledge=true' -H "Content-Type: application/json" -d @uu-ehff-22bb19f8-48b3-4f89-9d93-9fdfdcd568c5-v5.json
+
+可使用类似xpack.security.enabled: true来开启关闭x-pack中的部分功能。
+
+
+
+线上head访问：不能使用cdh-master作为地址访问！
+http://10.33.52.2:9100/?auth_user=elastic&auth_password=changeme  
+
+
+https://artifacts.elastic.co/downloads/packs/x-pack/
+
+curl -XGET "http://192.168.10.219:9200/spark/docs/1058573?pretty"
+curl -XGET "http://10.33.52.2:9200/lawplatform_v3/criminal_law/1?pretty"
+curl -XGET "http://elastic:changeme@10.33.52.2:9200/lawplatform_v3/criminal_law/1?pretty"
+
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://10.33.52.2:9200/. (Reason: missing token 'content-type' in CORS header 'Access-Control-Allow-Headers' from CORS preflight channel). <unknown>
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://10.33.52.2:9200/_cluster/state. (Reason: missing token 'content-type' in CORS header 'Access-Control-Allow-Headers' from CORS preflight channel).
+Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://10.33.52.2:9200/_cluster/health. (Reason: missing token 'authorization' in CORS header 'Access-Control-Allow-Headers' from CORS preflight channel).1 <unknown>
+====================================================
+破解license时间戳转换：
+1.将字符串的时间转换为时间戳
+import time
+a = "2050-10-10 23:40:00"
+timeArray = time.strptime(a, "%Y-%m-%d %H:%M:%S")
+#转换为时间戳:(得到的时间为s，再乘以1000得到ms时间戳,作为json的过期时间戳)
+timeStamp = int(time.mktime(timeArray))
+timeStamp == 1381419600
+===============================================================================================
+==============================================================================================
+
+权限配置：http://blog.csdn.net/pistolove/article/details/53838138
+注意：给新用户添加kibana_user角色能使用Dev Tools工具！
+给新用户添加monitoring_user角色能使用Monitoring监控工具！
+
+创建一个角色主要配置它对索引的操作权限：
+比如创建webServer_log角色：对索引webserver_log（也可是webserver-*等等）有所有权限。拥有该角色的用户能
+对webserver_log（或webserver-*开头的）索引创建、删除、读写等等！但对不是webserver_log（或webserver-*开头的）索引
+没有任何权限！
+========================================
+
+注意：默认用户（预留）elastic，kibana,logstash_system的密码统一为：changeme!
+为了安全需要修改默认用户密码：
+1、修改elasticSearch密码（es实例，9200端口）：在Kibana中，elastic登录，Management中直接修改！
+2、修改Kibana密码：
+	1）先修改/opt/kibana/config/kibana.yml，添加ES实例的用户密码：
+	elasticsearch.username: "elastic"
+	elasticsearch.password: "changeyou"
+	然后重启Kibana:./bin/kibana -Q &
+	2）在Kibana中，elastic登录，Management修改kibana用户的密码。
+3、修改logstash_system默认密码：在Kibana中，elastic登录，Management中直接修改！
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

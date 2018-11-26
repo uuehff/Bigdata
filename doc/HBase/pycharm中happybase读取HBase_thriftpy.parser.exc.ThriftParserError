@@ -1,0 +1,7 @@
+参考：https://stackoverflow.com/questions/39220102/error-import-impyla-library-on-windows
+
+解决：
+修改，C:\Anaconda3\lib\site-packages\thriftpy\parser\parser.py, 第488行：
+
+注释改行：if url_scheme == '':
+增加改行：if len(url_scheme) <= 1:

@@ -1,0 +1,369 @@
+查询当前数据库名
+方法一:select name from v$database;
+方法二：show parameter db
+
+二、数据库实例名
+什么是数据库实例名？
+数据库实例名是用于和操作系统进行联系的标识，就是说数据库和操作系统之间的交互用的是数据库实例名。实例名也被写入参数文件中，该参数为instance_name，在winnt平台中，实例名同时也被写入注册表。
+数据库名和实例名可以相同也可以不同。
+
+查询当前数据库实例名
+方法一：select instance_name from v$instance;
+方法二：show parameter instance
+方法三：在参数文件中查询。
+数据库实例名与ORACLE_SID
+虽然两者都表是oracle实例，但两者是有区别的。instance_name是oracle数据库参数。而ORACLE_SID是操作系统的环境变 量。 ORACLD_SID用于与操作系统交互，也就是说，从操作系统的角度访问实例名，必须通过ORACLE_SID。在winnt不台， ORACLE_SID还需存在于注册表中。
+且ORACLE_SID必须与instance_name的值一致，否则，你将会收到一个错误，在unix平台，是“ORACLE not available”,在winnt平台，是“TNS:协议适配器错误”。
+
+
+四、数据库服务名
+什么是数据库服务名？
+从oracle9i版本开始，引入了一个新的参数，即数据库服务名。参数名是SERVICE_NAME。
+如果数据库有域名，则数据库服务名就是全局数据库名；否则，数据库服务名与数据库名相同。
+查询数据库服务名
+方法一：select value from v$parameter where name = 'service_name';
+方法二：show parameter service_name
+方法三：在参数文件中查询。
+
+================================================
+mysql驱动放入sqoop/lib下：
+
+sqoop-help
+sqoop import --connect jdbc:mysql://localhost/db --help
+sqoop export --connect jdbc:mysql://localhost/db --help
+
+
+sqoop-list-databases --connect jdbc:mysql://localhost:3306/ --username root --password root
+sqoop-list-tables --connect jdbc:mysql://localhost:3306/test --username root --password root
+将关系型数据的表结构复制到hive中
+sqoop create-hive-table --connect jdbc:mysql://localhost:3306/hive --username root --password root --table TBLS --hive-database weiwc_sqoop --hive-table tbls
+
+mysql >>>>>  hive:(不用提前创建tbls2，导入后表字段类型与mysql一致)
+1）默认数据库及表名
+sqoop import --connect jdbc:mysql://localhost:3306/hive --username root --password root --table TBLS --hive-import
+2）指定数据库、表名、指定列(列是mysql表中的列)
+sqoop import --connect jdbc:mysql://localhost:3306/hive --username root --password root --table TBLS --columns TBL_ID,CREATE_TIME,DB_ID --hive-database t1 --hive-table tbls2 --hive-import
+
+hive >>>>mysql:
+将hive中的表数据导入到mysql中:(需提前创建表e1,e2,e3，表字段类型与hive一致,hive默认分隔符'\001',由任务产生的表，其数据分隔符为'\001'，
+直接导入数据的表，以真实数据分隔符为准！)
+1)数据分隔符：'\001'
+sqoop export --connect jdbc:mysql://localhost:3306/test --username root --password root --export-dir /user/hive/warehouse/t1.db/tbls3 --input-fields-terminated-by '\001' --table e1 ;
+2)数据分隔符：'\t'
+sqoop export --connect jdbc:mysql://localhost:3306/test --username root --password root --export-dir /user/hive/warehouse/train.db/salgrade --input-fields-terminated-by ',' --table e2 ;
+3)指定列导出：(--columns grade2,losal2,这里的列名指的是mysql表中的列名，而非hive)：
+sqoop export --connect jdbc:mysql://localhost:3306/test --username root --password root --export-dir /user/hive/warehouse/train.db/salgrade --input-fields-terminated-by ',' --columns grade2,losal2 --table e3;
+
+
+注意：这里的ORACLE的用户名和表名一般要大写！
+ORACLE:
+复制ojdbc6.jar到sqoop/lib目录：
+oracle >>> hive:
+指定列导入（--columns ZZID,ZZRBS,ZZSJ指的是oracle表中的字段）：
+sqoop import --connect jdbc:oracle:thin:@192.168.0.232:1521:ORCL --username yxsc_er --password 123 --table ZW_ZZXX --columns ZZID,ZZRBS,ZZSJ --verbose -m 1 --hive-database t1 --hive-table zw_zzxx --hive-import
+
+hive >>>oracle:
+1)数据分隔符为'\001'，指定列导出：
+sqoop export --connect jdbc:oracle:thin:@192.168.0.232:1521:ORCL --username YXSC_ER --password 123 --export-dir /user/hive/warehouse/t1.db/zw_zzxx --input-fields-terminated-by '\001' --columns q1,q2,q3 --table zc ;
+
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/gjz_zhuti --input-fields-terminated-by '\t'  --table gjz_zhuti ;
+
+sqoop export --connect jdbc:oracle:thin:@192.168.0.11:1521:orcl.tipdm.com --username gxms --password gxms --export-dir /user/hive/warehouse/t1.db/zw_zzxx --input-fields-terminated-by '\001'  --columns q1,q2,q3 --table zc ;
+
+isql OracleODBC-12c lspf_csgdata lspf_csgdata
+con=odbcConnect("OracleODBC-12c",uid="lspf_csgdata",pwd="lspf_csgdata")
+
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/ydfx_weighti --input-fields-terminated-by '\t'  --columns index1,var_name,weight --table ydfx_weighti ;
+CREATE TABLE ydfx_weighti(
+index VARCHAR2(30),
+var_name VARCHAR2(50),
+weight NUMBER
+); 
+
+select * from ydfx_weighti;
+======================
+index1,yhbh,xydjdm,ydlbdm,dydjdm,hyfldm,htrl,cxdm,khfqbz,yxrl,jlzzfldm,label,dydj,xydj,ydlb,jlzz,cx,hyfl,htrlb,htrldj,khfxpf,yhztdm,ycyhbz  	              	                    
+
+CREATE TABLE ydfx_zhuti(
+index1 VARCHAR2(50),
+yhbh VARCHAR2(50),
+xydjdm VARCHAR2(50),
+ydlbdm NUMBER,
+dydjdm VARCHAR2(50),
+hyfldm VARCHAR2(50),
+htrl NUMBER,
+cxdm VARCHAR2(50),
+khfqbz VARCHAR2(50),
+yxrl NUMBER,
+jlzzfldm VARCHAR2(50),
+label NUMBER,
+dydj NUMBER,
+xydj NUMBER,
+ydlb NUMBER,
+jlzz NUMBER,
+cx NUMBER,
+hyfl NUMBER,
+htrlb NUMBER,
+htrldj NUMBER,
+khfxpf NUMBER,
+yhztdm NUMBER,
+ycyhbz NUMBER);
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/ydfx_zhuti --input-fields-terminated-by '\t'  --columns index1,yhbh,xydjdm,ydlbdm,dydjdm,hyfldm,htrl,cxdm,khfqbz,yxrl,jlzzfldm,label,dydj,xydj,ydlb,jlzz,cx,hyfl,htrlb,htrldj,khfxpf,yhztdm,ycyhbz --table ydfx_zhuti ;
+=========================
+
+
+
+
+lspf_csgdata/lspf_csgdata
+
+isql OracleODBC-12c yxsc_er 123
+
+con=odbcConnect("OracleODBC-12c",uid="yxsc_er",pwd="123")
+Caused by: java.sql.SQLRecoverableException: No more data to read from socket
+解决：可能是导入的数据不满足约束条件，比如主键约束，对应数据列不能重复！
+
+oracle数据类型、语法参考：
+http://blog.csdn.net/haiross/article/details/11772847
+
+
+
+
+ydfx_zhuti
+ydfx_weighti
+
+gjz_zhuti,qf_zhuti_1
+GZBDDB = 
+	(DESCRIPTION = 
+		(ADDRESS_LIST = 
+			(ADDRESS = (PROTOCOL = TCP)(HOST =10.164.143.122)(PORT = 1521))
+		)			
+		(CONNECT_DATA =
+			(SERVICE_NAME = gzbddb)
+		)
+	)
+
+
+[Err] ORA-00900: invalid SQL statement
+
+null/NA等问题：参考：http://blog.csdn.net/huoyunshen88/article/details/19005183
+
+#fw_jcjhmx <- rhive.query('select yhbh,jhmxbs from fw_jcjhmx')
+
+#fw_jcjlmx <- rhive.query('select jhmxbs,jcrq,jcjl from fw_jcjlmx')
+
+#hs_jlddl <- rhive.query('select jldbh,dfny,ygdl,wgdl from hs_jlddl')
+
+#kh_jld <- rhive.query('select yhbh,jldbh,tqbs,jlzzfldm,cbfsdm  from kh_jld')
+
+#kh_ydkh <- rhive.query('select yhbh,xydjdm,xyfz,ydlbdm,dydjdm,hyfldm,htrl,cxdm,khfqbz,yxrl  from gy_ydkh')
+
+create table join_result as select g.yhbh,g.xydjdm,g.xyfz,g.ydlbdm,g.dydjdm,g.hyfldm,g.htrl,g.cxdm,g.khfqbz,g.yxrl,
+j.jldbh,j.tqbs,j.jlzzfldm,j.cbfsdm,h.dfny,h.ygdl,h.wgdl,f.jhmxbs,f2.jcrq,f2.jcjl  from gy_ydkh g 
+left outer join kh_jld j on g.yhbh = j.yhbh
+left outer join hs_jlddl h on j.jldbh = h.jldbh
+left outer join fw_jcjhmx f on g.yhbh = f.yhbh 
+left outer join fw_jcjlmx f2 on f2.jhmxbs = f.jhmxbs;
+
+
+select g.yhbh,g.xydjdm,g.xyfz,g.ydlbdm,g.dydjdm,g.hyfldm,g.htrl,g.cxdm,g.khfqbz,g.yxrl,
+j.jldbh,j.tqbs,j.jlzzfldm,j.cbfsdm,
+h.dfny,h.ygdl,h.wgdl,
+f.jhmxbs,
+f2.jcrq,f2.jcjl  from gy_ydkh g 
+left outer join kh_jld j on g.yhbh = j.yhbh
+left outer join hs_jlddl h on j.jldbh = h.jldbh
+left outer join fw_jcjhmx f on g.yhbh = f.yhbh 
+left outer join fw_jcjlmx f2 on f2.jhmxbs = f.jhmxbs;
+
+create table join_result1_not_null_sum_not0 as select yhbh,dfny,tqbs,sum(wgdl) as wgdl_sum,((sum(ygdl)+sum(wgdl))*1.0) as sum2,sum(yxrl) as yxrl_sum,(sum(htrl)*1.0) as htrl_sum from join_result1_not_null
+group by yhbh,dfny,tqbs;
+正常：
+create table  xsrl as select yhbh,dfny,tqbs,if(sum2>0,wgdl_sum/sum2,0) as wws_avg, if(htrl_sum>0,yxrl_sum/htrl_sum,NULL) as ysh_avg,
+sum2,wgdl_sum/sum2 as wss,htrl_sum,yxrl_sum/htrl_sum as yshs 
+from join_result1_not_null_sum_not0;
+
+select * from xsrl where yhbh = '0601000017946780' and ysh_avg is not null limit 10;
+
+create table  xsrl as select yhbh,dfny,tqbs,if(sum2>0,wgdl_sum/sum2,0) as wws_avg, if(htrl_sum>0,yxrl_sum/htrl_sum,NULL) as ysh_avg 
+from join_result1_not_null_sum_not0 where sum2 <=0 and htrl_sum<=0 limit;
+
+create table as select yhbh,dfny,tqbs,if(sum2>0,wgdl_sum/sum2,0) as , if(yxrl_sum/htrl_sum where htrl_sum > 0 ;
+
+create table as join_result1_not_null_sum_not0
+不正常：
+select yhbh,dfny,tqbs,wgdl_sum/sum2,yxrl_sum/htrl_sum where htrl_sum > 0 and sum2 >0;
+
+
+
+select * from join_result1_not_null_sum_not0 where wgdl_sum <= 0 or sum2 < 0 or yxrl_sum < 0 or htrl_sum < 0 limit 10;
+
+select * from join_result1_not_null_sum_not0 where  yxrl_sum > 0 and htrl_sum <= 0 limit 10;
+
+create table join_result1_not_null_sum_not0_result as 
+select yhbh,dfny,tqbs,sum(wgdl)/((sum(ygdl)+sum(wgdl))*1.0) as wyw_avg,sum(yxrl)/(sum(htrl)*1.0) from join_result1_not_null
+group by yhbh,dfny,tqbs;
+
+
+create table join_result1_not_null_sum_not0_result as 
+select yhbh,dfny,tqbs,sum(wgdl)/((sum(ygdl)+sum(wgdl))*1.0) as wyw_avg,sum(yxrl)/(sum(htrl)*1.0) from join_result1_not_null
+group by yhbh,dfny,tqbs;
+
+
+yhbh,dfny,tqbs,wgdl,ygdl,yxrl,htrl
+CREATE TABLE j1 (
+yhbh string,
+dfny double,
+tqbs string,
+wgdl double,
+ygdl double,
+yxrl double,
+htrl double)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+LOAD DATA LOCAL INPATH '/root/j.txt' OVERWRITE INTO TABLE student;
+
+
+INSERT OVERWRITE LOCAL DIRECTORY '/opt/out/join10000' ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' select yhbh,dfny,tqbs,wgdl,ygdl,yxrl,htrl from join_result limit 10000;
+
+INSERT OVERWRITE LOCAL DIRECTORY '/opt/out/ydfx_zhuti' ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' select * from ydfx_zhuti order by index;
+INSERT OVERWRITE LOCAL DIRECTORY '/opt/out/ydfx_weighti' ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' select * from ydfx_weighti ;
+
+
+hive >>>oracle:
+1)数据分隔符为'\001'，指定列导出：
+sqoop export --connect jdbc:oracle:thin:@192.168.0.232:1521:ORCL --username YXSC_ER --password 123 --export-dir /user/hive/warehouse/t1.db/zw_zzxx --input-fields-terminated-by '\001' --columns q1,q2,q3 --table zc ;
+
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/gjz_zhuti --input-fields-terminated-by '\t'  --table gjz_zhuti ;
+
+sqoop export --connect jdbc:oracle:thin:@192.168.0.11:1521:orcl.tipdm.com --username gxms --password gxms --export-dir /user/hive/warehouse/t1.db/zw_zzxx --input-fields-terminated-by '\001'  --columns q1,q2,q3 --table zc ;
+
+isql OracleODBC-12c lspf_csgdata lspf_csgdata
+con=odbcConnect("OracleODBC-12c",uid="lspf_csgdata",pwd="lspf_csgdata")
+
+==============================================================================
+导出Oracle数据库：
+1、
+CREATE TABLE qdhy_zt(
+index1 VARCHAR2(50),
+yhbh VARCHAR2(50),
+one_freq number,
+z_freq NUMBER,
+sqqddm VARCHAR2(50),
+one_y number,
+one_label VARCHAR2(50),
+z_y number,
+z_label VARCHAR2(50),
+khfqbz VARCHAR2(50),
+fqsj VARCHAR2(50),
+u NUMBER,
+sd NUMBER,
+one_p NUMBER,
+z_p NUMBER);
+
+
+create table qdhy_zt_null2_0 as select index,yhbh,nvl(one_freq,0) as one_freq,nvl(z_freq,0) as z_freq,
+sqqddm,nvl(one_y,0) as one_y,nvl(one_label,0) as one_label,nvl(z_y,0) as z_y,z_label,khfqbz,fqsj,
+nvl(u,0) as u,nvl(sd,0) as sd,nvl(one_p,0) as one_p,nvl(z_p,0) as z_p from qdhy_zt;
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/qdhy_zt_null2_0 --input-fields-terminated-by '\001'  --columns index1,yhbh,one_freq,z_freq,sqqddm,one_y,one_label,z_y,z_label,khfqbz,fqsj,u,sd,one_p,z_p  --table qdhy_zt ;
+=========================
+2、
+CREATE TABLE gjz_zhuti(
+index1 VARCHAR2(50),
+yhbh VARCHAR2(50),
+ydlbdm number,
+htrl NUMBER,
+xyfz NUMBER,
+khfqbz VARCHAR2(50),
+yhztdm VARCHAR2(50),
+pjdj number,
+chl NUMBER,
+yjdl NUMBER,
+pjjfsc NUMBER,
+khjzdjdm NUMBER);
+
+
+create table gjz_zhuti_null2_0 as select index,yhbh,nvl(ydlbdm,0) as ydlbdm,nvl(htrl,0) as htrl,
+nvl(xyfz,0) as xyfz,khfqbz,yhztdm,nvl(pjdj,0) as pjdj,nvl(chl,0) as chl,nvl(yjdl,0) as yjdl,
+nvl(pjjfsc,0) as pjjfsc,nvl(khjzdjdm,0) as khjzdjdm from gjz_zhuti;
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/gjz_zhuti_null2_0 --input-fields-terminated-by '\001'  --columns index1,yhbh,ydlbdm,htrl,xyfz,khfqbz,yhztdm,pjdj,chl,yjdl,pjjfsc,khjzdjdm  --table gjz_zhuti ;
+=============================================
+
+3、
+
+CREATE TABLE qf_zhuti_1(
+index1 VARCHAR2(50),
+yhbh VARCHAR2(50),
+yhztdm VARCHAR2(50),
+khfqbz VARCHAR2(50),
+avgjfsc NUMBER,
+more25cs NUMBER,
+jfcs NUMBER,
+jyfsbgcs NUMBER,
+z_avg_jfsc NUMBER,
+z_avg_morethan25 NUMBER,
+z_avg_jfcs NUMBER,
+z_avg_jyfsbgcs NUMBER,
+qfje NUMBER,
+yswyje NUMBER,
+qfcs NUMBER,
+wycs NUMBER,
+qffxdjdm NUMBER);
+
+index1,yhbh,yhztdm,khfqbz,avgjfsc,more25cs,jfcs,jyfsbgcs,z_avg_jfsc,z_avg_morethan25,z_avg_jfcs,z_avg_jyfsbgcs,qfje,yswyje,qfcs,wycs,qffxdjdm
+
+create table qf_zhuti_1_null2_0 as select index,yhbh,yhztdm,khfqbz,nvl(avgjfsc,0) as avgjfsc,
+nvl(more25cs,0) as more25cs,nvl(jfcs,0) as jfcs,nvl(jyfsbgcs,0) as jyfsbgcs,
+nvl(z_avg_jfsc,0) as z_avg_jfsc,nvl(z_avg_morethan25,0) as z_avg_morethan25,nvl(z_avg_jfcs,0) as z_avg_jfcs,nvl(z_avg_jyfsbgcs,0) as z_avg_jyfsbgcs,
+nvl(qfje,0) as qfje,nvl(yswyje,0) as yswyje,nvl(qfcs,0) as qfcs,nvl(wycs,0) as wycs,nvl(qffxdjdm,0) as qffxdjdm from qf_zhuti_1;
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/qf_zhuti_1_null2_0 --input-fields-terminated-by '\001'  --columns index1,yhbh,yhztdm,khfqbz,avgjfsc,more25cs,jfcs,jyfsbgcs,z_avg_jfsc,z_avg_morethan25,z_avg_jfcs,z_avg_jyfsbgcs,qfje,yswyje,qfcs,wycs,qffxdjdm --table qf_zhuti_1 ;
+
+============================
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/ydfx_zhuti_null2_0 --input-fields-terminated-by '\001'  --columns index1,yhbh,xydjdm,ydlbdm,dydjdm,hyfldm,htrl,cxdm,khfqbz,yxrl,jlzzfldm,label,dydj,xydj,ydlb,jlzz,cx,hyfl,htrlb,htrldj,khfxpf,yhztdm,ycyhbz --table ydfx_zhuti ;
+=========================
+6、
+
+CREATE TABLE tdmg_zhuti(
+index1 VARCHAR2(50),
+yhbh VARCHAR2(50),
+khfqbz VARCHAR2(50),
+avgdl NUMBER,
+tdzsc NUMBER,
+tdt NUMBER,
+tdsqcs NUMBER,
+dydjdm VARCHAR2(50),
+htrl NUMBER,
+yhztdm VARCHAR2(50),
+csyh NUMBER,
+tdmgdj NUMBER);
+
+create table tdmg_zhuti_null2_0 as select index,yhbh,khfqbz,nvl(avgdl,0) as avgdl,
+nvl(tdzsc,0) as tdzsc,nvl(tdt,0) as tdt,nvl(tdsqcs,0) as tdsqcs,
+nvl(dydjdm,0) as dydjdm,nvl(htrl,0) as htrl,nvl(yhztdm,0) as yhztdm,nvl(csyh,0) as csyh,
+nvl(tdmgdj,0) as tdmgdj  from tdmg_zhuti;
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/tdmg_zhuti_null2_0 --input-fields-terminated-by '\001'  --columns  index1,yhbh,khfqbz,avgdl,tdzsc,tdt,tdsqcs,dydjdm,htrl,yhztdm,csyh,tdmgdj --table tdmg_zhuti ;
+
+
+CREATE TABLE myd_gy(
+  index1 VARCHAR2(50),
+  yhbh VARCHAR2(50),
+  bygds01 VARCHAR2(50));
+
+数据分'\N',NULL 和 '\t','\001'
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/myd_gy --input-fields-terminated-by '\t' --columns  index1,yhbh,bygds01,khwtycjjl01,khbybjsc01,jlgztbdl01,ywhjyctgbl01,ywhjblxlzs01,ywzlblxlzs01,dnbzjgl01,tdcs01,tdpjsc01,tdtqtzl01,cbzql01,dnxzyksxds01,dnxzyksxrl01,yjjyksxdszb01,yjjyksxrlzb01,ywhjyctgbljl01,ywhjblxlzsjl01,ywzlblxlzsjl_sj01,ywzlblxlzsjl_zl01,dnbzjgljl01,cbcs01,bygds02,khwtycjjl02,khbybjsc02,jlgztbdl02,ywhjyctgbl02,ywhjblxlzs02,ywzlblxlzs02,dnbzjgl02,tdcs02,tdpjsc02,tdtqtzl02,cbzql02,dnxzyksxds02,dnxzyksxrl02,yjjyksxdszb02,yjjyksxrlzb02,bygds03,khwtycjjl03,khbybjsc03,jlgztbdl03,ywhjyctgbl03,ywhjblxlzs03,ywzlblxlzs03,dnbzjgl03,tdcs03,tdpjsc03,tdtqtzl03,cbzql03,dnxzyksxds03,dnxzyksxrl03,yjjyksxdszb03,yjjyksxrlzb03,score --input-null-string '\\N' --input-null-non-string '\\N' --table myd_gy ;
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/myd_gy --input-fields-terminated-by '\t' --columns  index1,yhbh,bygds01,khwtycjjl01,khbybjsc01,jlgztbdl01,ywhjyctgbl01,ywhjblxlzs01,ywzlblxlzs01,dnbzjgl01,tdcs01,tdpjsc01,tdtqtzl01,cbzql01,dnxzyksxds01,dnxzyksxrl01,yjjyksxdszb01,yjjyksxrlzb01,ywhjyctgbljl01,ywhjblxlzsjl01,ywzlblxlzsjl_sj01,ywzlblxlzsjl_zl01,dnbzjgljl01,cbcs01,bygds02,khwtycjjl02,khbybjsc02,jlgztbdl02,ywhjyctgbl02,ywhjblxlzs02,ywzlblxlzs02,dnbzjgl02,tdcs02,tdpjsc02,tdtqtzl02,cbzql02,dnxzyksxds02,dnxzyksxrl02,yjjyksxdszb02,yjjyksxrlzb02,bygds03,khwtycjjl03,khbybjsc03,jlgztbdl03,ywhjyctgbl03,ywhjblxlzs03,ywzlblxlzs03,dnbzjgl03,tdcs03,tdpjsc03,tdtqtzl03,cbzql03,dnxzyksxds03,dnxzyksxrl03,yjjyksxdszb03,yjjyksxrlzb03,score --input-null-string 'NULL' --input-null-non-string 'NULL' --table myd_gy ;
+================================================================
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata  --export-dir /opt/user/hive/warehouse/gy_ydkh --input-fields-terminated-by '\001'  --input-null-string '\\N' --input-null-non-string '\\N' --table KH_YDKH ;
+======================================
+9、
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata  --export-dir /opt/user/hive/warehouse/gy_ydkh --input-fields-terminated-by '\001'  --input-null-string '\\N' --input-null-non-string '\\N' --table KH_YDKH ;
+
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/zw_ysdfjl_0601 --input-fields-terminated-by '\001' --input-null-string '\\N' --input-null-non-string '\\N'  --table ZW_YSDFJL ;

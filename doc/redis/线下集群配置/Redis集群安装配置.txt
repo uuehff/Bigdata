@@ -1,0 +1,24 @@
+启动\关闭集群：
+su cdh
+start_redis_cluster.sh
+stop_redis_cluster.sh
+
+三个节点密码皆为：hhly2017
+
+启动服务：
+redis-server $redisDir/redis.conf
+
+
+客户端连接：
+redis-cli -c -h 192.168.10.225 -a hhly2017          #-c开启集群模式，-a 认证密码
+./src/redis-cli -c -h 192.168.10.225 -a hhly2017
+
+========================
+线上10.37.62.14,redis登录，cdh用户：redis-cli -h master-slave1 -a hhly_new_pass
+
+
+学习参考：http://doc.redisfans.com/index.html
+字符串、哈希表、列表、集合，有序集合，这四种数据类型的变量中只能存“字符串”！！！
+
+键（KEY）：是对上面的数据类型定义了一些通用的操作，不是一种数据类型！！！
+键的通用操作，以上数据类型变量都叫键！

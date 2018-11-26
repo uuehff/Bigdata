@@ -1,0 +1,37 @@
+参考：http://blog.csdn.net/u010936936/article/details/73650417
+http://blog.csdn.net/u013468917/article/details/78224691
+集成spark2后，spark2-shell使用，找不到jar包，配置：http://blog.csdn.net/haoxiaoyan/article/details/73201534
+
+
+官网: https://www.cloudera.com/documentation/spark2/latest/topics/spark2_installing.html
+csd下载：https://www.cloudera.com/documentation/spark2/2-1-x/topics/spark2_packaging.html#versions
+parcel下载：http://archive.cloudera.com/spark2/parcels/2.1.0.cloudera2/
+下载三个文件：parcel、sha、manifest.json
+---------------------------------------
+cdh5的spark2 on yarn 支持的spark功能：
+https://www.cloudera.com/documentation/spark2/latest/topics/spark2_known_issues.html#known_issues
+
+============================================================================
+
+参考以上链接，有几点需要补充：
+1、安装scala，配置SCALA_HOME环境变量；
+
+2、csd问题：cdh若不是默认安装在/opt目录下，则关闭cdh集群之前，csd路径需要修改:
+1）在cloudera主界面，点击->管理->设置-> 左边自定义服务描述符，修改属性：本地描述符存储库路径，为/data/opt/cloudera/csd（内网集群），
+该路径根据自己的cloudera-manager具体安装路径确定。
+2）所有节点都要有csd目录，都要上传jar包到csd目录；主节点有/data/opt/cloudera/csd目录，子节点没有，子节点需要手动创建该目录，上传SPARK2_ON_YARN-2.1.0.cloudera2.jar，修改该文件用户组为cloudera-scm:cloudera-scm,权限644。
+
+3、分配，激活，添加Spark2服务后，historyserver没有日志：
+Spark2 的historyserver 没有查询到日志：select.....,重启Cloudera Management Service 服务即可解决。
+
+4、spark2-shell进入时，找不到hadoop相关jar包：
+需进行配置，执行：
+cp /etc/spark/conf/classpath.txt /data/opt/cloudera/parcels/SPARK2-2.1.0.cloudera2-1.cdh5.7.0.p0.171658/etc/spark2/conf.dist/
+cp /etc/spark/conf/spark-env.sh /data/opt/cloudera/parcels/SPARK2-2.1.0.cloudera2-1.cdh5.7.0.p0.171658/etc/spark2/conf.dist/
+再编辑：vim /etc/spark2/conf/spark-env.sh
+修改SPARK_HOME环境变量如下：（一般搭建好spark2，主节点系统会修改为spark2的路径,子节点需要手动修改）
+export SPARK_HOME=/data/opt/cloudera/parcels/SPARK2-2.1.0.cloudera2-1.cdh5.7.0.p0.171658/lib/spark2
+
+
+
+

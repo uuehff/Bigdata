@@ -1,0 +1,14 @@
+解决ipython问题：TTransportException: TTransportException
+
+global conn
+global t
+
+def q1():
+    global conn
+    global t
+    conn = happybase.Connection('cdh-slave2')
+    t = conn.table('t5')
+q1()
+
+由于每次执行scan报错或timeout到期，connection就会断开，使用上面方法，每次执行q1()即可，
+========================================================================

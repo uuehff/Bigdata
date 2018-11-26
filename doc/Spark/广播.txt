@@ -1,0 +1,138 @@
+spark-submit --master spark://cdh-master-slave1:7077 word_direct.py cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 test_in3 test_out3
+
+1、spark-submit  --driver-memory 8g --executor-cores 4 --executor-memory 10g   test.py  
+	启动3个Executor，使用12核
+2、spark-submit  --driver-memory 3g --executor-cores 3 --executor-memory 11g   test.py
+	启动3个Executor，使用9核
+3、spark-submit  --driver-memory 3g --executor-cores 4 --executor-memory 4g   --total-executor-cores 10 test.py
+	启动2个Executor，使用8核
+4、spark-submit  --driver-memory 3g --executor-cores 3 --executor-memory 10g  test.py 
+
+关闭动态分区时，sc.parallelize()指定分区时，task跟分区一样。不然就是当前程序申请到的所有core!
+
+
+
+transformation中一般才传入方法，处理转换数据!
+
+问题1：在slave2上执行如下代码报错如下：
+Caused by: java.io.FileNotFoundException: /tmp/spark-b009af38-d4df-4e34-84bd-6f62b17fc1c7/executor0be8137e-614d-4a8f-929f-5d5473c3321f/blockmgr-73a1ae41-1169-4885-aaab-ea6ed8ea5b9b/32/shuffle_1_1_.index (Permission denied)
+修改下免密码后，在cdh-slave2上可以了，但在cdh-slave3上不行，也报上边的错。
+问题2：
+三个节点都不能免密码登录cdh-master-slave1节点，其他都可以免密码互相访问 ！
+
+data = sc.textFile("/data/inputfile.txt",3).cache()
+w2 = data.flatMap(lambda x :x.split(" ")).map(lambda x:(x,1)).reduceByKey(lambda x,y : x+y)
+w2.collect()
+
+
+
+pyspark --master spark://cdh-master-slave1:7077 --name broadcast --driver-memory 3g --executor-cores 3 --executor-memory 5g
+
+pyspark --master spark://cdh-master-slave1:7077 --name broadcast2 --driver-memory 5g --executor-cores 2 --executor-memory 6g
+
+data = sc.textFile("/data/visits.txt",3).cache()
+w2 = data.count()
+w2.collect()
+
+class pyspark.StorageLevel(useDisk, useMemory, useOffHeap, deserialized, replication=1)
+
+cache() 和persist()默认是：Memory Serialized 1x Replicated
+指定反序列化存在内存：persist(storageLevel=StorageLevel(False, True, False, True, 1)) 是Memory Deserialized 1x Replicated
+
+注意：经测试
+Memory Serialized：占用内存空间为实际数据大小的1/8左右！
+Memory Deserialized：占用内存空间为实际数据大小的2倍左右！
+
+Cache/Persist:
+
+1、Cache:
+	1) cache()占用的内存在页面中的每个Executor可看到，Driver中看不到！
+	执行了action后才会进行cache（是lazy的），页面中Storage和Executors中的Executor才可看到！
+	使用unpersist()进行释放缓存，立即生效（非lazy），界面可看到Executors中已没有缓存了,Storage中也没了。
+	2) 何时Cache?
+	为了避免在同一个RDD上多次调用action操作从而可能导致的重新计算，我们应该将该RDD在第一次调用action之前进行持久化。
+	cache是RDD的方法，用在transformation之间的转换，Action操作是已经取到值，它的结果不需要cache，比如collect(),返回的是数组，也没有cache方法。
+	RDD的action算子会触发一个新的job，spark会在DAG中寻找是否有cached或者persisted的中间结果，如果没有找到，
+那么就会重新执行这些中间过程以重新计算该RDD。因此，如果想在多个action操作中重用同一个RDD，那么最好使用 cache() / persist() 将RDD缓存在内存中,
+因此你应该在第一次调用action之前调用cache/persist。
+cache/persist使得中间计算结果存在内存中，这个才是说为什么Spark是内存计算引擎的地方。
+另外，如果一个RDD的计算过程中有抽样、随机值或者其他形式的变化，那么一定要缓存中间结果，否则程序执行结果可能都是不准确的！
+
+
+2、广播：http://www.tuicool.com/articles/yUfqay
+http://blog.csdn.net/w412692660/article/details/43639683
+	broadcast机制是不支持主动推送的！
+	广播占用的内存在页面中的每个driver中可以看到，其他三个Executor看不到。
+	广播变量只能使用b.unpersist()，释放缓存，但并非删除。
+	1）最开始使用b = sc.broadcast(value)之后，value的值会在Driver中保存一个副本（页面可看到），保存到BlockManager中,并告诉Master，其他Executor 是没有的，
+broadcast机制是不支持主动推送的，哪个Executor用到了，就会去Driver拉取，然后保存到本地BlockManager中，也告诉Master，这样它
+也可以作为数据源了，这就是广播的P2P机制。因此第一次使用广播变量比较慢，没有用到广播变量的Executor，就没有缓存广播变量。
+
+	2）当使用b = sc.broadcast(value)进行广播之后，会立即在页面中的driver中看到，广播变量占用的空间大小、变量对应RDD Blocks个数，
+这里的占用的空间是经过压缩、序列化后的大小，（这是广播变量的原理）。广播变量压缩、序列化后会进行分片，默认先存储到
+Driver中，分片大小默认4m,可通过spark-defaults.conf设置：spark.broadcast.blockSize=10m。广播一个变量之后，
+Driver中的 RDD Blocks的个数，就是：(变量压缩、序列化后的大小)/spark.broadcast.blockSize. 
+每执行一个action就会在task所在的节点产生RDD Blocks，界面可以看到，过一段时间，这些曾经计算时用到的RDD Blocks可能就会
+被系统删除，可看到每个Executor ID的RDD Blocks个数，是不断变化的，但使用过广播变量的Executor ID，它里面的广播变量的
+RDD Blocks、占用空间是不会被删除的，除非使用b.unpersist(),这样也只是清除每个Executor中的广播变量，Driver中还是有的，算子中
+还是可以使用广播变量的，只不过下次第一次使用广播变量时还要再重新传输一次，比较慢。
+	3）广播变量：
+本地变量和广播变量都是只读的，不对它进行赋值操作，可以使用它的方法取值！直接使用本地变量是copy一个副本到每个task，广播变量是copy到每个Executor！
+广播变量最开始只会在Drvier中保存一个副本,这个可在监控页面看到！见:	http://blog.csdn.net/hutao_hadoop/article/details/52694165
+
+	1. 广播变量存储在每个Executor中，即广播变量的作用范围是一个应用程序：
+	比如：pyspark 或spark-shell或一个SparkStreaming应用程序，广播变量作用周期为：进入shell，到退出shell，
+	应用结束，该应用程序中的cache变量也会消失。
+
+	2. RDD不能被直接广播！但可以广播rdd.count(),rdd.collect(),rdd.take(3)等等，这些有真正返回结果的action操作。
+	可以简单理解为：其他的transformation操作，是懒加载的，没有真正返回结果，当广播之后，在别的Executor中的算子中使用
+	该广播变量时，是否就是嵌套RDD，因此不能直接广播RDD,DataFrame。
+	3. action 和 transformation只能由Driver去调用！RDD的action 和 transformation中，不能嵌套RDD。
+	如下面英文：具体可见SPARK-5063：https://issues.apache.org/jira/browse/SPARK-5063
+Exception: It appears that you are attempting to broadcast an RDD or reference an RDD from an action or 
+transformation. RDD transformations and actions can only be invoked by the driver, not inside of other 
+transformations; for example, rdd1.map(lambda x: rdd2.values.count() * x) is invalid because the values
+transformation and count action cannot be performed inside of the rdd1.map transformation.
+
+
+
+
+Shuffle: 为什么Shuffle 容易导致Spark挂掉?
+
+Shuffle不过是偷偷的帮你加上了个类似saveAsLocalDiskFile的动作。然而，写磁盘是一个高昂的动作。所以我们尽可能的把数据先放到内存，
+再批量写到文件里，还有读磁盘文件也是给费内存的动作。
+
+一个Stage的开始就是从外部存储或者shuffle结果中读取数据；一个Stage的结束就是由于发生shuffle或者生成结果时。
+
+由于频繁的gc导致运行缓慢，意味着task执行用户代码的内存不够用，够用的话就不会频繁进行gc。
+
+spark.driver.extraJavaOptions
+
+1、GC的时候，一定是会导致工作线程停止，也就是导致Spark暂停工作那么一点时间。
+
+glom()将每个分区的元素组成数组，返回类型：RDD[Array[T]]
+k.glom().map(lambda x: len(x)).collect()
+
+
+累加器,只支持整型变量，可以指定初始值，可以对该变量进行赋值，调用add()，具体见GC调优！
+
+页面RDD Blocks：设置参数：spark.streaming.unpersist	true，帮助清除Job中的RDD Blocks数据
+
+Force RDDs generated and persisted by Spark Streaming to be automatically unpersisted from Spark's memory. 
+The raw input data received by Spark Streaming is also automatically cleared. Setting this to false will allow the raw data 
+and persisted RDDs to be accessible outside the streaming application as they will not be cleared automatically.
+But it comes at the cost of higher memory usage in Spark.
+
+
+
+data = sc.textFile("/data/inputfile.txt",3).cache()
+w2 = data.flatMap(lambda x :x.split(" ")).map(lambda x:(x,1)).reduceByKey(lambda x,y : x+y) 
+w2.collect()
+
+ba = 100
+b = sc.broadcast(ba)
+aa = sc.parallelize([1,2,3,4,5,6])
+aa.map(lambda x:(x,x+b.value)).collect()
+
+
+

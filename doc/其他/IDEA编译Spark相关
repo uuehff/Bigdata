@@ -1,0 +1,29 @@
+-target:jvm-1.7
+windows7: 64位
+IDEA: 14.0.1
+jdk:1.8
+scala: 2.10.5
+使用maven 的install 编译打包spark程序的jar时，报错如下：
+'jvm-1.8' is not a valid choice for '-target'
+
+
+原因: 这是scala编译器的bug,在IDEA中的settings,build,compiler,scala compiler中不能指定-target:jvm-1.8！
+或者pom.xml文件中设置了如下：
+<scalaVersion>${scala.version}</scalaVersion>
+        <args>
+            <arg>-target:jvm-1.8</arg>
+        </args>
+
+原因参考：
+https://stackoverflow.com/questions/29041527/jvm-1-8-is-not-a-valid-choice-for-target
+https://issues.scala-lang.org/browse/SI-8966
+
+
+解决：
+1、IDEA中，settings,build,compiler,scala compiler中指定：-target:jvm-1.7
+2、pom.xml文件中设置：
+<scalaVersion>${scala.version}</scalaVersion>
+        <args>
+            <arg>-target:jvm-1.7</arg>
+        </args>
+

@@ -1,0 +1,238 @@
+CREATE TABLE customer (
+customerID INT,
+firstName STRING, 
+lastName STRING, 
+birthday TIMESTAMP)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+--impala不能从本地加载文件
+LOAD DATA  INPATH '/user/weiwc/data/hive/customer.txt' OVERWRITE  INTO TABLE  customer;
+导入的数据在impala-shell中birthday字段没问题，到hive中识别不了。
+
+CREATE EXTERNAL TABLE salaries (
+gender string,
+age int,
+salary double,
+zip int)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION '/user/weiwc/salaries/';
+
+LOAD DATA  INPATH '/user/weiwc/data/hive/salaries.txt' OVERWRITE  INTO TABLE  salaries;
+
+CREATE TABLE employees (
+id int, 
+name string, 
+salary double)
+PARTITIONED BY (dept string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+#Impala
+LOAD DATA  INPATH '/home/weiwc/data/hive/employees.txt' OVERWRITE  INTO TABLE  employees PARTITION (dept='CA');
+
+CREATE TABLE student (
+id int,
+name string,
+score double,
+classes string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+LOAD DATA LOCAL INPATH '/root/students.txt' OVERWRITE INTO TABLE student;
+
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+CREATE TABLE student_dynamic22 (
+id int,
+name string,
+score double,
+classes string)
+PARTITIONED BY (class string,score2 int) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+INSERT OVERWRITE TABLE student_dynamic PARTITION (class,score2) SELECT *,classes,score FROM student ;
+
+
+CREATE TABLE stu (
+id int,
+name string,
+score double,
+classes string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+LOAD DATA LOCAL INPATH '/data/students.txt' OVERWRITE INTO TABLE stu;
+
+
+CREATE TABLE stucopy AS SELECT id,name,score 
+FROM student;
+
+
+CREATE TABLE customer_local (
+customerID INT,
+firstName STRING, 
+lastName STRING, 
+birthday STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+LOAD DATA LOCAL INPATH '/data/customer.txt' OVERWRITE INTO TABLE customer_local;
+
+
+
+CREATE  EXTERNAL TABLE teacher (
+id int,
+name string,
+gender string,
+age int,
+salary double,
+address string,
+classes string,
+course string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION '/data/teacher';
+
+LOAD DATA  INPATH '/data/teacher.txt' OVERWRITE INTO TABLE teacher;
+
+
+
+
+CREATE EXTERNAL TABLE salaries_hdfs (
+gender string,
+age int,
+salary double,
+zip int)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION '/data/out_table';
+
+LOAD DATA INPATH '/data/salaries.txt' OVERWRITE INTO TABLE salaries_source;
+
+CREATE EXTERNAL TABLE employees_external (
+id int, 
+name string, 
+salary double)
+PARTITIONED BY (dept string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'
+LOCATION '/data/out_external';
+
+LOAD DATA INPATH '/data/employees.txt' OVERWRITE INTO TABLE employees_external;
+
+
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nostrict;
+CREATE TABLE student_dynamic (
+id int,
+name string,
+score double,
+classes string)
+PARTITIONED BY (class string) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+
+
+
+CREATE EXTERNAL TABLE employees_part(
+name string,
+salary double)
+PARTITIONED BY (dept string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY  '\t' LOCATION '/data/out_part';
+
+INSERT OVERWRITE TABLE employees_part
+PARTITION (dept='CA')
+SELECT name,salary
+FROM employees_external
+WHERE salary > 10000.0;
+
+
+CREATE EXTERNAL TABLE emp (
+id int, 
+name string, 
+salary double)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY  '\t' LOCATION '/data/out_emp';
+
+
+CREATE EXTERNAL TABLE empcopy1(
+id int, 
+name string
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY  '\t' LOCATION '/data/out_empcopy1';
+
+CREATE EXTERNAL TABLE empcopy2(
+name string, 
+salary double)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY  '\t' LOCATION '/data/out_empcopy2';
+
+FROM emp
+INSERT INTO TABLE empcopy1
+SELECT id,name LIMIT 5
+INSERT INTO TABLE empcopy2
+SELECT name,salary WHERE salary>10000;
+
+CREATE EXTERNAL TABLE salaries_source(
+gender string,
+age int,
+salary double,
+zip int)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LOCATION '/data/salaries_source';
+
+CREATE  TABLE salaries_sub
+AS 
+SELECT gender,salary,zip
+FROM salaries_source WHERE salary > 20000;
+
+
+INSERT OVERWRITE LOCAL DIRECTORY 'data/customer_exp'
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+SELECT * FROM  customer_exp limit 5;
+
+
+
+SELECT * FROM teacher
+WHERE id > 40000 AND salary < 500000
+ORDER BY salary DESC
+LIMIT 8;
+
+
+CREATE EXTERNAL TABLE employees_external (
+id int, 
+name string, 
+salary double)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY  '\t' LOCATION '/data/out_external';
+
+
+LOAD DATA LOCAL INPATH '/data/employees.txt' OVERWRITE INTO TABLE employees_external;
+
+CREATE EXTERNAL TABLE employees_part(
+name string,
+salary double)
+PARTITIONED BY (dept string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY  '\t' LOCATION '/data/out_part';
+
+INSERT OVERWRITE TABLE employees_part
+PARTITION (dept='CA')
+SELECT name,salary FROM employees_external
+WHERE salary > 10000.0;
+
+
+LOAD DATA LOCAL INPATH '/data/employees.txt' OVERWRITE INTO TABLE emp; 
+
+add jar /root/stt.jar;
+create table my_udf(id int,name string,dateString string) row format delimited fields terminated by ',';
+
+create temporary function my_to_timestamp as 'testHive.StringToTimestamp';
+
+create temporary function my_to_timestamp as 'testHive.StringToTimestamp';
+
+load data local inpath '/root/udf.txt' overwrite into table my_udf;
+select id,my_to_timestamp2(dateString,'yyyy-MM-dd') from my_udf where id=2;
+===========================
+create temporary function my_square as 'testHive.Square';
+select id,my_square(id) from my_udf;
+
+create temporary function my_concat as 'testHive.StringConcat';
+select id,name,my_concat(id,name) from my_udf;
+
+create temporary function my_sub as 'testHive.StringSub';
+select id,name,my_sub(name,1,2),my_sub(name,2,3) from my_udf;
+
+
+
+
+
+
+
+

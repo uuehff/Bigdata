@@ -1,0 +1,120 @@
+{
+"law_link_sql":{
+  "size": "1000",
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match_phrase": {
+            "html_resource": "<a href=\"http://img.faxin.cn"
+          }
+        },
+        {
+          "match_phrase": {
+            "html_resource": "<img src=\"http://img.faxin.cn"
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ],
+  "_source": ["id","law_id","law_doc_url","html_resource"]
+},
+
+"lawyer_keshihua_look": {
+  "size": 0,
+  "query": {
+     "bool":{
+       "filter": {
+         "bool": {
+           "must": {
+             "term": {"lawyer_id": "5681c5b5-0056"}
+            }
+          }
+       }
+     }
+   },
+   "aggs":{
+      "aggs_plaintiff_id": {
+         "filter": {
+            "term": {"plaintiff_id": "5681c5b5-0056"}
+         },
+         "aggs": {
+            "合作律师":{
+               "terms": {
+                  "field": "plaintiff.keyword"
+               }
+            },
+            "合作公司":{
+               "terms": {
+                  "field": "org_plaintiff.keyword"
+               }
+            },
+            "对垒律师":{
+               "terms": {
+                  "field": "defendant.keyword"
+               }
+            },
+            "对垒公司":{
+               "terms": {
+                  "field": "org_defendant.keyword"
+               }
+            }
+         }
+      },
+      "aggs_defendant_id": {
+         "filter": {
+            "term": {"defendant_id": "5681c5b5-0056"}
+         },
+         "aggs": {
+            "合作律师":{
+               "terms": {
+                 "field": "defendant.keyword" }
+            },
+            "合作公司":{
+               "terms": {
+                  "field": "org_defendant.keyword"
+               }
+            },
+            "对垒律师":{
+               "terms": {
+                 "field": "plaintiff.keyword" }
+            },
+            "对垒公司":{
+               "terms": {
+                  "field": "org_plaintiff.keyword"
+               }
+            }
+         }
+      }
+      },
+
+    "_source" : {
+    "includes" : [
+      "aggs_plaintiff_id",
+      "plaintiff_id",
+      "plaintiff",
+      "defendant_id",
+      "defendant",
+      "lawyer_id"
+      ]
+  }
+},
+
+"get_lawyer_name":
+{
+  "query": {
+    "term": {
+      "lawyer_id": {
+        "value": "5681c5b5-0056"
+      }
+    }
+  }
+}
+}

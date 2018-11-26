@@ -1,0 +1,90 @@
+-- select *
+-- from information_schema.tables 
+-- where table_schema in 
+-- (select schema_name from information_schema.SCHEMATA  
+-- where schema_name like "laws_doc_%" and schema_name != "laws_doc2" 
+-- and schema_name not like "laws_doc_lawyers%" and schema_name != "laws_doc_mediate"
+-- )
+-- and (table_name like "%_field" or table_name like "%_lawyer" or table_name like "%_organization" ) 
+-- order by right(table_name,1)
+
+
+select *
+from information_schema.tables 
+where table_schema = "laws_doc_civil"
+and (table_name like "%_field" or table_name like "%_lawyer" or table_name like "%_organization" ) 
+order by right(table_name,1)
+
+
+laws_doc_civil civil_etl_v2_800w_01_field laws_doc:judgment_civil_all
+laws_doc_civil civil_etl_v2_800w_02_field laws_doc:judgment_civil_all
+laws_doc_civil civil_etl_v2_800w_02_organization laws_doc:judgment_civil_all
+laws_doc_civil civil_etl_v2_800w_01_organization laws_doc:judgment_civil_all
+laws_doc_civil civil_etl_v2_800w_02_lawyer laws_doc:judgment_civil_all
+laws_doc_civil civil_etl_v2_800w_01_lawyer laws_doc:judgment_civil_all
+
+线上导入：
+
+civil_v2
+judgment_v2
+administration_v2
+implement_v2
+
+
+judgment_v2 adjudication_xingshi_etl_v2_organization laws_doc:judgment_all
+civil_v2 judgment_zhangye_civil_v2_result_organization laws_doc:judgment_civil_all
+implement_v2 implement_civil_etl_v2_organization laws_doc:judgment_implement_all
+administration_v2 judgment_zhangye_xingzheng_v2_result_organization laws_doc:judgment_administration_all
+civil_v2 adjudication_civil_etl_v2_organization laws_doc:judgment_civil_all
+civil_v2 judgment_new_v2_organization laws_doc:judgment_civil_all
+judgment_v2 judgment_zhangye_xingshi_v4_result_organization laws_doc:judgment_all
+implement_v2 judgment_zhangye_zhixing_v4_result_organization laws_doc:judgment_implement_all
+implement_v2 imp_other_etl_v2_organization laws_doc:judgment_implement_all
+judgment_v2 judgment_etl_v2_organization laws_doc:judgment_all
+judgment_v2 judgment_zhangye_xingshi_v2_result_organization laws_doc:judgment_all
+implement_v2 judgment_zhangye_zhixing_v2_result_organization laws_doc:judgment_implement_all
+administration_v2 administration_etl_v2_organization laws_doc:judgment_administration_all
+civil_v2 judgment_zhangye_civil_v4_result_organization laws_doc:judgment_civil_all
+judgment_v2 judgment2_etl_v2_organization laws_doc:judgment_all
+administration_v2 judgment_zhangye_xingzheng_v4_result_organization laws_doc:judgment_administration_all
+civil_v2 civil_etl_v2_800w_02_organization laws_doc:judgment_civil_all
+civil_v2 civil_etl_v2_800w_01_organization laws_doc:judgment_civil_all
+
+=========================
+civil_v2
+judgment_v2
+administration_v2
+implement_v2
+
+judgment_v2 judgment2_etl_v2_lawyer laws_doc:judgment_all
+administration_v2 judgment_zhangye_xingzheng_v4_result_lawyer laws_doc:judgment_administration_all
+judgment_v2 adjudication_xingshi_etl_v2_lawyer laws_doc:judgment_all
+civil_v2 judgment_zhangye_civil_v2_result_lawyer laws_doc:judgment_civil_all
+implement_v2 implement_civil_etl_v2_lawyer laws_doc:judgment_implement_all
+administration_v2 judgment_zhangye_xingzheng_v2_result_lawyer laws_doc:judgment_administration_all
+civil_v2 adjudication_civil_etl_v2_lawyer laws_doc:judgment_civil_all
+civil_v2 judgment_new_v2_lawyer laws_doc:judgment_civil_all
+judgment_v2 judgment_zhangye_xingshi_v4_result_lawyer laws_doc:judgment_all
+implement_v2 judgment_zhangye_zhixing_v4_result_lawyer laws_doc:judgment_implement_all
+implement_v2 imp_other_etl_v2_lawyer laws_doc:judgment_implement_all
+judgment_v2 judgment_etl_v2_lawyer laws_doc:judgment_all
+judgment_v2 judgment_zhangye_xingshi_v2_result_lawyer laws_doc:judgment_all
+administration_v2 administration_etl_v2_lawyer laws_doc:judgment_administration_all
+implement_v2 judgment_zhangye_zhixing_v2_result_lawyer laws_doc:judgment_implement_all
+civil_v2 judgment_zhangye_civil_v4_result_lawyer laws_doc:judgment_civil_all
+civil_v2 civil_etl_v2_800w_02_lawyer laws_doc:judgment_civil_all
+civil_v2 civil_etl_v2_800w_01_lawyer laws_doc:judgment_civil_all
+
+
+
+
+
+
+
+
+
+
+
+
+
+

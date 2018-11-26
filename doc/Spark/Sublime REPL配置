@@ -1,0 +1,53 @@
+=======================================================================
+centos7 挂载DVD镜像 ：桌面安装
+http://www.cnblogs.com/jw31/p/5966498.html
+
+Sublime Text 3搭建Python IDE环境及插件安装：
+http://lovesoo.org/sublime-text-3-build-the-python-ide-environment-and-plug-in-installation.html
+
+REPL — 交互式解释器环境。
+R(read)、E(evaluate)、P(print)、L(loop) 
+输入值，交互式解释器会读取输入内容并对它求值，再返回结果，并重复此过程。
+
+
+修改字体/修改颜色：
+"font_size":15.0, 
+"font_face": "YaHei Consolas Hybrid",
+"default_encoding":"UTF-8"
+
+右下角修改为python代码！  
+
+注册码：
+
+Michael Barnes
+Single User License
+EA7E-821385
+8A353C41 872A0D5C DF9B2950 AFF6F667
+C458EA6D 8EA3C286 98D1D650 131A97AB
+AA919AEC EF20E143 B361B1E7 4C8B7F04
+B085E65E 2F5F5360 8489D422 FB8FC1AA
+93F6323C FD7F7544 3F39C318 D95E6480
+FCCC7561 8A4A1741 68FA4223 ADCEDE07
+200C25BE DBBC4855 C4CFB774 C5EC138C
+0FEC1CEF D9DCECEC D3A5DAD1 01316C36
+==================
+Sublime REPL 快捷键设置：
+在Preferences-> Key Bindings-User 添加如下内容，f7 自动换行，f5 执行当前代码！
+1、
+[
+  { "keys": ["f7"], "command": "toggle_setting", "args": {"setting": "word_wrap"} },
+  {
+        "keys": ["f5"],
+        "caption": "SublimeREPL: Python - RUN current file",
+        "command": "run_existing_window_command",
+         "args":
+        {
+            "id": "repl_python_run",
+            "file": "config/Python/Main.sublime-menu"
+        }
+    }
+]
+
+2、在每个python文件中首行添加：#!/usr/bin/python
+
+=============================================

@@ -1,0 +1,6 @@
+sparkstreaming可直接针对RDD进行的操作：foreachRDD 和 transform，是DStream的操作！
+
+foreachRDD : 是action操作，可将每个RDD写入外部系统，无返回值。
+
+
+transform: 可进行RDD[U] -> RDD[V]的转换，返回DStream[V]！

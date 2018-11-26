@@ -1,0 +1,69 @@
+转换数据：
+spark-submit \
+--master yarn \
+--deploy-mode client \
+--queue default2 \
+--num-executors 6 \
+--executor-memory 8G \
+--archives mnist/mnist.zip#mnist \
+TensorFlowOnSpark/examples/mnist/mnist_data_setup.py \
+--output mnist/csv2 \
+--format csv2
+===========================================================
+
+训练和预测结果不知是否OK。中间没报错，但预测没结果，不知是何原因？
+
+34上weiwc用户提交：(都是用本地目录，修改tfspark.zip和Python.zip内容后，不需要上传HDFS,方便测试)
+streaming训练：
+
+spark-submit \
+--master yarn \
+--deploy-mode cluster \
+--num-executors 4 \
+--executor-memory 6G \
+--py-files /home/weiwc/TensorFlowOnSpark/tfspark.zip,/home/weiwc/TensorFlowOnSpark/examples/mnist/streaming/mnist_dist.py \
+--conf spark.executorEnv.LD_LIBRARY_PATH=$LIB_JVM:$LIB_HDFS \
+--conf spark.dynamicAllocation.enabled=false \
+--conf spark.yarn.maxAppAttempts=1 \
+--conf spark.yarn.executor.memoryOverhead=4096 \
+--conf spark.streaming.stopGracefullyOnShutdown=true \
+--archives /home/weiwc/Python/Python.zip#Python \
+/home/weiwc/TensorFlowOnSpark/examples/mnist/streaming/mnist_spark.py \
+--images stream_data \
+--format csv2 \
+--mode train \
+--model mnist_model_streaming
+
+==============
+streaming预测：
+spark-submit \
+--master yarn \
+--deploy-mode cluster \
+--num-executors 4 \
+--executor-memory 4G \
+--py-files ${HOME}/TensorFlowOnSpark/tfspark.zip,${HOME}/TensorFlowOnSpark/examples/mnist/streaming/mnist_dist.py \
+--conf spark.dynamicAllocation.enabled=false \
+--conf spark.yarn.maxAppAttempts=1 \
+--conf spark.yarn.executor.memoryOverhead=6144 \
+--conf spark.streaming.stopGracefullyOnShutdown=true \
+--archives hdfs:///user/${USER}/Python.zip#Python \
+--conf spark.executorEnv.LD_LIBRARY_PATH=$LIB_JVM:$LIB_HDFS \
+${HOME}/TensorFlowOnSpark/examples/mnist/streaming/mnist_spark.py \
+--images stream_data2 \
+--format csv2 \
+--mode inference \
+--model mnist_model_streaming \
+--output predictions2
+
+一般只配置以下三个变量就可以了：
+export SPARK_YARN_USER_ENV="PYSPARK_PYTHON=Python/bin/python"
+export LIB_HDFS=/data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib64
+export LIB_JVM=$JAVA_HOME/jre/lib/amd64/server
+===================================================================================
+===================================================================================
+停止SparkStreaming任务：
+1）host和port是 reservation server的IP和端口，在driver的日志中可找到类似："listening for reservations at ('<host>', <port>)"的日志。
+2）执行：/home/weiwc/Python/bin/python /home/weiwc/TensorFlowOnSpark/tensorflowonspark/reservation.py <host> <port>
+（注意：可能需要修改：reservation.py第19行，为：import util）
+
+

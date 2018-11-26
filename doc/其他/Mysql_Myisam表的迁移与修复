@@ -1,0 +1,22 @@
+迁移：
+
+1、将当前Mysql服务关闭！！！
+2、拷贝对应的三个文件即可。
+==============================================================================
+修复：
+
+Mysql的BUG：在Windows7上，Mysql5.6,5.7中Myisam引擎的表数据大于4G时，无法修复！但在Linux上，可以修复！
+BUG地址：  https://bugs.mysql.com/bug.php?id=69683
+
+注意：修复过程中会在表文件所在目录生成*.TMD临时文件，大小和原表大小样，因此要保证磁盘有足够的空间！
+
+修复命令：
+1、关闭当前Mysql
+2、进入表文件所在的目录：（/var/lib/mysql/civil），确保文件的执行权限！
+3、myisamchk -o -f -v --sort_buffer_size=4G --key_buffer_size=512M --read_buffer_size=64M --write_buffer_size=64M judgment
+4、启动Mysql
+
+
+其中的参数参考：以下网址中的参数！
+
+参考： http://www.cnblogs.com/wxl-dede/p/5061270.html

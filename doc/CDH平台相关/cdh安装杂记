@@ -1,0 +1,132 @@
+spark-env.sh:
+
+SPARK_WORKER_CORES=6
+SPARK_WORKER_MEMORY=20G
+
+SPARK_WORKER_CORES=6
+SPARK_WORKER_MEMORY=20G
+===========
+/etc/spark/conf/spark-defaults.conf
+spark.authenticate=false
+#spark.dynamicAllocation.enabled=true
+spark.dynamicAllocation.executorIdleTimeout=60
+spark.dynamicAllocation.minExecutors=0
+spark.dynamicAllocation.schedulerBacklogTimeout=1
+spark.eventLog.enabled=true
+spark.serializer=org.apache.spark.serializer.KryoSerializer
+#spark.shuffle.service.enabled=true
+#spark.shuffle.service.port=7337
+spark.ui.killEnabled=true
+spark.eventLog.dir=hdfs://cdh-master-slave1:8020/user/spark/applicationHistory
+spark.yarn.historyServer.address=http://cdh-master-slave1:18088
+spark.yarn.jar=local:/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/spark/lib/spark-assembly.jar
+spark.driver.extraLibraryPath=/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/hadoop/lib/native
+spark.executor.extraLibraryPath=/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/hadoop/lib/native
+spark.yarn.am.extraLibraryPath=/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/hadoop/lib/native
+spark.yarn.config.gatewayPath=/opt/cloudera/parcels
+spark.yarn.config.replacementPath={{HADOOP_COMMON_HOME}}/../../..
+spark.master=yarn-client
+spark.driver.extraClassPath=/home/weiwc/mongo-java-driver-3.2.2.jar:/home/weiwc/mongo-spark-connector_2.10-1.0.0.jar:/data/opt/cloudera/parcels/CDH/jars/spark_hbase-assembly-1.0.jar:/data/opt/cloudera/parcels/CDH/jars/spark_hbase_2.10-1.0.jar:/home/weiwc/mysql-connector-java-5.1.41-bin.jar
+spark.executor.extraClassPath=/home/weiwc/mongo-java-driver-3.2.2.jar:/home/weiwc/mongo-spark-connector_2.10-1.0.0.jar:/data/opt/cloudera/parcels/CDH/jars/spark_hbase-assembly-1.0.jar:/data/opt/cloudera/parcels/CDH/jars/spark_hbase_2.10-1.0.jar:/home/weiwc/mysql-connector-java-5.1.41-bin.jar
+
+
+注释：想要使用资源动态分配的话，就得开启以下两个参数；以下两个参数是同时使用的！
+#spark.dynamicAllocation.enabled=true
+#spark.shuffle.service.enabled=true
+#spark.shuffle.service.port=7337
+否则会报如下错：
+Caused by: java.io.FileNotFoundException: /tmp/spark-e93ef051-b651-4a91-9c13-b8cdb4885235/executor-13b08328-8bf5-45de-8231-
+72e9e04304c7/blockmgr-5002c8a5-1650-4c67-be12-cc047cd7bb39/03/shuffle_5_8_0.index (Permission denied)或（权限不够）
+======================
+卸载自带OpenJDK：
+rpm -qa | grep java
+rpm -e --nodeps java-1.8.0-openjdk-headless-1.8.0.101-3.b13.el7_2.x86_64
+rpm -e --nodeps java-1.8.0-openjdk-1.8.0.101-3.b13.el7_2.x86_64
+rpm -e --nodeps java-1.7.0-openjdk-headless-1.7.0.111-2.6.7.2.el7_2.x86_64
+rpm -e --nodeps java-1.7.0-openjdk-1.7.0.111-2.6.7.2.el7_2.x86_64
+=============================
+
+cp /opt/mysql-connector-java-5.1.41-bin.jar  /opt/cm-5.14.2/share/cmf/lib/
+
+cp /data/opt/cm-5.14.2/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar /data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/sqoop
+sudo mkdir /var/lib/cloudera-scm-server
+sudo mkdir /data/opt/cm-5.14.2/run/cloudera-scm-agent
+sudo mkdir /data/opt/cm-5.14.2/run/cloudera-scm-server
+sudo /opt/cm-5.14.2/share/cmf/schema/scm_prepare_database.sh mysql cm -h cdh_master_slave1 -uroot -pHhly2017@13322.com --scm-host cdh_master_slave1 scm scm scm
+/usr/share/cmf/schema/scm_prepare_database.sh mysql cm -h master-slave1 -uroot -pHhly2017@13322.com --scm-host master-slave1 scm scm scm
+/usr/share/cmf/schema/scm_prepare_database.sh mysql cm  -uroot -pxhwlcdh01mysql --scm-host cdh01 scm scm scm
+
+
+vi /opt/cm-5.14.2/etc/cloudera-scm-agent/config.ini
+server_host=cdh_master_slave1
+
+sudo scp -r /opt/cm-5.14.2/ root@cdh_slave2:/opt/
+sudo scp -r /opt/cm-5.14.2/ root@cdh_slave3:/opt/
+
+sudo mkdir /var/lib/cloudera-scm-server
+sudo mkdir /opt/cm-5.14.2/run/cloudera-scm-agent
+sudo mkdir /opt/cm-5.14.2/run/cloudera-scm-server
+
+
+useradd --system --home=/opt/cm-5.14.2/run/cloudera-scm-server/ --no-create-home --shell=/bin/false --comment "Cloudera SCM User" cloudera-scm
+chown -R cloudera-scm:cloudera-scm /opt/cm-5.14.2/run/cloudera-scm-agent
+chown -R cloudera-scm:cloudera-scm /opt/cm-5.14.2/run/cloudera-scm-server
+
+
+/opt/cm-5.14.2/etc/init.d/cloudera-scm-server start
+/opt/cm-5.14.2/etc/init.d/cloudera-scm-agent start
+
+/opt/cm-5.14.2/etc/init.d/cloudera-scm-server stop
+/opt/cm-5.14.2/etc/init.d/cloudera-scm-agent stop
+
+
+tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log
+tail -f /var/log/cloudera-scm-agent/cloudera-scm-agent.out
+
+chown cloudera-scm:cloudera-scm /data/opt/cloudera/parcels
+=======================
+sudo tail -f /opt/cm-5.10.1/log/cloudera-scm-server/cloudera-scm-server.log
+sudo tail -f /opt/cm-5.10.1/log/cloudera-scm-agent/cloudera-scm-agent.out
+
+agent的log:
+cat /dev/null > cloudera-scm-agent.log
+cat /dev/null > cloudera-scm-agent.out
+
+server的log:
+rm -f cloudera-scm-server.log.*
+rm -f cmf-server-perf.log.*
+cat /dev/null > cloudera-scm-server.log
+
+sudo cp /data/opt/cm-5.10.1/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar /data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/hive/lib/
+sudo cp /data/opt/cm-5.10.1/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar /data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/oozie/lib/
+
+线下cdh集群自启动：所有节点添加如下：
+编辑/etc/rc.local文件，添加:/usr/bin/init_cdh_env.sh
+编辑：/usr/bin/init_cdh_env.sh，权限755
+cdh-master节点，init_cdh_env.sh如下：
+#!/bin/bash
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+#/sbin/sysctl vm.swappiness=10
+ntpdate cdh-master
+systemctl start ntpd
+systemctl start mysqld
+mount -o loop /mnt/CentOS-7-x86_64-DVD-1611.iso /media
+systemctl start vsftpd
+/data/opt/cm-5.10.1/etc/init.d/cloudera-scm-server start
+sleep 30
+/data/opt/cm-5.10.1/etc/init.d/cloudera-scm-agent start
+子节点如下：
+#!/bin/bash
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+#/sbin/sysctl vm.swappiness=10
+ntpdate cdh-master
+systemctl start ntpd
+/data/opt/cm-5.10.1/etc/init.d/cloudera-scm-agent start
+===========================================================
+===========================================================
+线上配置一样：
+只不过线上CDH安装路径为/opt，而不是/data/opt。
+
+改变hdfs存储目录时，只需改变/dfs/dn即可！！不要改动/dfs/nn,/dfs/snn等，否则无法启动服务，需要重新格式化hdfs。

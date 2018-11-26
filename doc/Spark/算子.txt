@@ -1,0 +1,15 @@
+算子：
+v型：filter、map、flatMap、countByValue()、groupBy()\
+mapPartitions: def mapPartitions[U](f: (Iterator[T]) ⇒ Iterator[U], preservesPartitioning: Boolean = false)(implicit arg0: ClassTag[U]): RDD[U]
+mapPartitionsWithIndex: def mapPartitionsWithIndex[U](f: (Int, Iterator[T]) ⇒ Iterator[U], preservesPartitioning: Boolean = false)(implicit arg0: ClassTag[U]): RDD[U]
+zip: def zip[U](other: RDD[U])(implicit arg0: ClassTag[U]): RDD[(T, U)]
+k-v型：mapValues、flatMapValues
+
+1、前者数据大的话，可用后者代替。
+作用：shuffle数据倾斜时，countByKey查看各个key的分布。
+
+（K,V）def countByKey(): Map[K, Long] 等价于
+ rdd.mapValues(_ => 1L).reduceByKey(_ + _)
+
+2、def  countByValue()(implicit ord: Ordering[T] = null): Map[T, Long]等价于
+	rdd.map(x => (x, 1L)).reduceByKey(_ + _),返回(value, count) pairs.

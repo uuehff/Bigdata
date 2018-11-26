@@ -1,0 +1,37 @@
+Centos7安装桌面:
+1、检查可用的组：sudo yum grouplist
+2、安装桌面:
+ sudo yum groupinstall "GNOME Desktop" -y
+ sudo yum install xorg-x11-xauth -y
+3、配置/etc/ssh/sshd_config：
+编辑两个属性：
+X11Forwarding yes
+X11UseLocalhost no
+注意1：以上两个参数配置后，ssh直接连接目标机（这里的直连也可以是做了端口映射的服务器，
+比如ipa(外网ip)服务器的3333端口与ipb(内网ip)的22映射，那xshell中配置，ipa,端口3333，
+登陆后就直接连到了ipb，可以直接打开firefox,这里不算通过跳板机连接），并且在ssh使用的用户下，
+是可以打开firefox，切记，切换用户后就不可打开firefox,因为切换用户后已不是同一个xshell session!
+
+注意2：当ssh不是直接连接目标机，要通过跳板机，例如：本地windows先连接master,在master上再连接slave1,这时想要在slave1打开firefox的图形界面，
+需要配置如下：
+    1）xshell中的，“隧道”->转发X11连接到：选择Xmanager！，功能相当于参数：ssh -X
+    2）在master、slave上都要配置：
+    X11Forwarding yes
+    X11UseLocalhost no
+    3）master在ssh登录到slave时，使用：ssh -X slave 或ssh -X cdh@slave,总之要加上-X参数，代表会转发图形界面！
+    4)整个过程要使用ssh的用户！
+4、重启sshd服务：
+sudo systemctl restart sshd
+
+5、exit退出，重新连接ssh,命令行若没有出现：WARNING! The remote SSH server rejected X11 forwarding request.则OK。
+可以的话登录时的命令行如下：
+Host 'local-slave2' resolved to 192.168.20.24.
+Connecting to 192.168.20.24:22...
+Connection established.
+To escape to local shell, press 'Ctrl+Alt+]'.
+
+Last login: Wed Aug  2 16:49:58 2017 from 192.168.20.1
+[weiwc@local-slave2 ~]$
+
+
+

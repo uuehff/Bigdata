@@ -1,0 +1,18 @@
+注意：git中，有本地版本库、分支和服务器端的版本库、分支，commit只是提交到本地的版本库中，Push才是推送到服务器端版本库。
+
+一般开发有两个大的分支：master,develop；
+develop 是基于master创建的；
+所有的开发人员，基于develop,再各自新建一个分支，比如：develop_weiwc,等等。
+在浏览器项目中创建一个新的分支为develop_weiwc,基于develop创建。
+然后配置项目的http://*.git路径，之后再选择菜单栏中VCS -> Git ->Branches -> 选择Remote Branches中的自己的分支，checkout as new local branch,
+起个分支名，最好跟remote 分支一样，叫develop_weiwc。之后在该分之下进行编辑，commit 只是提交到本地的develop_weiwc版本库里，commit之后再在VCS -> Git -> Push，才能推送到远程的
+版本库，浏览器中才能看到。所以一般选择 commit and Push。
+
+合并：每个人的develop_weiwc分支都会合并到develop上，编译测试OK，再将develop合并到master。
+合并一般是创建时有依赖关系的分支，按照创建时的顺序。两个创建时完全没有依赖关系的分支不要合并。
+
+右下角选中一个子分支，然后merge，会将它merge到当前主分支。这是在本地merge后，提交到本地的分支库中。
+
+注意：右下角显示的Git:master，是当前的分支，在切换分支时，一定要将所有的修改且未提交的文件先提交了，即先同步到当前分支中去；不然，
+切换到另外一个分支时，这些修改或增加的文件，也会在左下角Local Changes中显示，还以为是基于该分支编辑的，其实应该是上一个分支里文件。因此容易搞混乱。因此需要在
+切换分支时，先把Local Changes中的文件提交了。

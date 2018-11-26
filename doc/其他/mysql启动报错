@@ -1,0 +1,13 @@
+mysql启动日志报错：
+2018-02-01T07:09:55.037138Z 0 [Note] Server hostname (bind-address): '0.0.0.0'; port: 3306
+2018-02-01T07:09:55.037181Z 0 [Note]   - '0.0.0.0' resolves to '0.0.0.0';
+2018-02-01T07:09:55.037239Z 0 [ERROR] Do you already have another mysqld server running on port: 3306 ?
+
+使用命令查看：
+netstat -anop |grep 3306，查看本机服务端口中包含3306端口的：
+                    本机ip:端口                外部服务ip:端口                        pid/本机上的哪个服务
+tcp        0      0 192.168.10.22:3306      192.168.10.22:7558      ESTABLISHED 29312/mysqld         keepalive (6624.84/0/0)
+tcp        0      0 127.0.0.1:3306          127.0.0.1:41476         ESTABLISHED 29312/mysqld         keepalive (6690.37/0/0)
+tcp        0      0 192.168.10.22:7558      192.168.10.22:3306      ESTABLISHED 29660/python         keepalive (6624.84/0/0)
+
+mysql启动失败原因是：端口被占用，本机上有一个连接mysql的python程序，循环执行，占用了3306端口。找出kill掉即可。

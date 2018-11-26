@@ -1,0 +1,334 @@
+======================================================================================================
+一、数据库结构（所有处理后的数据）：
+1）文书：192.168.74.102服务器有以下库：
+    laws_doc_adjudication,laws_doc_administration,laws_doc_imp_other,laws_doc_implement
+    laws_doc_judgment,laws_doc_zhangye_v2,laws_doc_new库；
+
+    192.168.74.103服务器：laws_doc_civil库；
+
+2）律师：192.168.74.102服务器：laws_doc_lawyers_new\hht_lawyer_all_collect_match_result表
+3）法规：192.168.74.103服务器：law\law_rule_result2、law_rule_result_article表
+======================================================================================================
+二、代码结构：
+1、文书分段及长文本处理：law\spark_part
+2、文书小字段处理：law\spark_short
+3、律师数据处理：law\spark_lawyers
+4、法规数据处理：law\spark_law
+5、数据处理过程中所有的sql：law\sql
+======================================================================================================
+三、表字段结构：
+1、文书表字段结构信息：
+id              表id（用于数据入库HBase）
+uuid_old        文书网uuid
+party_info      当事人信息
+trial_process   审理经过
+trial_request   诉称/辩称
+court_find      法院查明
+court_idea      法院认为
+judge_result    判决结果
+doc_footer      文书尾部
+court           法院
+uuid            基于文书uuid生成自己的uuid
+judge_type      文书类别，例如：判决书，裁定书，通知书，调解书等
+title           标题
+reason_type     案件类别，分为：民事、刑事、行政、执行
+caseid          案号
+type            审理程序
+casedate        判决日期
+province        省份
+reason          案由
+reason_uid      案由关联id
+court_uid       法院关联id
+judge           法官
+court_cate      法院层级
+field           文书领域（按案由所属领域划分）
+plaintiff_id    原告律师id（使用原告律师姓名+原告律所，与律师表关联得到，多个以||隔开）
+defendant_id    被告律师id（使用被告律师姓名+被告律所，与律师表关联得到，多个以||隔开）
+lawyer_id       律师id（等于plaintiff_id + defendant_id，多个以||隔开）
+law_office      律所（律所名称，多个以||隔开）
+lawyer          律师（律师名称，等于plaintiff+defendant，多个以||隔开）
+plaintiff       原告律师（原告律师名称，多个以||隔开）
+defendant       被告律师（被告律师名称，多个以||隔开）
+org_plaintiff   原告组织（原告组织名称，多个以||隔开）
+org_defendant   被告组织（被告组织名称，多个以||隔开）
+
+2、律师表字段结构信息：
+id          表id（用于数据入库HBase）
+lawyer_id   律师id（律师的唯一标识，自己生成，用来与文书关联）
+name        律师姓名
+pra_number  执业证号
+org_name    执业律所
+birth_date  出生日期
+biyexueyuan 毕业学校
+city        城市
+edu_origin  学历
+first_pra_time  首次执业时间
+gender      性别
+id_num      身份证号
+mail        邮箱
+nation      民族
+org_identity    所内身份
+phone       电话
+mobile_phone    手机
+politics    政治面貌
+practicestatus  执业状态
+pra_course      执业历程
+pra_type        执业类型
+province        执业省份
+qua_number      资格证号
+qua_time        资格证获取时间
+xuewei          学位
+zhuanye         专业
+years           执业年限
+org_names       曾执业律所
+resume          个人简介
+
+3、法规表字段结构信息：
+1）单条法规表（用于查看整篇法规时，合并），字段信息：
+
+id          表id（用于数据入库HBase）
+law_id      法规id(一个法规的唯一标识，自己生成)
+cate_a      法规库类别（如：地方规范性文件库、团体、行业规范库等,用于划分法规效力级别）
+cate_b      法规类别（例如：证券、合同、计划等，用于法规高级检索）
+department  发布部门（法规签发部门）
+publish_date    发布日期
+effective_date  生效日期
+effective_range 生效时间（日期时间段，例如：1982-1992）
+effective_status    法规生效状态（"有效":1,u"失效":0,u"被修订":2,u"被修正":3）
+title_short     法规标题（法规标准标题，用于法规显示）
+art_num         法规中条目（例如：第十八条）
+art             法规中某条的内容
+area            法规所属区域（指：全国、各省、直辖市）
+art_digit       法规中条目数字（将art_num转为数字，例如：18）
+doc_num         法规发文字号
+lawlist_id      一个法规中某一条法的id
+area_uid        法规所属区域对应的行政划分（area对应的行政划分）
+city            法规所属城市（指area下属的城市）
+law_grade       效力级别
+
+2）整篇法规表（将同一法规下的法条合并，用于列表展示），字段信息：
+id              表id（用于数据入库HBase）
+law_id          法规id(一个法规的唯一标识，自己生成)
+cate_a          法规库类别（如：地方规范性文件库、团体、行业规范库等,用于划分法规效力级别）
+cate_b          法规类别（例如：证券、合同、计划等，用于法规高级检索）
+department      发布部门（法规签发部门）
+publish_date    发布日期
+effective_date  生效日期
+effective_range 生效时间（日期时间段，例如：1982-1992）
+effective_status    法规生效状态（"有效":1,u"失效":0,u"被修订":2,u"被修正":3）
+title_short     法规标题（法规标准标题，用于法规显示）
+area            法规所属区域（指：全国、各省、直辖市）
+doc_num         法规发文字号
+article         整篇法规（同一法规下的所有条合并成一篇法规）
+art             法规中某条的内容
+area_uid        法规所属区域对应的行政划分（area对应的行政划分）
+city            法规所属城市（指area下属的城市）
+law_grade       效力级别
+
+
+==================================================================================================
+==================================================================================================
+==================================================================================================
+四、文书处理流程：（以新增480万为例）：
+
+新增480万数据库、代码结构：
+1、原始数据：192.168.74.100\wenshu_gov\judgment_500w
+2、处理后的数据：192.168.74.102\laws_doc_zhangye_v2\*_v5_*
+3、代码：law\spark_part\spark_part_wenshu_add500wan_2018_10_251
+        law\spark_short\spark_short_wenshu_add500wan_2018_10_25
+
+    1）文书分段处理：包含长文本字段字段提取、及原始type,reason_type等字段处理（代码：law\spark_part\spark_part_wenshu_add500wan_2018_10_25）;
+    2）文书分段输出结果：分段后输出4个表，对应民事、刑事、行政、执行，便于后期分别处理，入库。
+    3）基于分段后的输出结果表进一步处理小字段：(代码：law\spark_short\spark_short_wenshu_add500wan_2018_10_25)
+       代码casedate*.py：针对判决日期、案由、案由id,省份，法院id等进一步完善补充或新增处理；
+       代码court*.py：针对法院、法官、法院层级、及长文本提取或进一步规范。
+       代码lawlist*.py：提取案例法规、关联法规表ID；
+    4）代码law\spark_short\spark_short_limai_and_wenshu_origin\lawyer_id*.py：提取文书律师、及关联律师ID；（目前这部分晓妍使用简称去提取、关联律师ID）
+    5）导入HBase线上、线下脚本：law\spark_short\spark_short_wenshu_add500wan_2018_10_25\sqoop_batch_sh目录；
+
+五、律师处理：
+==============================================================================
+=======律师版本一处理流程：===========================
+============================================================================
+1、原始数据来源于：
+	1）爬取各地的律协、司法局律师数据（不完整）。
+	2）文书（当时的280万文书）中提取，律师姓名，律所。
+2、合并两部分原始数据，并去重（律师名称、律所一样的认为重复）。
+3、得到70万律师数据，质量不高。
+======================================================
+=======律师版本二处理流程：===========================
+======================================================
+1、原始数据来源于：
+	1）爬取法网数据。
+	2）新爬取各省的律协、司法局律师数据。
+2、合并处理两部分原始数据：流程如下：
+1）删除律协数据中，律师名称、执业证号、律所任意一个为NULL或""的数据；如下：
+	delete from hht_lawyer_gansu where pra_number = "" or pra_number is null;
+	delete from hht_lawyer_gansu where name = "" or name is null;
+	delete from hht_lawyer_gansu where org_name = "" or org_name is null;
+
+2）使用正则统计、清洗律师名称、执业证号、律所三个字段,因为需要去重、合并，去重、合并都是围绕这三个字段，必须先处理，如下：
+    （law\spark_lawyers\sql\v2\v2*.sql）
+
+	1.清洗pra_number字段: 查询*，可以直接在查询结果中修改；
+	SELECT * from hht_lawyer_12348gov_v3 where pra_number REGEXP '[a-zA-Z 	,:;\\()!+@.|"\'/]|\\?|\\]|\\[|\\-'
+	or hex(pra_number) REGEXP 'efbc8c|e38082|e38081|efbc9a|efbc9b|efbc9f|efbc81|e28098|e28099|efbc88|efbc89';
+	2.清洗name字段：查询*，可以直接在查询结果中修改；
+	SELECT * from hht_lawyer_12348gov_v3 where name REGEXP '[a-z0-9A-Z 	,:;\\()!+@.|"\'/]|\\?|\\]|\\[|\\-'
+	or hex(name) REGEXP 'efbc8c|e38082|e38081|efbc9a|efbc9b|efbc9f|efbc81|e28098|e28099|efbc88|efbc89';
+	3.清洗org_name字段：先将（）字符统一为()；
+	update hht_lawyer_12348gov_v3 set org_name = replace(org_name,"（","(");
+	update hht_lawyer_12348gov_v3 set org_name = replace(org_name,"）",")");
+
+	带中文（）的正则来匹配；
+	SELECT * from hht_lawyer_12348gov_v4 where org_name REGEXP '[a-z0-9A-Z 	,:;\\+!@.|"\'/]|\\?|\\]|\\[|\\-'
+	or hex(org_name) REGEXP 'efbc8c|e38082|e38081|efbc9a|efbc9b|efbc9f|efbc81|e28098|e28099|efbc88|efbc89';
+3）法网数据新增一个source字段表示来源,便于和律协数据区分，保证所有表中同一字段的字段名称一致前提下，将所有表的数据导入到HBase,读取HBase，筛选需要的字段，
+	将数据写出到一个新表中，字段名称与HBase保持一致；
+	1.导入脚本：batch_sqoop_match.sh、tables_name_lawyers_origin；
+	2.读取HBase写入Mysql：happybase_cdh_lawyers_match_to_mysql.py
+
+4）去重，去重有几种情况：
+	1.律师名称、执业证号、律所都一样；（主要是法网与律协之间的重复：代码law\spark_lawyers\lawyers_2018_09_07_hht_lawyer_all_collect_add_and_match_gov_v3_distinct.py）
+
+	2.名称、执业证号一样，律所不一样；（可能是换律所，可参考代码：law\spark_lawyers\lawyers_2018_09_07_hht_lawyer_all_collect_add_and_match_result_pra_number_right_6_distinct.py）
+
+	其中：2、3、4三个步骤中重复数据较少，可使用正则、sql，甚至手动合并，来处理。（138-354行：law\spark_lawyers\sql\v2\v2_律师_01_02_03汇总处理.sql）
+	3.名称、律所一样的，执业证号不一样；（可能是录入错误或无效证号，可找出几个进行百查证等方式找出规律，
+	具体根据真实数据进行取舍，如无法取舍，以法网为准，如果不包含法网数据，以17位且符合规则的为准）
+
+	4.律所、执业证号一样，名称不一样的；（可能是录入错误或有大小名（包含个大字或小字等情况），可找出几个进行百查证或在文书网
+	高级搜索中搜索律所和名字等方式找出规律，进行合并或删除，否则以法网为准，否则以统一的规则取舍）
+
+	5.姓名一样、执业证号是标准的11位，且除了行政代码4位、执业类型1位不一样外，其他都一样，律所不一样；
+	（这种是跨省或跨市执业或转执业类型，执业证号做了更改；代码：law\spark_lawyers\lawyers_2018_09_07_hht_lawyer_all_collect_add_and_match_result_pra_number_part_group.py）
+
+	6.姓名一样、执业证号是标准的11位，且后6位一样的、律所不一样；
+	（一般执业证号后6位是不变的，可能有其他原因造成的执业证号的前几位有变化，但可与姓名绑定进行去重；
+	代码：lawyers_2018_09_07_hht_lawyer_all_collect_add_and_match_result_pra_number_right_6_distinct.py）
+
+    7.姓名一样，执业证号前15位一样(经统计发现同一律师其执业证号来源不同，一个网站将执业证号后两位用0代替，一个网站执业证号是完整的；)，
+       因此需要使用姓名+执业证号前15位过滤重复，且互为重复的数据之间，他们的org_names之间大部分相互包含；去重后org_names相互合并。
+       （代码：law\spark_lawyers\lawyers_process_10_30_duplicate_merge_by_name_and_org_names_pra_number_left_15.py）
+
+    8.最终结果导入HBase:（脚本law\spark_lawyers\batch_sqoop）
+
+六、法规处理：
+    1、法规效力级别处理；(spark_law\sql\法规效力级别处理.sql)
+    2、法规地域范围处理；(spark_law\sql\法条地域范围清洗.sql、spark_law\*area_province_city*.py）
+    3、法规单条合并为整篇，单条分段、关联法规去除等；(spark_law\sql\新增法规处理.sql、spark_law\law_*_to_article.py)
+    4、法规id重新生成；(law_rule_result2_uuid_replace.py)
+    5、导入HBase库：（脚本spark_law\batch_sqoop）
+
+七、法官处理：
+待完善；
+
+====================================================================================================
+===========================数据合并==================================================================
+====================================================================================================
+一、合并脚本：
+102-administration库：合并数据.sql
+103-laws_doc_civil库：合并数据.sql
+二、合并说明：已将之前的uuid_law_id*表、*other_fields*表更新到对应的大表，合并为一个大表，保留后期增加的*court_cate_judge_footer、
+*field表、*lawyer表、*organization表，并对应合并为一个表；
+=====================================================================================
+三、102服务器数据合并：
+1、administration（行政）包含以下5个表，
+administration:来自所有库的*result表，插入进来，每个库的*result对应的source不同。
+administration_court_cate_judge_footer：来自所有库的*court_cate_judge_footer表，插入进来。
+administration_field：来自所有库的*field表，插入进来。
+administration_lawyer：来自所有库的*lawyer表，插入进来。
+administration_organization：来自所有库的*organization表，插入进来。
+
+来源库：laws_doc_administration,laws_doc_zhangye_v2(中的v2,v3,v4,v5)
+注意：
+1）在administration下面4个表中出现的字段，在administration表里已全部更新为NULL，全部以4个小表的字段为准，确保入库准确；
+2）导入administration时不同库对应的source：
+laws_doc_administration：source = "laws_doc_administration"
+laws_doc_zhangye_v2,
+judgment_zhangye_xingzheng_v2_result: source = "laws_doc_zhangye_v2_v2"
+judgment_zhangye_xingzheng_v3_result: source = "laws_doc_zhangye_v2_v3"
+judgment_zhangye_xingzheng_v4_result: source = "laws_doc_zhangye_v2_v4"
+judgment_zhangye_xingzheng_v5_result: source = "laws_doc_zhangye_v2_v5"
+2、==================================================================================
+civil（民事）包含以下5个表，
+civil:来自所有库的*result表，插入进来，每个库的*result对应的source不同。
+civil_court_cate_judge_footer：来自所有库的*court_cate_judge_footer表，插入进来。
+civil_field：来自所有库的*field表，插入进来。
+civil_lawyer：来自所有库的*lawyer表，插入进来。
+civil_organization：来自所有库的*organization表，插入进来。
+
+来源库：laws_doc_adjudication,laws_doc_new,laws_doc_zhangye_v2(中的v2,v3,v4,v5)
+注意：
+1）在civil下面4个表中出现的字段，在civil表里已全部更新为NULL，全部以4个小表的字段为准，确保入库准确；
+2）导入civil时不同库对应的source：
+laws_doc_adjudication库：source = "laws_doc_adjudication"
+laws_doc_new库：source = "laws_doc_new"
+
+laws_doc_zhangye_v2,
+judgment_zhangye_civil_v2_result: source = "zhangye_v2"
+judgment_zhangye_civil_v3_result: source = "zhangye_v3"
+judgment_zhangye_civil_v4_result: source = "zhangye_v4"
+judgment_zhangye_civil_v5_result: source = "zhangye_v5"
+
+3、====================================================================================
+judgment（刑事）包含以下5个表，
+judgment:来自所有库的*result表，插入进来，每个库的*result对应的source不同。
+judgment_court_cate_judge_footer：来自所有库的*court_cate_judge_footer表，插入进来。
+judgment_field：来自所有库的*field表，插入进来。
+judgment_lawyer：来自所有库的*lawyer表，插入进来。
+judgment_organization：来自所有库的*organization表，插入进来。
+
+来源库：laws_doc_adjudication,laws_doc_judgment,laws_doc_zhangye_v2(中的v2,v3,v4,v5)
+注意：
+1）在judgment下面4个表中出现的字段，在judgment表里已全部更新为NULL，全部以4个小表的字段为准，确保入库准确；
+2）导入judgment时不同库对应的source：
+laws_doc_adjudication库：source = "laws_doc_adjudication"
+laws_doc_judgment库：
+judgment_etl_v2：source = "laws_doc_judgment"
+judgment2_etl_v2：source = "laws_doc_judgment_j2"
+
+laws_doc_zhangye_v2,
+judgment_zhangye_xingshi_v2_result: source = "zhangye_v2"
+judgment_zhangye_xingshi_v3_result: source = "zhangye_v3"
+judgment_zhangye_xingshi_v4_result: source = "zhangye_v4"
+judgment_zhangye_xingshi_v5_result: source = "zhangye_v5"
+3）旧版本可视化数据：judgment_keshihua_only，judgment2_keshihua_only都已合并之前对应的另一个可视化表，是最新，但未
+更新到judgment_etl_v2，judgment2_etl_v2以及最终的judgment表里；
+4、=================================================================================
+implement（执行）包含以下5个表，
+implement:来自所有库的*result表，插入进来，每个库的*result对应的source不同。
+implement_court_cate_judge_footer：来自所有库的*court_cate_judge_footer表，插入进来。
+implement_field：来自所有库的*field表，插入进来。
+implement_lawyer：来自所有库的*lawyer表，插入进来。
+implement_organization：来自所有库的*organization表，插入进来。
+
+来源库：laws_doc_imp_other,laws_doc_implement,laws_doc_zhangye_v2(中的v2,v3,v4,v5)
+注意：
+1）在implement下面4个表中出现的字段，在implement表里已全部更新为NULL，全部以4个小表的字段为准，确保入库准确；
+2）导入implement时不同库对应的source：
+laws_doc_imp_other库：source = "laws_doc_imp_other"
+laws_doc_implement库：source = "laws_doc_implement"
+laws_doc_zhangye_v2,
+judgment_zhangye_zhixing_v2_result: source = "zhangye_v2_v2"
+judgment_zhangye_zhixing_v3_result: source = "zhangye_v2_v3"
+judgment_zhangye_zhixing_v4_result: source = "zhangye_v2_v4"
+judgment_zhangye_zhixing_v5_result: source = "zhangye_v2_v5"
+=============================================================================
+=============================================================================
+=============================================================================
+四、103服务器数据合并：
+civil（民事）包含以下5个表，
+civil:来自所有库的*result表，插入进来，每个库的*result对应的source不同。
+civil_court_cate_judge_footer：来自所有库的*court_cate_judge_footer表，插入进来。
+civil_field：来自所有库的*field表，插入进来。
+civil_lawyer：来自所有库的*lawyer表，插入进来。
+civil_organization：来自所有库的*organization表，插入进来。
+
+来源库：laws_doc_civil
+注意：
+1）在civil下面4个表中出现的字段，在civil表里已全部更新为NULL，全部以4个小表的字段为准，确保入库准确；
+2）导入civil时不同库对应的source：
+laws_doc_civil,
+civil_etl_v2_800w_01: source = "103_civil_01"
+civil_etl_v2_800w_02: source = "103_civil_02"

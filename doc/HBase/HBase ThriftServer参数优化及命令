@@ -1,0 +1,64 @@
+舆情系统爬虫存储HBase阻塞问题：http://udn.yyuap.com/doc/ae/921227.html
+设置三个参数：
+l hbase.thrift.minWorkerThreads
+l hbase.thrift.maxWorkerThreads
+l hbase.thrift.maxQueuedRequests
+HBase主要的搜索Filter使用： http://hbase.apache.org/book.html#thrift
+
+常见超时问题及参数调优：http://blog.csdn.net/zychun1991/article/details/52098949
+http://www.cnblogs.com/qinersky902/p/6217741.html
+
+
+scanner超时报错：是由于服务端引起
+"org.apache.hadoop.hbase.client.RetriesExhaustedException: Can't get the location\n\tat org.apache.hadoop.hbase.client.RpcRetryingCallerWithReadReplicas.getRegionLocations(RpcRetryingCallerWithReadReplicas.java:326)\n\tat org.apache.hadoop.hbase.client.ScannerCallableWithReplicas.call(ScannerCallableWithReplicas.java:157)\n\tat
+happybase的client的Connection也有timeout，总之服务端与客户端时间都不超时才可操作数据。
+
+服务端参数配置：
+HBase配置的“高级”里面，新增以下配置：
+1、hbase-site.xml 的 HBase 服务高级配置代码段（安全阀）
+1）名称 hbase.thrift.connection.max-idletime
+值 1728000000
+说明 ConnectionCache缓存的连接过期时间，毫秒为单位，20天为1728000000毫秒，一个月的毫秒数为25亿大于int最大值21亿，
+源码转换时会报错，thriftserver会启动失败，连接超过这个时间时，hbase会清理过期连接，同时把当前运行的connection也
+当成过期的连接清除，这是hbase的bug，因此可以理解为，超过这个时间时，hbase会清理掉所有的连接。
+2）名称 hbase.thrift.server.socket.read.timeout
+值 1728000000
+说明 ：服务端thriftServer的socket超时时间，以毫秒为单位。
+
+2、hbase-site.xml 的 HBase 客户端高级配置代码段（安全阀）
+1）名称 hbase.thrift.connection.max-idletime
+值 1728000000
+说明 ConnectionCache过期时间,20天，单位毫秒.
+2）名称 hbase.thrift.server.socket.read.timeout
+值 1728000000
+说明 thriftServer的socket超时时间，20天，单位毫秒。
+
+修改参数后，重启ThriftServer服务才生效！！！！
+++++++++++++++++++++++++++++++++++++++
+===========================================
+
+在高并发压力测试时，对一个reginserver做scan操作的时，java.io.IOException: Connection reset by peer，Broken pipe问题
+以上是有客户端配置引起！
+客户端参数设置：
+
+在CDH页面的HBase中搜索：
+1. 搜索：hbase.client.operation.timeout   10s 改为：72000000
+会有：hbase.rpc.timeout  10s  改为:50000
+hbase.client.retries.number 1 改为:10
+hbase.client.rpc.maxattempts    1  改为:10
+2. 搜索：hbase.client.pause  100ms  不变
+3. 搜索：hbase.client.scanner.timeout.period  1分钟
+会有：hbase.regionserver.lease.period, 5分钟  改为：7天
+hbase.client.scanner.timeout.period 5分钟   改为：7天
+
+
+
+HBase-ThriftServer启动关闭命令（手动执行，cdh页面的thriftServer服务，也可以用，在HBase的实例中添加角色实例）：
+官网： http://hbase.apache.org/book.html#security.client.thrift
+
+命令：
+cd /opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/hbase/bin/
+1、启动ThriftServer，并能看到timeout等信息：./hbase thrift start -threadpool
+2、./hbase-daemon.sh start thrift
+3、Usage: hbase-daemon.sh [--config <conf-dir>] (start|stop|restart|autorestart|foreground_start) <hbase-command> <args...>
+root下：jps可看到ThriftServer进程。

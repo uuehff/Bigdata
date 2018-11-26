@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>网民画像分析</title>
+	<script src="js/echarts.min.js"></script>
+	<script src="js/jquery-1.12.4.js"></script>
+	<script src="js/china.js"></script>
+	<style>
+		.main{width:80%;min-width:950px;margin:0 auto;}
+		.main_left{width:60%;height:800px;float: left;}
+		.main_right{width:39%;height:800px;float:left;margin-top:50px;}
+		.tt{color:#214293;font-size:24px;}
+		ul{width:100%;height:180px;}
+		#map{width:100%;height:500px;}
+		#right_pie,.right_low{width:100%;height:350px;}
+		.right_low{position: relative;}
+		#right_sex{width:40%;height:350px;}
+		#right_pie{margin-top:20px;}
+		#right_sex,.man,.woman{margin-top: 80px;}
+		.man,.woman,#right_sex{float:left;}
+		.man,.woman{width:30%;height:350px;}
+		.man{text-align:right;line-height:640px;}
+		.woman{text-indent: 8px;line-height: 625px;}
+		.title{position: absolute;top:35%;left:50%;margin-left:-43px;font-size:16px;font-weight: 800;font-family:'微软雅黑';}
+		.text{line-height:40px;font-size:16px;margin-left:50px;}
+	</style>
+</head>
+<body>
+	<div class="main">
+		 <div class="main_left">
+		<div>
+			<p class="tt"><img src="title.png" alt="" style="vertical-align:middle;"> 案例展示3. 网民画像分析</p>
+		</div>
+			<ul>
+				<li class="text">关注围棋赛的大部分用户是男性，只有少部分女性用户关注。</li>
+				<li class="text">年龄分布来看，80后和90后群体比较关注围棋名人战。</li>
+				<li class="text">从地区分布看，北京地区的关注度非常高，其次是广东地区。</li>
+			</ul>
+			<div id="map"></div>
+		</div>
+		<div class="main_right">
+			<div id="right_pie"></div>
+			<div class="right_low">
+				<p class="title">性别分布</p>
+				<div class="man">
+					<img src="man.png" alt="">
+				</div>
+				<div id="right_sex"></div>			
+				<div class="woman">
+					<img src="femail.png" alt="">
+				</div>
+			</div>
+			
+		</div>
+	</div>
+	
+	<script>
+         var myChart = echarts.init(document.getElementById('map'));		
+				option = {
+					title:{
+						text:'地区分布',
+						// textStyle:{
+				  //                   	color:'#32d2c9',
+				  //                   },
+						left:'center',
+						top:'2%'
+					},
+				    tooltip: {
+				        trigger: 'item',
+				        // formatter: '{b}'
+				    },
+				     visualMap: {
+				        min: 0,
+				        max:50,
+				        left: '5%',
+				        top: 'bottom',
+				        color:['#4472c7','#084a94','#90c4f5','#f4fcd7'],
+				        text: ['高','低'],           // 文本，默认为数值文本
+				        calculable: true
+				    },
+				    series: [
+				        {
+				            name: '地区分布',
+				            type: 'map',
+				            mapType: 'china',
+				            selectedMode : 'multiple',
+				            label: {
+				                normal: {
+				                    show: true,
+				                    
+				                },
+				                emphasis: {
+				                    show: true
+				                }
+				            },
+				            data:[
+				                {name:'\u9752\u6d77', value:5},
+				                {name:'\u6cb3\u5357', value:5},
+				                {name:'\u5c71\u4e1c', value:13},
+				                {name:'\u56db\u5ddd', value:10},
+				                {name:'\u9999\u6e2f', value:1},
+				                {name:'\u6c5f\u82cf', value:31},
+				                {name:'\u6cd5\u56fdProvence-Alpes-Cote d"Azur"', value:1},
+				                {name:'\u8d35\u5dde', value:1},
+				                {name:'\u65b0\u7586', value:6},
+				                {name:'\u798f\u5efa', value:14},
+				                {name:'\u6d59\u6c5f', value:17},
+				                {name:'\u6e56\u5317', value:21},
+				                {name:'\u5929\u6d25', value:6},
+				                {name:'\u6c5f\u897f', value:12},
+				                {name:'\u9ed1\u9f99\u6c5f', value:7},
+				                {name:'\u5e7f\u4e1c', value:42},
+				                {name:'\u65e5\u672c\u5927\u962a', value:3},
+				                {name:'\u4e91\u5357', value:4},
+				                {name:'\u5317\u4eac', value:99},
+				                {name:'\u53f0\u6e7e', value:3},
+				                {name:'\u6cf0\u56fd', value:2},
+				                {name:'\u6d77\u5916', value:4},
+				                {name:'\u6fb3\u95e8', value:2},
+				                {name:'\u5176\u4ed6', value:5},
+				                {name:'\u6fb3\u5927\u5229\u4e9a\u7ef4\u591a\u5229\u4e9a', value:1},
+				                {name:'\u4e2d\u56fd', value:2},
+				                {name:'\u52a0\u62ff\u5927', value:1},
+				                {name:'\u65b0\u52a0\u5761\u65b0\u52a0\u5761', value:2},
+				                {name:'\u5e7f\u897f', value:6},
+				                {name:'\u65e5\u672c', value:1},
+				                {name:'\u9655\u897f', value:7},
+				                {name:'\u7518\u8083', value:2},
+				                {name:'\u7f8e\u56fd', value:2},
+				                {name:'\u6cb3\u5317', value:6},
+				                {name:'\u5409\u6797', value:5},
+				                {name:'\u6cd5\u56fdIle-de-France', value:1},
+				                {name:'\u5b89\u5fbd',value:14},
+				                {name:'\u91cd\u5e86', value:5},
+				                {name:'\u5b81\u590f', value:4},
+				                {name:'\u6e56\u5357', value:12},
+				                {name:'\u5c71\u897f',value:3},
+				                {name:'\u52a0\u62ff\u5927\u827e\u4f2f\u5854', value:1},
+				                {name:'\u5185\u8499\u53e4', value:1},
+				                {name:'\u4e0a\u6d77', value:20},
+				                {name:'\u8fbd\u5b81', value:6},
+				                {name:'\u52a0\u62ff\u5927\u5b89\u5927\u7565', value:3},
+				                {name:'西藏',value:0},
+				                {name:'海南',value:0}
+
+				            ]
+				        }
+				    ]
+		};
+		myChart.setOption(option);	
+		resize(myChart);
+		function resize(obj) {
+	        $(window).resize(function () {
+	            obj.resize()
+	        })
+  		  }
+
+  		  var myChart1 = echarts.init(document.getElementById('right_pie'));
+  			option = {
+			    title : {
+			        text: '年龄分布',
+			        x:'center',
+			        top:'4%',
+			        textStyle:{
+			            fontSize:16,
+			            fontWeight:800,
+			            //color:'#32d2c9',
+			        }
+			    },
+			    tooltip : {
+			        trigger: 'item',
+			        formatter: "{a} <br/>{b} : {c} ({d}%)"
+			    },
+			    color:['#e5c890','#b5a0d9','#56b5f7','#3eb9b6','#4472c7'],
+			    legend: {
+			        orient: 'horizontal',
+			        left: 'center',
+			        bottom:0,
+			        itemWidth:10,
+			        itemHeight:10,
+			        data: ['60\u540e','70\u540e','80\u540e','90\u540e','00\u540e']
+			    },
+			    series : [
+			        {
+			            name: '年龄分布',
+			            type: 'pie',
+			            radius : '65%',
+			            center: ['50%', '55%'],
+			            data:[
+			            	{value:2, name:'60\u540e'},
+			                {value:1, name:'70\u540e'},			                
+			                {value:13, name:'80\u540e'},
+			                {value:19,name:'90\u540e'},
+			                {value:3, name:'00\u540e'},
+			                
+			            ],
+			            label:{
+			                normal:{
+			                   show:false,
+			                   // position:'inside',
+			                    formatter: function(param) {
+			                     return param.name + ':\n' + Math.round(param.percent) + '%';
+			                 	},
+			                 	textStyle:{
+			                 		fontSize:12,
+			                 		color:'#000',
+			                 	}
+			                },
+			                
+			            },
+			            itemStyle: {
+			                normal:{
+			                    borderWidth:1,
+			                    borderColor:'#fff',
+			                },
+			                emphasis: {
+			                    shadowBlur: 10,
+			                    shadowOffsetX: 0,
+			                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+			                }
+			            }
+			        }
+			    ]
+			};
+		myChart1.setOption(option);	
+		resize(myChart1);
+
+		var myChart2 = echarts.init(document.getElementById('right_sex'));
+		option = {
+			    tooltip: {
+			        formatter: "{a} <br/>{b} : {c}%"
+			    },
+			    series: [{
+			        name: '',
+			        type: 'gauge',
+
+			        center: ['50%', '66%'], // 默认全局居中
+			        radius: '80%',
+			        axisLine: {
+			            show: false,
+			            lineStyle: { // 属性lineStyle控制线条样式
+			                color: [
+			                    [0.86, '#396497'],
+			                    [1, 'rgba(150, 104, 150, 1)']
+			                ],
+			                width: 15
+			            }
+			        },
+			        splitLine: {
+			            show: false
+			        },
+			        axisTick: {
+			            show: false
+			        },
+			        axisLabel: {
+			            show: false
+			        },
+			        pointer: {
+			            show: true,
+			            length: '0',
+			            width: '0'
+			        },
+			        detail: {
+			        	show:true,
+			            formatter:'{value}%',
+			            offsetCenter: [0, '5%']
+			        },
+			        data: [{
+			            value: 86,
+			            
+			        }]
+			    
+			    }]
+			};			
+		myChart2.setOption(option);	
+		resize(myChart2);
+	</script>
+</body>
+</html>

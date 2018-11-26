@@ -1,0 +1,83 @@
+
+supervisor安装：pip install supervisor
+安装配置参考：http://www.cnblogs.com/justphp/p/6120201.html
+
+
+root用户、es用户都要java环境变量，es用户下：必须是编辑~/.bashrc，而不是~/.bash_profile!
+
+
+ps -ef | grep /opt/elasticsearch
+ps -ef | grep /etc/supervisor
+
+
+ES关闭两种方式：supervisorctl stop all 或 kill -9 ES进程
+
+root用户下，单个启动supervisord:
+supervisord -c /etc/supervisor/supervisord.conf
+
+supervisorctl（客户端）：
+在客户端中关闭所有服务：例如ES（服务名称）
+supervisorctl stop all
+
+关闭supervisord(服务端)：
+supervisorctl shutdown
+
+>>> supervisorctl
+>>> stop ES
+>>> shutdown
+
+
+cat /dev/null >  /var/log/elasticsearch.log
+cat /var/log/elasticsearch.log
+
+1、es用户下：
+./bin/elasticsearch（方式启动,日志如下）
+tail -f /data/es/logs/hhly_es.log
+
+2、
+root用户下（source /etc/profile），单个启动supervisord: supervisord -c /etc/supervisor/supervisord.conf
+或：
+cdh用户下，start_supervisord.sh 启动ES,日志目录如下（可修改）：
+tail -f /var/log/elasticsearch.log
+
+
+tail -f /tmp/supervisord.log
+cat /tmp/supervisord.log
+cat /dev/null >  /tmp/supervisord.log
+supervisor.sock删除：（supervisorctl shutdown这种方式关闭supervisord可能遗留的sock）
+unlink /tmp/supervisor.sock
+
+
+cat /dev/null > /data/es/logs/hhly_es.log
+tail -f /data/es/logs/hhly_es.log
+tail -f /var/log/elasticsearch.log
+tail -n200 /var/log/elasticsearch.log
+
+删除node.lock:
+/data/es/data/nodes/0/node.lock
+
+
+;这里的命令如果直接是：/opt/elasticsearch/bin/elasticsearch，会读取不到ll /etc/security/limits.conf中的设置！而导致ES起不来！
+command= su - es -c "/opt/elasticsearch/bin/elasticsearch"   ; the program (relative uses PATH, can take args)
+[1]: max file descriptors [4096] for elasticsearch process is too low, increase to at least [65536]
+[2]: memory locking requested for elasticsearch process but memory is not locked
+
+
+# allow user 'es' mlockall
+	es soft memlock unlimited
+	es hard memlock unlimited
+
+
+cat >>  /etc/security/limits.conf << END
+es  soft  memlock  unlimited
+es  hard  memlock  unlimited
+*        hard    nofile           65536
+*        soft    nofile           65536
+END
+
+cat >>  a << END
+elasticsearch  soft  memlock  unlimited
+elasticsearch  hard  memlock  unlimited
+*        hard    nofile           65536
+*        soft    nofile           65536
+END

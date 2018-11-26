@@ -1,0 +1,99 @@
+
+
+创建索引，并设置type及其mapping
+PUT spark
+{
+    "settings": {
+      "index": {
+        "number_of_shards": "10",
+        "number_of_replicas": "1"
+      }
+    },
+    "mappings": {
+      "docs": {
+        "properties": {
+          "name_first": {
+            "type": "byte"
+          },
+          "name_last": {
+            "type": "byte"
+          }
+        }
+      }
+    }
+}
+在没有插入数据之前可以修改mapping，但在插入数据后就不可更改mapping元数据了：
+新增type,并设置mapping(不能与之前type的数据类型冲突)
+PUT spark/_mapping/info
+{
+  "properties": {
+    "age": {
+      "type": "keyword"
+    }
+  }
+}
+在没有插入数据之前：
+指定type,新增字段 (不能与之前type的数据类型冲突)
+PUT spark/_mapping/info
+{
+  "properties": {
+    "age": {
+      "type": "keyword"
+    }
+  }
+}
+
+=========================================
+GET spark/_settings
+GET /bank/_search?q=*&sort=account_number:asc&pretty
+GET /_cat/health?v
+GET /_cat/nodes?v
+GET /_cat/indices/
+GET _cat/shards
+GET /_cat/shards/spark
+DELETE /spark
+
+
+GET /spark/docs/_search
+GET /spark/docs/_search?size=10
+GET bank2/account/_search
+GET bank/account/99?_source=age
+GET bank/account/99?_source=account_number,balance
+GET /spark/docs/_mapping    #docs类型下的mapping
+GET /spark/_mapping         #整个spark索引的mapping
+GET /_mapping
+GET /spark/docs/_count
+GET /spark/docs/2000056
+
+
+GET /lawplatform/criminal_law/_search?size=1
+GET /lawplatform/criminal_law/_mapping
+
+PUT /cdhindex?pretty
+PUT /customer/external/1?pretty
+{
+  "name": "John Doe"
+}
+
+POST /bank/account/99/_update
+{
+    "doc": { "account_number": 990,"balance": 471590}
+
+}
+POST /bank/account/_bulk?pretty&refresh -binary @accounts.json
+POST /bank/account/_bulk?pretty&consistency=POST /customer/external/_bulk?pretty
+POST /customer/external/_bulk?pretty
+{"index":{"_id":"1"}}
+{"name": "John Doe" }
+{"index":{"_id":"2"}}
+{"name": "Jane Doe" }
+POST /customer/external/_bulk?pretty
+{"update":{"_id":"1"}}
+{"doc": { "name": "John Doe becomes Jane Doe" } }
+{"delete":{"_id":"2"}}
+
+======================================================
+discover界面搜索数据：
+基于Lucene语法： https://lucene.apache.org/core/2_9_4/queryparsersyntax.html
+https://www.cnblogs.com/bugsbunny/p/7248386.html
+doc_footer:

@@ -1,0 +1,149 @@
+饶路：
+law_office 从 party_info
+province,city,district   从 court
+court_cate 从 court
+
+刘方：
+新字段	来源字段
+doc_oriligigation	doc_oriligigation
+crime_reason	reason
+fact_finder_new	fact_finder
+punish_cate	judge_result
+punish_date	judge_result
+delay_date	judge_result
+punish_money	judge_result
+
+志坚：
+gender,nation,edu,suspect_num,native_place,age_year,crml_team,j_adult 来自party_info, prvs 来自court_find
+
+紫鹏：
+doc_reason judge_chief judge_member
+reason 是根据 doc_reason 再处理的
+
+晓妍：
+court_new 来自court;
+doc_oriligigation_new 来自 doc_oriligigation;
+record_time_new来自record_time;
+casedate_new来自casedate;
+duration来自casedate与record_time的差；
+plaintiff_new 来自plaintiff;
+defendant_new来自defendant;
+judge_chief_new来自judge_chief;
+judge_member_new来自judge_member；
+if_adult,if_surrender,if_nosuccess和if_accumulate都来自court_idea
+
+===============================================
+mongo表：
+字段	字段类型	说明  清洗后的对应字段
+id	number	判决文档的存储id(唯一)
+title	string	文档标题
+judge_result	string	裁判结果==========punish_cate ,punish_date ,delay_date ,punish_money
+judge_chief	string	审判长================judge_chief_new
+judge_member	string	审判员============judge_member_new
+fact_finder	string	陪审检察员=============fact_finder_new
+court_idea	string	裁判理由==============if_adult,if_surrender,if_nosuccess和if_accumulate
+court	string	法院名称=====================province,city,district,court_cate,court_new
+doc_oriligigation	string	公诉机关===============doc_oriligigation_new
+court_find	string	法院审查=============prvs
+trial_process	string	审理过程
+defendant	string	被告律师==================defendant_new
+plaintiff	string	原告律师==================plaintiff_new
+record_time	string	立案日期==================record_time_new
+casedate	string	判决日期==================casedate_new
+caseid	string	文件编号
+third_party_lawyer	string	第三方律师
+party_info	string	参审双方信息==========gender,nation,edu,suspect_num,native_place,age_year,crml_team,j_adult,law_office
+trial_request	string	诉求
+trial_reply	string	答辩
+casecontroversy	array	争议焦点
+lawlist	array	相关法律法规(每个元素为string)
+doc_reason	array	罪由(每个元素为一个object)==============crime_reason
+======================================================
+judgment表：
+
+id
+uuid
+caseid
+title
+doc_reason
+doc_oriligigation
+fact_finder
+court
+lawlist
+record_time
+casedate
+timeline
+party_info
+defendant
+plaintiff
+third
+trial_process
+trial_request
+trial_reply
+court_find
+court_idea
+judge_result
+judge_chief
+judge_member
+history
+type
+reason_type
+judge_type
+result_type
+doc_content
+update_time
+doc_from
+reason
+is_crawl
+is_format
+======================================================
+judgment_etl表：
+
+id
+uuid
+type
+casedate
+lawlist
+lawlist_1r
+court_new
+doc_oriligigation_new
+record_time_new
+casedate_new
+duration
+defendant_new
+plaintiff_new
+judge_chief_new
+judge_member_new
+if_adult
+if_surrender
+if_nosuccess
+if_accumulate
+crime_reason
+fact_finder_new
+punish_cate
+punish_date
+delay_date
+punish_money
+law_office
+province
+city
+district
+court_cate
+court
+gender
+nation
+edu
+suspect_num
+birth_day
+native_place
+age_year
+reason
+crml_team
+j_adult
+prvs
+per
+loc
+org
+time
+role
+crime

@@ -1,0 +1,11 @@
+CDH加密模块：https://www.cloudera.com/documentation/enterprise/latest/topics/security.html
+HDFS加密：http://blog.cloudera.com/blog/2015/01/new-in-cdh-5-3-transparent-encryption-in-hdfs/?_ga=2.154534385.816081153.1497409266-975566848.1490951928
+Express和Enterprise区别：   https://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_feature_differences.html
+可在CDH主页面，管理 -> 安全 中看到：HDFS静态数据加密
+
+安装步骤参考：http://blog.csdn.net/haoxiaoyan/article/details/53726240
+https://www.cloudera.com/documentation/enterprise/latest/topics/cm_sg_s2_jce_policy.html
+http://www.tuicool.com/articles/eYniaqr
+已完成了几个包的安装，有：openldap-clients，krb5-workstation，krb5-libs
+
+注意：未完待续，需先在本地安装集群进行测试（目前是Express而非Enterprise），没问题再在服务器中安装！

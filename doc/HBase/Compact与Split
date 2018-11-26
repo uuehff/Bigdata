@@ -1,0 +1,31 @@
+Compact：
+
+查看分区名称：
+hbase(main):035:0> scan "hbase:meta",{STARTROW => 'laws_doc:office_sa',ENDROW => 'laws_doc:offj'}
+
+合并一个表（分区及分区下所有列族）：
+hbase(main):034:0> major_compact 'laws_doc:office_save'
+合并一个分区：
+hbase(main):031:0> major_compact 'laws_doc:office_save,,1501129826959.73568b0f196c5672a6638b18cce6215a.'
+合并一个分区下的一个列族：
+hbase(main):032:0> major_compact 'laws_doc:office_save,,1501129826959.73568b0f196c5672a6638b18cce6215a.','d'
+合并一个表中的一个列族：
+hbase(main):033:0> major_compact 'laws_doc:office_save','d'
+
+Split：
+
+========================================================
+
+
+监控每个分区聚合前占空间大小：
+hadoop fs -du -h /hbase/data/laws_doc/judgment/
+
+命令行执行聚合：major_compact 'laws_doc:judgment,0_2014-13,1501627466728.bb01631e6a23a97362e90b36e9b71b8b.'
+同时监控页面看该分区聚合的进度，聚合后会将多个Storefile聚合为一个。聚合过程中，三个机器的磁盘空间都会减少，减少的大小基本为该分区大小，
+（占用的临时磁盘空间要过一会儿才能恢复）。
+
+聚合后再查看分区占用的空间，是否有所减少：
+hadoop fs -du -h /hbase/data/laws_doc/judgment/
+
+
+Hbase删除数据时，可从按分区顺序监控页面请求数观察进度！

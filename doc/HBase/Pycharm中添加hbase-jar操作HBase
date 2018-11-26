@@ -1,0 +1,24 @@
+参考：http://blog.csdn.net/wtljiayou/article/details/50053277
+
+1、在pycharm中，右键Run，执行test01/wechat_wordcloud.py时，找不到其中引用的类：
+    hbase.pythonconverters.ImmutableBytesWritableToStringConverter
+    hbase.pythonconverters.HBaseResultToStringConverter
+    org.apache.hadoop.hbase.mapreduce.TableInputFormat
+    org.apache.hadoop.hbase.io.ImmutableBytesWritable
+    等等。
+解决方式一（添加依赖的jar包）：
+    1）添加配置环境变量SPARK_CONF_DIR,值为: %SPARK_HOME%\conf
+    2）复制conf\spark-env.sh.template为spark-env.cmd,并编辑spark-env.cmd，内容就是如下一行：
+set SPARK_CLASSPATH=E:\PycharmProjects\test1\hbase_lib\spark_hbase-assembly-1.0.jar;E:\PycharmProjects\test1\hbase_lib\spark_hbase_2.10-1.0.jar
+
+解决方式二：
+    1）在pycharm的Terminal中，使用spark-submit.cmd提交，命令如下：
+spark-submit --jars  E:\PycharmProjects\test1\hbase_lib\spark_hbase-assembly-1.0.jar,E:\PycharmProjects\test1\hbase_lib\spark_hbase_2.10-1.0.jar "E:\PycharmProjects\test1\main\src\test01\weibo_to_HBase.py"
+
+注意：在spark-defaults.conf中或程序中设置没有用。
+
+理解：
+右键Run执行顺序,其实去调用spark-submit.cmd：
+spark-submit.cmd -> spark-submit2.cmd -> spark-class2.cmd -> %SPARK_HOME%\bin\load-spark-env.cmd
+-> spark-env.cmd
+

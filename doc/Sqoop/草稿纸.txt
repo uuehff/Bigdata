@@ -1,0 +1,446 @@
+查看表占用空间：http://blog.csdn.net/zhangzeguang88/article/details/20697321
+select CONCAT(round(sum(DATA_LENGTH/1024/1024), 2),'MB') AS data FROM `TABLES` WHERE TABLE_NAME='tb_doc';
+
+存储、清洗、分析可视化、检索、挖掘建模？
+
+1、存储到HBase，rowkey设计？docid?是唯一的吗？相对于以后爬的数据也是唯一的？爬虫代码能否直接存储Hbase,
+一次happybase连接持续多久？
+2、处理后的数据存Hbase如何检索？写分布式代码进行？如何分布式读取聚类、分类建模?
+set password for 'root'@'localhost'=password('Hhly2017.com');
+
+GRANT ALL PRIVILEGES ON *.* TO 'tzp'@'%' IDENTIFIED BY '123456' WITH GRANT OPTION;
+*82B4D20B35294D6EE599435B982EFB86DFF56751
+
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root' WITH GRANT OPTION;
+
+=============================================================
+
+mysql >>>>>  hbase: 参数--hbase-create-table会创建没有的表和列族。如果Mysql的表中有空值，则对应空值(不管其字段类型是数值或varchar)的列将不会插入Hbase.
+
+	1.默认情况下sqoop.hbase.add.row.key为false,意思是指定为rowkey的列不再作为数据插入到单元格中，可设置为true，即可作为数据插入。
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table tb_doc  \
+--hbase-table tbdoc  --hbase-row-key id  --column-family data --hbase-create-table
+
+	2.再次导入data2列族，并设置：-D sqoop.hbase.add.row.key=true，注意该参数位置要放在最前边，如下命令所示：
+sqoop import -D sqoop.hbase.add.row.key=true --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person2  \
+--hbase-table sqoop  --hbase-row-key id   --column-family data2 --hbase-create-table
+===========================================================================================================
+
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table tb_doc  \
+--hbase-table tb_doc  --hbase-row-key uuid,is_crawl,is_format  --column-family d --hbase-create-table
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --table tb_doc \
+--columns uuid,caseid,title,doc_reason,doc_oriligigation,fact_finder,court,lawlist,record_time,casedate,timeline,party_info,defendant,plaintiff,third,trial_process,trial_request,trial_reply,court_find,court_idea,judge_result,judge_chief,judge_member,history,type,reason_type,judge_type,result_type,doc_content,update_time,doc_from,reason,is_crawl,is_format \
+--hbase-table tb_doc  --hbase-row-key uuid,is_crawl,is_format  --column-family d --hbase-create-table
+
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select * from tb_doc where id <= 10 and $CONDITIONS' --target-dir /user/weiwc/tb_doc --split-by id \
+--hbase-table tb1  --hbase-row-key uuid,is_crawl,is_format  --column-family d --hbase-create-table
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --query 'select CONCAT(judge_type,type,casedate,uuid) as rowkey,caseid,title,doc_reason,doc_oriligigation from tb_doc where $CONDITIONS' --target-dir /user/weiwc/z2 --split-by casedate \
+--hbase-table z2  --hbase-row-key rowkey  --column-family d --hbase-create-table
+
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table tb_doc \
+--columns uuid,caseid,title,doc_reason,doc_oriligigation,fact_finder,court,lawlist,record_time,casedate,timeline,party_info,defendant,plaintiff,third,trial_process,trial_request,trial_reply,court_find,court_idea,judge_result,judge_chief,judge_member,history,type,reason_type,judge_type,result_type,doc_content,update_time,doc_from,reason,is_crawl,is_format \
+--hbase-table z2  --hbase-row-key judge_type,type,casedate,uuid  --column-family d --hbase-create-table
+
+3）增量导入：使用--check-column id --incremental append --last-value  5 ：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table tb_doc --check-column id --incremental append --last-value  18 \
+--columns uuid,caseid,title,doc_reason,doc_oriligigation,fact_finder,court,lawlist,record_time,casedate,timeline,party_info,defendant,plaintiff,third,trial_process,trial_request,trial_reply,court_find,court_idea,judge_result,judge_chief,judge_member,history,type,reason_type,judge_type,result_type,doc_content,update_time,doc_from,reason,is_crawl,is_format \
+--hbase-table z2  --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table
+
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select uuid,caseid,title,doc_reason,doc_oriligigation,fact_finder,court,lawlist,record_time,casedate,timeline,party_info,defendant,plaintiff,third,trial_process,trial_request,trial_reply,court_find,court_idea,judge_result,judge_chief,judge_member,history,type,update_time,doc_from,reason,is_crawl,is_format from tb_doc where id <= 1000000 and $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by casedate --hbase-table  laws_doc:judgment --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table
+
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select id,uuid,caseid,title,doc_reason,doc_oriligigation,fact_finder,court,lawlist,record_time,casedate,timeline,party_info,defendant,plaintiff,trial_process,trial_request,trial_reply,court_find,court_idea,judge_result,judge_chief,judge_member,type,reason_type,judge_type,result_type,doc_content,update_time,doc_from,reason from judgment where id <= 1000000 and $CONDITIONS' \
+-m 20 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table  laws_doc:judgment --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --query 'select uuid,caseid,title,doc_reason,doc_oriligigation,fact_finder,court,lawlist,record_time,casedate,timeline,party_info,defendant,plaintiff,trial_process,trial_request,trial_reply,court_find,court_idea,judge_result,judge_chief,judge_member,type,reason_type,judge_type,result_type,doc_content,update_time,doc_from,reason from tb_doc where id <= 100 and $CONDITIONS' \
+-m 3 --target-dir /user/weiwc/tb_doc2 --split-by id --hbase-table  z2 --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table
+
+更新导入一个history字段：（也可更新导入一个content字段，先建个处理后的表，包括type,casedate,uuid,处理后的字段）
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --query 'select uuid,casedate,type,history from tb_doc where id <= 100 and $CONDITIONS' \
+-m 3 --target-dir /user/weiwc/tb_doc2 --split-by uuid --hbase-table  z2 --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table
+
+
+注意：这里的rowkey不能使用：--hbase-row-key  tmp_raolu.type,tmp_raolu.casedate,tmp_raolu.uuid 这种写法。
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select tmp_raolu.id,tmp_raolu.type,tmp_raolu.casedate,tmp_raolu.uuid,court_new,duration,casedate_new,law_office,court_cate,reason,fact_finder,defendant_new from tmp_wxy,tmp_raolu,judgment where tmp_wxy.id=tmp_raolu.id and tmp_wxy.id=judgment.id and tmp_raolu.id <= 100000 and $CONDITIONS' \
+-m 10 --target-dir /user/weiwc/tb_doc --split-by tmp_raolu.id --hbase-table  laws_doc:office --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+按律师统计：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select tmp_raolu.id,tmp_raolu.type,tmp_raolu.casedate,tmp_raolu.uuid,court_new,duration,casedate_new,law_office,court_cate,reason,fact_finder,defendant_new from tmp_wxy,tmp_raolu,judgment where tmp_wxy.id=tmp_raolu.id and tmp_wxy.id=judgment.id and tmp_raolu.id <= 10 and $CONDITIONS' \
+-m 3 --target-dir /user/weiwc/tb_doc --split-by tmp_raolu.id --hbase-table  laws_doc:office2 --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+迁移judgment_etl到laws_doc:judgment
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select * from judgment_etl where id <= 1800000 and $CONDITIONS' \
+-m 18 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+--前180万，共1751564条
+
+judgment_etl部分字段更新：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select id,type,casedate,uuid,court_new,doc_oriligigation_new,defendant_new from judgment_etl where id <= 1800000 and $CONDITIONS' \
+-m 18 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+sqoop import -D sqoop.hbase.add.row.key=true --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select id,type,casedate,uuid from judgment_etl where id <= 1800000 and $CONDITIONS' \
+-m 18 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+新增judgment中的原始字段：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,title,doc_reason,doc_oriligigation,fact_finder,record_time,timeline,party_info,defendant,plaintiff,third,trial_process,trial_request,trial_reply,court_find,court_idea,judge_result,judge_chief,judge_member,history,reason_type,judge_type,result_type,update_time,doc_from from judgment where id <= 1800000 and $CONDITIONS' \
+-m 28 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+新增尾部footer:
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select id,type,casedate,uuid,doc_footer from tmp_footer where id <= 1800000 and $CONDITIONS' \
+-m 18 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+更新字段：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select id,type,casedate,uuid,judge_member_new,judge_chief_new,defendant_new,fact_finder_new,court_new,province from judgment_etl where id <= 1800000 and $CONDITIONS' \
+-m 18 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+更新尾部带空格的字段：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select id,type,casedate,uuid,gender,nation,edu,birth_day,native_place from judgment_etl where id <= 1800000 and $CONDITIONS' \
+-m 18 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+================================================================
+id作为rowkey,全量导入：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select * from judgment_etl where $CONDITIONS' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+线上环境：(相比线下删除的字段有（先全部导入，再用代码删除）：'d:if_adult','d:law_office','d:crime_reason','d:doc_oriligigation_new','d:defendant_new','d:plaintiff_new','d:judge_member_new')
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password HHly2017. --query 'select id,uuid,type,casedate,lawlist,lawlist_1r,court_new,record_time_new,casedate_new,duration,judge_chief_new,if_surrender,if_nosuccess,if_accumulate,age_min,age_max,fact_finder_new,punish_cate,punish_date,delay_date,if_delay,control_date,lock_date,punish_money,if_right,right_date,degree,province,city,district,court_cate,court,new_office,new_lawyer,gender,nation,edu_new,edu,suspect_num,birth_day,native_place,age_year,reason,crml_team,j_adult,new_reason,prvs,per,loc,org,time,role,crime,doc_footer from judgment_etl where $CONDITIONS' \
+-m 90 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+线上环境(导入law_rule_result2表)：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password HHly2017. --query 'select * from law_rule_result2 where $CONDITIONS' \
+-m 90 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+线上环境(更新HBase的law_rule_result2表，title_short_new,art_new,effective_range)：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password HHly2017. --query 'select id,title_short_new,art_new,effective_range from law_rule_result2 where $CONDITIONS' \
+-m 90 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+线上环境(更新HBase的law_rule_result2表，字段effective_date,effective_range的21条数据)：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password HHly2017. --query 'select id,effective_date,effective_range from 
+ where law_id in ('379593','417146','42419') and $CONDITIONS' \
+-m 1 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+
+线下环境(导入law_rule_result2表)：
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/law --username root --password HHly2017. --query 'select * from law_rule_result2 where $CONDITIONS and error = "" ' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+线下环境(导入law_rule_result2表与article表1000条具有相同law_id的数据测试)：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/law --username root --password HHly2017. --query 'select * from law_rule_result2 where $CONDITIONS and error = "" and law_id in (select law_id from law_rule_result_article where id <=1000)  ' \
+-m 10 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2_1w --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+线下环境(导入law_rule_result_article表1000条测试)：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/law --username root --password HHly2017. --query 'select * from law_rule_result_article where $CONDITIONS and id <= 1000' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result_article_1k --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+线下环境(导入law_rule_result_article表10000条测试)：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/law --username root --password HHly2017. --query 'select * from law_rule_result_article where $CONDITIONS and id <= 10000' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result_article_1w --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+导入1万条测试：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/law --username root --password HHly2017. --query 'select * from law_rule_result2 where $CONDITIONS and error = "" limit 50000' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2_test --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/law --username root --password HHly2017. --query 'select * from law_rule_result2 where $CONDITIONS' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+线下环境(更新HBase的law_rule_result2表，字段effective_date,effective_range的21条数据)：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/law --username root --password HHly2017. --query 'select id,effective_date,effective_range from law_rule_result2 where law_id in ('379593','417146','42419') and $CONDITIONS' \
+-m 1 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+线下环境(更新HBase的law_rule_result2表，字段uuids)：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/law --username root --password HHly2017. --query 'select id,uuids from law_rule_result2 where $CONDITIONS' \
+-m 1 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+线下环境(更新HBase的law_rule_result2表，字段lawlist_id,art_digit)：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/law --username root --password HHly2017. --query 'select id,lawlist_id,art_digit from law_rule_result2 where $CONDITIONS' \
+-m 3 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,per,loc,org,time,role,crime from judgment_etl where id > 1800000 and $CONDITIONS' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+judgment中的原始字段导入：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,title,doc_reason,doc_oriligigation,fact_finder,record_time,timeline,party_info,defendant,plaintiff,third,trial_process,trial_request,trial_reply,court_find,judge_chief,judge_member,history,reason_type,judge_type,result_type,update_time,doc_from from judgment where $CONDITIONS' \
+-m 28 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+judgment中的原始字段导入：删除了court_idea,judge_result，这两个字段已在tmp_wxy中清洗，且更新到judgment_etl。
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,title,doc_reason,doc_oriligigation,fact_finder,record_time,timeline,party_info,defendant,plaintiff,third,trial_process,trial_request,trial_reply,court_find,judge_chief,judge_member,history,reason_type,judge_type,result_type,update_time,doc_from from judgment where $CONDITIONS' \
+-m 28 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+线上环境：（相比线下又删了：doc_oriligigation,defendant,plaintiff,judge_member）
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password HHly2017. --query 'select id,title,doc_reason,fact_finder,record_time,timeline,party_info,third,trial_process,trial_request,trial_reply,court_find,court_idea,judge_result,judge_chief,history,reason_type,judge_type,result_type,update_time,doc_from from judgment_part where $CONDITIONS' \
+-m 90 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+2017/09/20删除：update_time，casedate，record_time
+
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,age_year,j_adult from judgment_etl where $CONDITIONS' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,per,loc,org,time,role,crime from judgment_etl where id > 1800000 and $CONDITIONS' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+更新edu_new,age_year：
+
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,edu_new,age_year from judgment_etl where $CONDITIONS' \
+-m 28 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select * from court where $CONDITIONS'  \
+-m 3 --target-dir /user/tb_doc --split-by id --hbase-table laws_doc:court --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+线下更新reason表：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,name,new_name,uid,parent from reason where $CONDITIONS' \
+-m 3 --target-dir /user/tb_doc --split-by id --hbase-table  laws_doc:reason --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+线下环境，uuid为rowkey,导入judgment_etl表：
+表结构：create 'laws_doc:judgment_new',{NAME => 'd',REPLICATION_SCOPE => 1},
+		SPLITS => ['1f','3f','59','7f','9f','bf','df']
+
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root \
+--query 'select * from judgment_etl where $CONDITIONS' \
+-m 28 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_new --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+judgment中的原始字段导入：删除了court_idea,judge_result，这两个字段已在tmp_wxy中清洗，且更新到judgment_etl。
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,uuid,title,doc_reason,doc_oriligigation,fact_finder,record_time,timeline,party_info,defendant,plaintiff,third,trial_process,trial_request,trial_reply,court_find,judge_chief,judge_member,history,reason_type,judge_type,result_type,update_time,doc_from from judgment where $CONDITIONS' \
+-m 28 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_new --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+线下导入reason表：
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select name,full_name,uid,pid from reason where $CONDITIONS' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by uid --hbase-table laws_doc:reason --hbase-row-key uid  --column-family d --hbase-create-table --hbase-bulkload
+
+线下导入court表：
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select name,province,city,pid,uid from court where $CONDITIONS' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by uid --hbase-table laws_doc:court --hbase-row-key uid  --column-family d --hbase-create-table --hbase-bulkload
+
+=============================================================
+
+judgment中的原始字段导入：删除了court_idea,judge_result，这两个字段已在tmp_wxy中清洗，且更新到judgment_etl。
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,title,doc_reason,doc_oriligigation,fact_finder,record_time,timeline,party_info,defendant,plaintiff,third,trial_process,trial_request,trial_reply,court_find,judge_chief,judge_member,history,reason_type,judge_type,result_type,update_time,doc_from from judgment where $CONDITIONS' \
+-m 28 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/laws_doc --username root --password root --query 'select id,type,casedate,uuid,gender,nation,edu,birth_day,native_place from judgment_etl where id <= 1800000 and $CONDITIONS' \
+-m 18 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment --hbase-row-key type,casedate,uuid  --column-family d --hbase-create-table --hbase-bulkload
+================================================================
+================================================================
+================================================================
+================================================================
+干净的数据整理后：（汇总一审二审到一个judgment_all表，
+其中一审judgment_main_etl表type全为1，二审judgment2_main_etl表中type全为2）
+
+一审：
+线下导入judgment_main_etl表：
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select * from judgment_main_etl where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+线下导入judgment_visualization_v2表：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select * from judgment_visualization_v2 where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+线下导入judgment_part_v2表：(要加上is_format=1,才和judgment_main_etl的uuid完全一致,这里就不需要再添加sqoop.hbase.add.row.key=true了)
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select * from judgment_part_v2 where $CONDITIONS ' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+更新degree字段：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,uuid,degree from judgment_visualization_v2 where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+========================
+测试用：
+
+线下导入judgment_main_etl中1w条进行测试：
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select * from judgment_main_etl where $CONDITIONS and id < 10000' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_1w --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+线下导入judgment_part_v2表1w条：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,uuid,caseid,result_type,title,party_info,trial_process,court_find,judge_type from judgment where $CONDITIONS and id < 10000' \
+-m 90 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_1w --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+更新：province,city,court_cate
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,uuid,province,city,court_cate from judgment_main_etl where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+
+
+
+==============
+二审：
+线下导入judgment2_main_etl表：
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave1:3306/laws_doc2 --username root --password root --query 'select * from judgment2_main_etl where $CONDITIONS' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+导入1w条进行测试：
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave1:3306/laws_doc2 --username root --password root --query 'select * from judgment2_main_etl where $CONDITIONS and id < 10000 ' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_1w --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+导入judgment2_visualization_v2:
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc2 --username root --password root --query 'select * from judgment2_visualization_v2 where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+更新degree字段：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc2 --username root --password root --query 'select id,uuid,degree from judgment2_visualization_v2 where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+
+更新degree字段：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,uuid,degree from judgment_visualization_v2 where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+
+更新：history_title,plt_claim,dft_rep,crs_exm 
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc2 --username root --password root --query 'select id,uuid,history_title,plt_claim,dft_rep,crs_exm from judgment2_main_etl where $CONDITIONS' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+更新：province,city,court_cate
+
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc2 --username root --password root --query 'select id,uuid,province,city,court_cate from judgment2_main_etl where $CONDITIONS' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+线下导入judgment2表：(要加上is_format=1,才和judgment2_main_etl的uuid完全一致)
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/laws_doc2 --username root --password root --query 'select id,uuid,caseid,result_type,title,party_info,trial_process,court_find,judge_type from judgment2 where $CONDITIONS and is_format = 1' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+导入1w条进行测试：
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/laws_doc2 --username root --password root --query 'select id,uuid,caseid,result_type,title,party_info,trial_process,court_find,judge_type from judgment2 where $CONDITIONS and is_format = 1 and id < 10000 ' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_1w --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+============================================
+============================================
+导入民法1万条测试：
+============================================
+sqoop import -D sqoop.hbase.add.row.key=true --connect jdbc:mysql://cdh-slave2:3306/civil --username root --password HHly2017. --query 'select id,uuid,caseid,result_type,title,party_info,trial_process,court_find,judge_type from judgment where $CONDITIONS and is_format=1 and judge_type = "判决" and id <= 10000 ' -m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:civil_test --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave2:3306/civil --username root --password HHly2017. --query 'select * from tmp_wxy where $CONDITIONS and  id <= 10000' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:civil_test --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave2:3306/civil --username root --password HHly2017. --query 'select * from tmp_hzj where $CONDITIONS and  id <= 10000' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:civil_test --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+=================================================
+导入民法，清洗并汇总后的56万条： 
+sqoop import -D sqoop.hbase.add.row.key=true --connect jdbc:mysql://cdh-slave2:3306/civil --username root --password HHly2017. \
+--query 'select * from judgment_civil_56w where $CONDITIONS ' \
+-m 20 --target-dir /user/weiwc/tb_doc --split-by id \
+--hbase-table laws_doc:judgment_civil_56w --hbase-row-key uuid \
+--column-family d --hbase-create-table --hbase-bulkload 
+
+线下导入民法，清洗并汇总后的1万条,测试：
+sqoop import -D sqoop.hbase.add.row.key=true --connect jdbc:mysql://cdh-slave2:3306/civil --username root --password HHly2017. \
+--query 'select * from judgment_civil_56w where $CONDITIONS and id < 10000 ' \
+-m 20 --target-dir /user/weiwc/tb_doc --split-by id \
+--hbase-table laws_doc:judgment_civil_1w --hbase-row-key uuid \
+--column-family d --hbase-create-table --hbase-bulkload 
+
+==================================================================================================
+ 
+线上导入刑法一审：
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave1:3306/laws_doc_v2 --username weiwc --password HHly2017. --query 'select * from judgment_main_etl where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/laws_doc_v2 --username weiwc --password HHly2017. --query 'select * from judgment_part_v2 where $CONDITIONS' \
+-m 90 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+线上导入刑法二审：
+
+	线上导入judgment2_main_etl表：
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave1:3306/laws_doc_v2 --username weiwc --password HHly2017. --query 'select * from judgment2_main_etl where $CONDITIONS' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+	线上导入judgment2表：(要加上is_format=1,才和judgment2_main_etl的uuid完全一致)
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/laws_doc_v2 --username weiwc --password HHly2017. --query 'select id,uuid,caseid,result_type,title,party_info,trial_process,court_find,judge_type from judgment2 where $CONDITIONS and is_format = 1' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+
+
+线上导入民法：
+sqoop import -D sqoop.hbase.add.row.key=true  --connect jdbc:mysql://cdh-slave1:3306/civil --username weiwc --password HHly2017. --query 'select * from judgment_civil_all where $CONDITIONS' \
+-m 120 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_civil_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+==========================
+线上导入law_rule_result2,reason,court：
+
+law_rule_result2:
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/civil --username weiwc --password HHly2017. --query 'select * from law_rule_result2 where $CONDITIONS and error is null ' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+reason:
+sqoop import  -D sqoop.hbase.add.row.key=true --connect jdbc:mysql://cdh-slave1:3306/civil --username weiwc --password HHly2017. --query 'select name,full_name,uid,pid from reason where $CONDITIONS ' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by uid --hbase-table laws_doc:reason --hbase-row-key uid  --column-family d --hbase-create-table --hbase-bulkload
+
+court：
+sqoop import -D sqoop.hbase.add.row.key=true --connect jdbc:mysql://cdh-slave1:3306/civil --username weiwc --password HHly2017. --query 'select name,province,city,pid,uid from court where $CONDITIONS ' \
+-m 1 --target-dir /user/weiwc/tb_doc --split-by uid --hbase-table laws_doc:court --hbase-row-key uid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/civil --username weiwc --password HHly2017. --query 'select * from law_rule_result2 where $CONDITIONS and error is null ' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:law_rule_result2 --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+================================================
+线下导入可视化数据：judgment_visualization是一审所有可视化字段，由于judgment_main_etl中已经
+导入了部分可视化字段，因此，只需导入judgment_visualization中剩余的部分字段即可。
+
+judgment_main_etl中未包含的可视化字段有：
+edu,nation,gender,punish_money,punish_date,delay_date,punish_cate,new_lawyer,new_office,judge
+
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,uuid,edu,nation,gender,punish_money,punish_date,delay_date,punish_cate,new_lawyer,new_office,judge from judgment_visualization where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+线下导入1w条进行测试：
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,uuid,edu,nation,gender,punish_money,punish_date,delay_date,punish_cate,new_lawyer,new_office,judge from judgment_visualization where $CONDITIONS and id < 10000 ' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_1w --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+线上导入可视化数据：
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/laws_doc_v2 --username weiwc --password HHly2017. --query 'select id,uuid,edu,nation,gender,punish_money,punish_date,delay_date,punish_cate,new_lawyer,new_office,judge from judgment_visualization where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+=========================2017-12-27
+线下导入可视化：plaintiff_id,defendant_id,lawyer_id
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select id,uuid,plaintiff_id,defendant_id,lawyer_id from party_info_result_ids where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+
+
+线上导入可视化：plaintiff_id,defendant_id,lawyer_id
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/laws_doc_v2 --username weiwc --password HHly2017. --query 'select id,uuid,plaintiff_id,defendant_id,lawyer_id from party_info_result_ids where $CONDITIONS' \
+-m 30 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:judgment_all --hbase-row-key uuid  --column-family d --hbase-create-table --hbase-bulkload
+====================
+线下导入可视化：lawyer表
+sqoop import --connect jdbc:mysql://cdh-slave1:3306/laws_doc --username root --password root --query 'select * from lawyer where $CONDITIONS' \
+-m 3 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:lawyer --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+线上导入可视化：lawyer表
+sqoop import  --connect jdbc:mysql://cdh-slave1:3306/laws_doc_v2 --username weiwc --password HHly2017. --query 'select * from lawyer where $CONDITIONS' \
+-m 3 --target-dir /user/weiwc/tb_doc --split-by id --hbase-table laws_doc:lawyer --hbase-row-key id  --column-family d --hbase-create-table --hbase-bulkload
+
+
+doc_id 占用36个字节
+
+[u'一',u'二',u'三',u'四',u'五',u'六',u'七',u'八',u'九',u'十',u'百',u'千',u'第',u'条']
+[u'\u4e00', u'\u4e8c', u'\u4e09', u'\u56db', u'\u4e94', u'\u516d', u'\u4e03', u'\u516b', u'\u4e5d', u'\u5341', u'\u767e', u'\u5343', u'\u7b2c', u'\u6761']

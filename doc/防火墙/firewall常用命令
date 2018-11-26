@@ -1,0 +1,35 @@
+x参考：http://blog.csdn.net/gbenson/article/details/50056713
+
+指定IP、访问端口，添加到防火墙：
+firewall-cmd --permanent --add-rich-rule="rule family="ipv4" source address="192.168.142.166" port protocol="tcp" port="6379" accept"
+重启生效：systemctl restart firewalld.service
+
+firewall-cmd --permanent --add-rich-rule="rule family="ipv4" source address="10.133.22.35" port protocol="tcp" port="3306" accept"
+firewall-cmd --permanent --add-rich-rule="rule family="ipv4" source address="10.37.61.203" port protocol="tcp" port="3306" accept"
+
+或修改：
+
+
+删除规则：
+firewall-cmd --permanent --remove-rich-rule="rule family="ipv4" source address="10.37.61.203" port protocol="tcp" port="3306" accept"
+firewall-cmd --permanent --remove-rich-rule="rule family="ipv4" source address="10.133.22.35" port protocol="tcp" port="3306" accept"
+
+firewall-cmd --permanent --remove-rich-rule="rule family="ipv4" source address="10.133.22.35" accept"
+重启生效：systemctl restart firewalld.service
+====================================
+
+firewall-cmd --zone=public --add-port=8080/tcp  --permanent
+firewall-cmd --reload
+
+firewall-cmd --list-ports
+firewall-cmd --zone=public --list-all
+firewall-cmd --list-all
+firewall-cmd --reload             # 更新规则，不重启服务
+--permanent   #永久生效，没有此参数重启后失效
+
+
+systemctl list-units| grep firewalld       #从已启动的服务中查找
+systemctl list-unit-files| grep firewalld   #从所有服务中查找，可查看服务是否自启动
+
+
+firewall-cmd --permanent --add-rich-rule="rule family="ipv4" accept"

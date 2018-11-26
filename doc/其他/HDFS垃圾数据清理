@@ -1,0 +1,21 @@
+hbase表据清理：
+
+disable '表'
+drop '表'
+这样会先把表的数据移到/hbase/archive中，过一会儿系统会再删除，（或者过大时手动删除），df -f 可以看到磁盘已腾出空间！
+
+
+du -h --max-depth=1 /
+hadoop fs -du -h /
+
+
+1��HDFS�ϣ�/user/spark/applicationHistoryĿ¼�»���spark�������еĹ������ݣ��趨ʱ����
+�л���hdfs�û���
+    1.hadoop fs -chmod 755 -R /user/hdfs
+    2.hadoop fs -rm -f -R /user/spark/applicationHistory/* �Ὣ�����Ƶ���/user/hdfs/.Trash/Current/user/spark/applicationHistory
+�����ٴΣ�hadoop fs -rm -f -R /user/hdfs/.Trash/Current/user/spark/applicationHistory/*
+
+2�����أ�/yarn/nm/usercache/weiwc/filecache/Ŀ¼������mr������ļ����棬�趨ʱ����
+
+ɾ��HDFS�ϵ�30G�����ݺ󣬾Ϳɽ�ʡ��Ⱥ90G����������30G������������
+

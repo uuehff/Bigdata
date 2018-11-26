@@ -1,0 +1,281 @@
+---Hive内建函数：http://blog.csdn.net/sunlei1980/article/details/46602425
+
+---参考：http://blog.csdn.net/fly_time2012/article/details/50885442
+-------Impala不支持多表插入语句、不支持静态分区表load语句（支持insert,select）、不支持动态分区表create、load、insert（支持select）语句。
+------多种存储格式可以选择（Parquet,Text, Avro, RCFile, SequeenceFile）
+--INVALIDATE METADATA;  刷新元信息
+--根据数据位置，创建外表。比如/user/weiwc/salaries中有salaries.txt文件，可创建外表指定：LOCATION '/user/weiwc/salaries/'，则salaries
+---中即可查到数据。
+
+--impala创建内、外表，删除同Hive一样，内表删除表和数据，外表只删表
+
+CREATE TABLE customer (
+customerID INT,
+firstName STRING, 
+lastName STRING, 
+birthday TIMESTAMP)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+--impala不能从本地加载文件，只能从HDFS导入
+LOAD DATA  INPATH '/user/weiwc/data/hive/customer.txt' OVERWRITE  INTO TABLE  customer;
+
+
+CREATE EXTERNAL TABLE salaries (
+gender string,
+age int,
+salary double,
+zip int)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION '/user/weiwc/salaries/';
+
+LOAD DATA  INPATH '/user/weiwc/data/hive/salaries.txt' OVERWRITE  INTO TABLE  salaries;
+
+--========================================
+----------静态分区表
+CREATE TABLE employees (
+id int, 
+name string, 
+salary double)
+PARTITIONED BY (dept string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+--注意以下语句不能在Impala中使用LOAD直接导入数据，需在Hive中执行；
+----LOAD DATA  INPATH '/user/weiwc/data/hive/employees.txt' OVERWRITE  INTO TABLE  employees PARTITION (dept='CE');
+-------外表LOCATION '/data/out_table';
+
+CREATE TABLE employees2 (
+id int,
+name string,
+salary double)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+LOAD DATA  INPATH '/user/weiwc/data/hive/employees.txt' OVERWRITE  INTO TABLE  employees2 ;
+
+---插入数据方式
+---INTO和OVERWRITE一样,都是追加。插入时select后的字段要与要插入的表字段个数对应相等，不能少。
+INSERT INTO	 TABLE employees PARTITION (dept='CB') SELECT id,name,1 FROM employees2 WHERE id > 5 ;
+INSERT OVERWRITE TABLE employees PARTITION (dept='CD') SELECT id,name,salary FROM employees2 WHERE id > 6;
+
+================================================
+-----从已有表创建新表
+
+CREATE TABLE stu (
+id int,
+name string,
+score double,
+classes string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+LOAD DATA  INPATH '/user/weiwc/data/hive/students.txt' OVERWRITE INTO TABLE stu;
+
+CREATE TABLE stucopy AS SELECT id,name,score FROM stu where id > 10 and score > 80;
+----======================================================
+----Impala和HBase整合 ：http://shiyanjun.cn/archives/526.html
+1、在hbase中创建表t6,:create 't6',{COLUMNS => 'info', VERSIONS => 3}
+2、假设info下面有字段：'id','name','salary'
+3、导入数据employees.txt使用：SparkReadSaveHBase.py
+
+4、在Hive中（不能在Impala中）创建表与HBase表映射：
+--注意：SparkReadSaveHBase.py存储时，使用了id作为rowkey。
+
+CREATE EXTERNAL TABLE employees_hbase (
+rowkey string,
+id int,
+name string, 
+salary double)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.hbase.HBaseSerDe'
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key, info:id, info:name, info:salary")
+TBLPROPERTIES("hbase.table.name" = "t6");
+
+在impala-shell：select substr(name,2,1),count(*) from employees_hbase group by substr(name,2,1);
+
+--注意rowkey的类型、字段的类型，hive中字段的类型，要与hbase中的数据保持一致，一旦HIve创建表后，hbase中插入的
+--数据要遵循HIve中对应的类型，否则在Hive中查询时会无法进行类型转换，为NULL，但在Hbase中可以正常查询！
+---入库之前的数据格式为一个元组：（rowkey,[rowkey,cf,column,value]），其中列表中的rowkey,是真正的rowkey值，对应id;
+
+--可以通过Hive向HBase中插入数据：Hive中使用如下命令：
+INSERT INTO TABLE employees_hbase SELECT id,name,salary FROM employees WHERE id > 5 ;
+====================================================
+--将public_sentiment中的贴吧数据映射到Hbase！
+---贴吧属性：tie_title，tieba_name，user_name，tie_time，tie_content
+
+--Hive中创建表：
+CREATE EXTERNAL TABLE tieba (
+rowkey string,
+tie_title string,
+tieba_name string, 
+user_name string,
+tie_time string,
+tie_content string)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.hbase.HBaseSerDe'
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key, d:tie_title, d:tieba_name, d:user_name, d:tie_time, d:tie_content")
+TBLPROPERTIES("hbase.table.name" = "public_sentiment");
+
+--在Hive或Impala中执行命令：
+select count(*) from tieba where rowkey like  '嫘祖杯050000%';      --结果与happybase一致
+
+--注意：可将Hbase中的public_sentiment表映射成几个字表：微信、微博、贴吧、新闻，进而再进行分析！
+
+===================================================
+--Hive中创建表，映射laws_doc:judgment
+CREATE EXTERNAL TABLE lawsdoc_judgment (
+rowkey string,
+id int,
+uuid string,
+caseid string,
+title string,
+doc_reason string,
+doc_oriligigation string,
+fact_finder string,
+court string,
+lawlist string,
+record_time string,
+casedate string,
+timeline string,
+party_info string,
+defendant string,
+plaintiff string,
+trial_process string,
+trial_request string,
+trial_reply string,
+court_find string,
+court_idea string,
+judge_result string,
+judge_chief string,
+judge_member string,
+type string,
+reason_type string,
+judge_type string,
+result_type string,
+doc_content string,
+update_time string,
+doc_from string,
+reason string,
+third string,
+history string
+)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.hbase.HBaseSerDe'
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key, d:id, d:uuid, d:caseid, d:title, d:doc_reason, d:doc_oriligigation, d:fact_finder, d:court, d:lawlist, d:record_time, d:casedate, d:timeline, d:party_info, d:defendant, d:plaintiff, d:trial_process, d:trial_request, d:trial_reply, d:court_find, d:court_idea, d:judge_result, d:judge_chief, d:judge_member, d:type, d:reason_type, d:judge_type, d:result_type, d:doc_content, d:update_time, d:doc_from, d:reason, d:third, d:history")
+TBLPROPERTIES("hbase.table.name" = "laws_doc:judgment");
+
+映射表不包含的字段有：is_crawl,is_format
+映射表有但其实Hbase中没有的字段：third,history，在impala中查询时，为NULL，使用条件is null或is not null查询！
+
+没有值或不需要的字段：id,third,history,reason_type,judge_type,result_type,doc_content,is_crawl,is_format
+
+===============================================================================================================
+    id            | int(11)      | NO   |     | NULL      |       |
+| uuid          | varchar(100) | YES  |     | NULL      |       |
+| doc_footer    | text         | YES  |     | NULL      |       |
+| court_idea    | mediumtext   | YES  |     | NULL      |       |
+| judge_result  | mediumtext   | YES  |     | NULL      |       |
+| court         | varchar(100) | YES  |     | NULL      |       |
+| casedate      | varchar(100) | YES  |     | NULL      |       |
+| org_plaintiff | text         | YES  |     | NULL      |       |
+| org_defendant | text         | YES  |     | NULL      |       |
+| dispute       | text         | YES  |     | NULL      |       |
+| update_flag   | varchar(2)   | YES  |     | NULL      |       |
+| court_uid     | varchar(255) | YES  |     | NULL      |       |
+| reason_uid    | varchar(255) | YES  |     | NULL      |       |
+| law_id        | text         | YES  |     | NULL      |       |
+| reason        | varchar(255) | YES  |     | NULL      |       |
+| history       | text         | YES  |     | NULL      |       |
+| type          | varchar(2)   | YES  |     | NULL      |       |
+| lawlist       | text         | YES  |     | NULL      |       |
+| history_title | text         | YES  |     | NULL      |       |
+| province      | varchar(255) | YES  |     | NULL      |       |
+| city          | varchar(255) | YES  |     | NULL      |       |
+| court_cate    | varchar(10)  | YES  |     | NULL      |       |
+| plt_claim     | mediumtext   | YES  |     | NULL      |       |
+| dft_rep       | mediumtext   | YES  |     | NULL      |       |
+| crs_exm       | mediumtext   | YES  |     | NULL      |       |
+| caseid        | varchar(80)  | NO   |     | NULL      |       |
+| result_type   | varchar(255) | YES  |     |           |       |
+| title         | varchar(220) | NO   |     | NULL      |       |
+| party_info    | text         | YES  |     | NULL      |       |
+| trial_process | mediumtext   | YES  |     | NULL      |       |
+| court_find    | mediumtext   | YES  |     | NULL      |       |
+| judge_type    | varchar(255) | YES
+
+reason,history，type，lawlist，history_title，province，city，，court_cate，plt_claim，dft_rep，crs_exm，caseid，result_type，title，party_info，trial_process
+
+--Hive中创建表，映射laws_doc:judgment_civil_all
+CREATE EXTERNAL TABLE judgment_civil_all (
+rowkey string,
+id int,
+uuid string,
+doc_footer string,
+court_idea string,
+judge_result string,
+court string,
+casedate string,
+org_plaintiff string,
+org_defendant string,
+dispute string,
+update_flag string,
+court_uid string,
+reason_uid string,
+law_id string,
+reason string,
+history string,
+type string,
+lawlist string,
+history_title string,
+province string,
+city string,
+court_cate string,
+plt_claim string,
+dft_rep string,
+crs_exm string,
+caseid string,
+result_type string,
+title string,
+party_info string,
+trial_process string,
+court_find string,
+judge_type string
+)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.hbase.HBaseSerDe'
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key, d:id, d:uuid, d:doc_footer, d:court_idea, d:judge_result, d:court, d:casedate, d:org_plaiff, d:org_defendant, d:dispute, d:update_flag, d:court_uid, d:reason_uid, d:law_id, d:reason, d:history, d:type, d:lawlist, d:history_title, d:province, d:city, d:court_cate, d:plt_claim, d:dft_rep, d:crs_exm, d:caseid, d:result_type, d:title, d:party_info, d:trial_process, d:court_find, d:judge_type")
+TBLPROPERTIES("hbase.table.name" = "laws_doc:judgment_civil_all");
+
+
+
+
+
+id
+uuid
+doc_footer
+court_idea
+judge_result
+court
+casedate
+org_plaiff
+org_defendant
+dispute
+update_flag
+court_uid
+reason_uid
+law_id
+reason
+history
+type
+lawlist
+history_title
+province
+city
+court_cate
+plt_claim
+dft_rep
+crs_exm
+caseid
+result_type
+title
+party_info
+trial_process
+court_find
+judge_type

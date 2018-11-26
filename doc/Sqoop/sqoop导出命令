@@ -1,0 +1,261 @@
+注意：使用CDH中的Sqoop1导出数据，无需开启Sqoop2服务，sqoop1就使用sqoop命令，没有服务！
+
+=============================================================================
+Sqoop1.4.6官方文档：http://sqoop.apache.org/docs/1.4.6/SqoopUserGuide.html
+
+sqoop-help
+sqoop import --connect jdbc:mysql://cdh-slave2/db --help
+sqoop export --connect jdbc:mysql://cdh-slave2/db --help
+
+
+sqoop-list-databases --connect jdbc:mysql://cdh-slave2:3306/ --username root --password root
+sqoop-list-tables --connect jdbc:mysql://cdh-slave2:3306/hive --username root --password root
+将关系型数据的表结构复制到hive中
+sqoop create-hive-table --connect jdbc:mysql://cdh-slave2:3306/hive --username root --password root --table TBLS --hive-database t1 --hive-table tbls
+
+mysql >>>>>  hive:(不用提前创建hive中对应的表，导入后表字段类型与mysql一致)
+1）默认数据库及表名
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/hive --username root --password root --table TBLS --hive-import
+2）指定数据库、表名、指定列(列是mysql表中的列)
+	1. 数据库、表名、指定列
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/hive --username root --password root --table TBLS --columns TBL_ID,CREATE_TIME,DB_ID --hive-database t1 --hive-table tbls2 --hive-import
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person --columns id,name,age,address --hive-database weiwc_sqoop --hive-table tbls2 --hive-import
+	2. 使用--direct直接连接关系型数据库进行优化：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person --columns id,name,age,address \
+--hive-database weiwc_sqoop --hive-table tbls_direct --hive-import --direct
+
+	3. mysql中的空值导入到hive中：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person  --hive-database weiwc_sqoop --hive-table tbls3 --hive-import
+
+注意：如果Hive中有空值的话，在Impala中进行查询分析时，会出现类型转换的错误！
+总结：1.	Mysql中的数据类型为varchar，为空值的话，导入Hive后：对应的是字符串null（在HDFS界面看到的是null字符串），查询类似使用如下：
+	select count(*) from tbls3 where address = "null";
+	2.	Mysql中的数据类型为数值型（bigint,int,float,double）为空值的话，导入Hive后：对应的是NULL（在HDFS界面看到的也是null字符串），查询类似使用如下：
+	select count(*) from tbls3 where age is null;
+	select count(*) from tbls3 where gender is null;
+	select count(*) from tbls3 where salary is null;
+说明：--null-string '\\N' --null-non-string '\\N'
+	import时，指定\N代替mysql/oracle中的NULL存储到HDFS中（因为hive中的NULL在HDFS上就是\N,因此MYsql中哪些数据是空值与hive中判断要保持一致（不能有的：is null 有的：=="null"），
+以免hive表通过运算，出现既有null代表空也有\N代表空的情况，这样导出时就无法统一指定为只有\N是NULL），默认数值或varchar都使用字符串'null'代替，在HDFS上可看到，但查询出来的是：数值是NULL，
+因此查询出来的是NULL的话，HDFS上可能有多种情况：比如，\N，null,原始数据load时的空值（什么都没有）查询出来也会是NULL！
+
+3）增量导入：使用--check-column id --incremental append --last-value  5 ：
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person2 --check-column id --incremental append --last-value  5  --null-non-string '\\N' --null-string '\\N' --hive-database weiwc_sqoop --hive-table person2 --hive-import
+
+4）--query等同于--table、--columns、--where三个参数：
+	官网示例：--query 'SELECT a.*, b.* FROM a JOIN b on (a.id == b.id) WHERE $CONDITIONS'  -m 1 --target-dir /user/foo/joinresults
+
+	1.使用--query导出到Hive:必须有--target-dir，--split-by，其中--query中的select中必须有$CONDITIONS'条件，导出到hive时--target-dir，指定的目录会创建但没有用（但必须指定），数据还是会导入指定的Hive表、及对应路径中。
+使用了--query就不能同时指定参数：--table、--columns、--where。
+
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --query 'select id,age,salary,address from person2 where id > 5 and $CONDITIONS' --target-dir /user/weiwc/sqoop --split-by id --null-non-string '\\N' --null-string '\\N' \
+--hive-database weiwc_sqoop --hive-table person3 --hive-import
+
+	2.使用--query导出到HDFS: 此时不再指定hive相关的参数，数据会导入--target-dir /user/weiwc/sqoop目录，以，分割。
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --query 'select id,age,salary,address from person2 where id > 5 and $CONDITIONS' --target-dir /user/weiwc/sqoop --split-by id --null-non-string '\\N' --null-string '\\N'
+
+5）追加导入到HDFS（不支持导入到Hive）：--append，新的数据会生成新的几个文件存放在共同目录下,不支持导入到Hive，只支持导入到HDFS。
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person2 --target-dir /user/weiwc/sqoop  --null-non-string '\\N' --null-string '\\N' --append
+
+6）导入到Hive指定分区：参数--hive-partition-key  country --hive-partition-value  china
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person2 --null-non-string '\\N' --null-string '\\N' \
+--hive-database weiwc_sqoop --hive-table person_china --hive-partition-key  country --hive-partition-value  china --hive-import
+=============================================================================================================
+mysql >>>>>  hbase: 参数--hbase-create-table会创建没有的表和列族。如果Mysql的表中有空值，则对应空值(不管其字段类型是数值或varchar)的列将不会插入Hbase.
+
+	1.默认情况下sqoop.hbase.add.row.key为false,意思是指定为rowkey的列不再作为数据插入到单元格中，可设置为true，即可作为数据插入。
+sqoop import --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person2  \
+--hbase-table sqoop  --hbase-row-key id  --column-family data --hbase-create-table
+
+	2.再次导入data2列族，并设置：-D sqoop.hbase.add.row.key=true，注意该参数位置要放在最前边，如下命令所示：
+sqoop import -D sqoop.hbase.add.row.key=true --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person2  \
+--hbase-table sqoop  --hbase-row-key id   --column-family data2 --hbase-create-table
+
+================
+hive >>>>mysql:
+将hive中的表数据导入到mysql中注意的几点:
+1、需提前创建表e1,e2,e3,e4，表字段及其类型必须与hive一致。
+2、hive中分隔符问题：1. 直接load导入的数据，以文本数据即建表时指定的分隔符为准。2.由任务产生的表（类似create as ），为Hive默认分隔符：'\001',总之以HDFS上看到的真实数据分隔符为准！
+
+1)数据分隔符：'\t'和'\001'
+sqoop export --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table e1  --export-dir /user/hive/warehouse/weiwc.db/emp --input-fields-terminated-by '\t' ;
+sqoop export --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table e2  --export-dir /user/hive/warehouse/weiwc.db/emp_as --input-fields-terminated-by '\001' ;
+2)指定列导出：(--columns grade2,losal2,这里的列名指的是mysql表中的列名，而非hive)：
+sqoop export --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table e3 --columns id2,name2,salary2 --export-dir /user/hive/warehouse/weiwc.db/emp_as --input-fields-terminated-by '\001' ;
+--columns id2,name2,salary2这里的字段，是HDFS文件分割后的映射字段。如果指定--columns id2,salary2，则导出的结果其实为：hive中的前两个字段
+映射到mysql中的第一和第三个字段。
+3）Hive中的空值导出到Mysql,此时Hive表中的NULL值其实为\N（import时做过转换）,将hive表person2导出到Mysql的person3中：
+sqoop export --connect jdbc:mysql://cdh-slave2:3306/test --username root --password root --table person3 --export-dir /user/hive/warehouse/weiwc_sqoop.db/person2 --input-fields-terminated-by '\001' --input-null-string '\\N' --input-null-non-string '\\N' ;
+
+--input-null-string '\\N' --input-null-non-string '\\N'
+说明：这两个参数意思是：当export数据时，当值为\N时就认为是NULL，将其作为NULL存储到mysql/oracle中，默认是把值为'null'当作NULL，因此当import
+数据时把Mysql中的空（string列和非string列），使用--null-string '\\N' --null-non-string '\\N'进行存储为'\N',因此当导出时就把值为'\N'认为是空。
+
+==============================================================
+
+export时：--columns a1,a2  将hive中的数据切割，按切割后的字段顺序，匹配--columns指定的字段导入数据。比如：
+mysql:a1,a2,a3,a4,a5,a6    hive:a1,a2,a3,a4,a5,a6
+指定--columns a1,a4 导出时，值对应关系为mysql:a1,a4 ——> a1,a2。
+
+import时：--columns a1,a2  hive中只对应的a1,a2列及值。a1,a2在mysql表中可能不挨着！
+import时，可以指定 --where,--query 参数！
+
+--query 'SELECT a.*, b.* FROM a JOIN b on (a.id == b.id) WHERE $CONDITIONS'等价于：
+--columns  和 --where 参数！
+
+sqoop import   --query 'SELECT a.*, b.* FROM a JOIN b on (a.id == b.id) WHERE $CONDITIONS' \
+  -m 1 --target-dir /user/foo/joinresults
+============================================================================================
+
+
+sqoop                    sqoop-eval               sqoop-import-all-tables  sqoop-list-tables
+sqoop.cmd                sqoop-export             sqoop-import-mainframe   sqoop-merge
+sqoop-codegen            sqoop-help               sqoop-job                sqoop-metastore
+sqoop-create-hive-table  sqoop-import             sqoop-list-databases     sqoop-version
+
+usage: sqoop COMMAND [ARGS]
+Available commands:
+  codegen            Generate code to interact with database records
+  create-hive-table  Import a table definition into Hive
+  eval               Evaluate a SQL statement and display the results
+  export             Export an HDFS directory to a database table
+  help               List available commands
+  import             Import a table from a database to HDFS
+  import-all-tables  Import tables from a database to HDFS
+  import-mainframe   Import datasets from a mainframe server to HDFS
+  job                Work with saved jobs
+  list-databases     List available databases on a server
+  list-tables        List available tables in a database
+  merge              Merge results of incremental imports
+  metastore          Run a standalone Sqoop metastore
+  version            Display version information
+
+Common arguments:
+   --connect <jdbc-uri>                         Specify JDBC connect
+                                                string
+   --connection-manager <class-name>            Specify connection manager
+                                                class name
+   --connection-param-file <properties-file>    Specify connection
+                                                parameters file
+   --driver <class-name>                        Manually specify JDBC
+                                                driver class to use
+   --hadoop-home <hdir>                         Override
+                                                $HADOOP_MAPRED_HOME_ARG
+   --hadoop-mapred-home <dir>                   Override
+                                                $HADOOP_MAPRED_HOME_ARG
+   --help                                       Print usage instructions
+-P                                              Read password from console
+   --password <password>                        Set authentication
+                                                password
+   --password-alias <password-alias>            Credential provider
+                                                password alias
+   --password-file <password-file>              Set authentication
+                                                password file path
+   --relaxed-isolation                          Use read-uncommitted
+                                                isolation for imports
+   --skip-dist-cache                            Skip copying jars to
+                                                distributed cache
+   --username <username>                        Set authentication
+                                                username
+   --verbose                                    Print more information
+                                                while working
+Argument	Description
+--append	Append data to an existing dataset in HDFS
+--as-avrodatafile	Imports data to Avro Data Files
+--as-sequencefile	Imports data to SequenceFiles
+--as-textfile	Imports data as plain text (default)
+--as-parquetfile	Imports data to Parquet Files
+--boundary-query <statement>	Boundary query to use for creating splits
+--columns <col,col,col…>	Columns to import from table
+--delete-target-dir	Delete the import target directory if it exists
+--direct	Use direct connector if exists for the database
+--fetch-size <n>	Number of entries to read from database at once.
+--inline-lob-limit <n>	Set the maximum size for an inline LOB
+-m,--num-mappers <n>	Use n map tasks to import in parallel
+-e,--query <statement>	Import the results of statement.
+--split-by <column-name>	Column of the table used to split work units. Cannot be used with --autoreset-to-one-mapper option.
+--autoreset-to-one-mapper	Import should use one mapper if a table has no primary key and no split-by column is provided. Cannot be used with --split-by <col> option.
+--table <table-name>	Table to read
+--target-dir <dir>	HDFS destination dir
+--warehouse-dir <dir>	HDFS parent for table destination
+--where <where clause>	WHERE clause to use during import
+-z,--compress	Enable compression
+--compression-codec <c>	Use Hadoop codec (default gzip)
+--null-string <null-string>	The string to be written for a null value for string columns
+--null-non-string <null-string>	The string to be written for a null value for non-string columns
+
+Hive import arguments:
+
+   --create-hive-table                         Fail if the target hive
+                                                  table exists
+   --hive-database <database-name>             Sets the database name to
+                                               use when importing to hive
+   --hive-delims-replacement <arg>             Replace Hive record \0x01
+                                               and row delimiters (\n\r)
+                                               from imported string fields
+                                               with user-defined string
+   --hive-drop-import-delims                   Drop Hive record \0x01 and
+                                               row delimiters (\n\r) from
+                                               imported string fields
+   --hive-home <dir>                           Override $HIVE_HOME
+   --hive-import                               Import tables into Hive
+                                               (Uses Hive's default
+                                               delimiters if none are
+                                               set.)
+   --hive-overwrite                            Overwrite existing data in
+                                               the Hive table
+   --hive-partition-key <partition-key>        Sets the partition key to
+                                               use when importing to hive
+   --hive-partition-value <partition-value>    Sets the partition value to
+                                               use when importing to hive
+   --hive-table <table-name>                   Sets the table name to use
+                                               when importing to hive
+   --map-column-hive <arg>                     Override mapping for
+                                               specific column to hive
+                                               types.
+
+Export control arguments:
+   --batch                                                    Indicates
+                                                              underlying
+                                                              statements
+                                                              to be
+                                                              executed in
+                                                              batch mode
+   --call <arg>                                               Populate the
+                                                              table using
+                                                              this stored
+                                                              procedure
+                                                              (one call
+                                                              per row)
+   --clear-staging-table                                      Indicates
+                                                              that any
+                                                              data in
+                                                              staging
+                                                              table can be
+                                                              deleted
+   --columns <col,col,col...>                                 Columns to
+                                                              export to
+                                                              table
+   --direct                                                   Use direct
+                                                              export fast
+                                                              path
+   --export-dir <dir>                                         HDFS source
+                                                              path for the
+                                                              export
+-m,--num-mappers <n>                                          Use 'n' map
+                                                              tasks to
+                                                              export in
+                                                              parallel
+   --mapreduce-job-name <name>                                Set name for
+                                                              generated
+                                                              mapreduce
+                                                              job
+   --staging-table <table-name>                               Intermediate
+                                                              staging
+                                                              table
+   --table <table-name>                                       Table to
+                                                              populate
+   --update-key <key>                                         Update
+                                                              records by
+                                                              specified
+                                                              key column

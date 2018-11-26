@@ -1,0 +1,204 @@
+﻿192.168.12.34 
+
+刑事一审二审案例字段：
+
+一审显示字段（二审一样）
+1. title         ---- 标题
+2. party_info    ---- 当事人信息
+3. trial_process ---- 审理经过
+4. plt_claim     ---- 公诉机关控诉,(新增，来自tmp_hzj表)：
+5. dft_rep       ---- 被告辩称,(新增，来自tmp_hzj表)：
+6. crs_exm       ---- 双方质证,(新增，来自tmp_hzj表)：
+7. court_find    ---- 法院查明
+8. court_idea    ---- 本院认为
+9. judge_result  ----裁判结果
+10. doc_footer   ---- 文书尾部
+
+检索用得到的字段：
+uuid,
+caseid,
+court, 
+history,(2审才有)
+type, 
+result_type,
+reason,
+province, 
+city, 
+if_surrender, 
+if_nosuccess , 
+if_accumulate,
+if_guity,
+if_right,
+if_team,
+if_adult,
+age_year,
+law_id,
+reason_uid,
+court_uid
+
+后续可能需要的
+	judge_chief,（先不要，二审及以后重新清洗）
+	court_cate,
+	defendant,（先不要，二审及以后重新清洗）
+	defendant_info, （先不要，二审及以后重新清洗）
+	defendant_id, （先不要，二审及以后重新清洗）
+	judge_type, 
+	plaintiff_info, （先不要，二审及以后重新清洗）
+	plaintiff_id（先不要，二审及以后重新清洗）
+	
+	org_plaintiff    ----原告中的公司、机构
+	org_defendant    ----被告中的公司、机构
+	dispute             ----争议焦点
+
+
+（一）本版产品用到的字段
+1. 来自judgment表：
+	uuid         ------ 裁判文书网ID 示例：343fbc62-d4c2-4f64-a45c-039d5cbb583d
+	caseid       ------ 文书编号 示例：（2016）黑7516刑初13号
+	title        ------ 文书标题 示例：卢某某危险驾驶罪一审刑事判决书
+	defendant(二审的保留，一审改名defendant_origin1)    ------ 原告及被告律师及其律师事务所
+	party_info   ------ 当事人信息 示例：公诉机关内蒙古自治区满洲里市人民检察院。\n被告人历某，男...
+	trial_process   --- 审理经过 示例：黑龙江省海林林区人民检察院以海林检刑诉[2016]24号起诉书指控被告人...
+	court_find   ------ 法院查明 示例：上述事实，被告人罗某在开庭审理过程中亦无异议，且有扣押清单、归案情况说明...
+	type        ------ 审理类型 示例：0是一审
+	reason_type  ------ 案由类型 示例：刑事
+	result_type  ------ 判决结果类型 示例：驳回攻方部分请求
+	judge_chief(二审的保留，一审的改为judge_chief_origin)   ----- 法官，包括审判长、审判员
+	new_reason(一审的保留，改名reason) -- 标准案由（多个以||分隔） 示例：走私、贩卖、运输、制造毒品罪
+
+
+2. 来自tmp_raolu表：
+	province------审理地点（省）
+	city----------审理地点（市）
+	court_cate----法院类型（最高、高、中、基层）
+
+    来自tmp_lawyers表，小璐更新：
+	plaintiff_info----原告律师及律所
+	defendant_info ----被告律师及律所
+	plaintiff_id -----原告律师编号
+	defendant_id -----被告律师编号	
+	
+	律师及律所汇总大表在id_lawyer表，小璐更新：
+	lawyer---律师
+	office---律所
+	
+3.  来自tmp_wxy表：
+	court_new，改名court      ------新判决法院 补全了省市信息 
+	casedate_new，改名casedate   ------新判决时间 去掉不合理时间
+	if_surrender   ------是否自首（1自首，0未自首）
+	if_nosuccess   ------是否未遂（1未遂，0成功）
+	if_accumulate  ------是否累犯（1累犯，0首犯）
+	if_guity       ------是否无罪（1无罪，0有罪）
+	if_right(二审) ------是否剥夺政治权利（1是，0否）
+	court_idea_new，改名court_idea ------新法院观点
+	judge_result_new，改名judge_result ----新判决结果，包含依据的法条
+	doc_footer(二审) ----尾部
+	is_format_history_uuid ----关联文书是否匹配到
+	history_new2，改名history     ----完整的关联文书
+	org_plaintiff    ----原告中的公司、机构
+	org_defendant    ----被告中的公司、机构
+	dispute          ----争议焦点
+	
+4.  来自tmp_hzj表：
+    crml_team，改名if_team  ----是否团伙犯罪(1团伙，0非团伙)
+	j_adult，改名if_adult -----是否成年（1成年，0未成年）
+	age_year     ----- 被告年龄（判决年份-出生年份）
+	plt_claim    -----公诉机关诉称
+	dft_rep      -----被告辩称     
+	crs_exm      -----双方质证
+
+	
+5. 来自tmp_liufang表：
+	if_right（一审） ------是否剥夺政治权利（1是，0否）
+	
+6. 来自tmp_footer:
+	doc_footer(一审) ----尾部
+    
+7. 其他
+    lawlist_ids，改名law_id   --- 法条id，对应到法规的表
+    reason_uid     --- 案由id，用于检索
+    court_uid      --- 法院id，用于检索
+
+
+（二） 本版产品没用到字段。  
+1. 来自judgment表：
+	id           ------ 自增ID 示例：1
+	court(改名court_origin)        ------ 判决法院 示例：海林林区基层法院
+	lawlist     ------ 法条名称 示例：["《中华人民共和国刑法》第二百七十五条", "《中华人民共和国刑法》第六十四条"]
+	court_idea(改名court_idea_origin)   ------ 本院认为 示例：本院认为，被告人罗某在其住所内容留他人吸食毒品四次，其行为已构成容留他人...
+	judge_result(改名judge_result_origin) ------ 裁判结果 示例：被告人赵海峰犯故意伤害罪，有期徒刑六个月（刑期从判决执行之日起计算...
+	trial_request   --- 诉求 示例：多伦县人民检察院指控:2016年7月8日8时许，被告人伊凤金驾驶冀BU****号重型半挂牵引车...
+	trial_reply(一审) --庭审答辩 示例：被告人吴×对指控事实、罪名及量刑建议没有异议且签字具结，在开庭审理过程...
+	doc_content ------ 文书内容，含HTML标签
+	non_reason    ---- 准确案由（多个以||分隔） 示例：寻衅滋事||盗窃
+	doc_from ----- 采集来源 示例：wenshu-gov
+	judge_type  ------ 判决类型 示例：判决书
+	is_format    ----- 文书抽取状态，0为待抽取，1为已抽取，2为抽取失败（其他待添加）		
+	update_time   ----更新时间
+	is_crawl       ----是否爬取	
+	casedate（改名casedate_origin,可删除）     ------ 判决时间 示例：2016-09-07 
+	judge_chief（一审改名judge_chief_origin）    ----审判长
+	judge_member，改名judge_member_origin   ----审判员
+	reason （改名reason_origin）        ----案由
+	third （可删除）       ----- 第三方律师
+	doc_oriligation，改名doc_oriligation_origin ----- 检察院
+	fact_finder，改名fact_finder_origin    ----- 检察长
+	record_time，改名record_time_origin    ----- 立案时间
+	timeline        ----- 时间轴
+	plaintiff,改名plaintiff_origin      ----- 原告律师
+	defendant，改名defendant_origin1 ----- 刑事一审被告律师
+	history，改名history_origin    ------ 相关文书（一般二审关联一审） 示例：[343fbc62-d4c2-4f64-a45c-039d5cbb583d]	
+	lawlist_ids（二审），改名law_id  -----法条
+	doc_reason(二审的保留) -- 标准案由，包含一级案由||二级案由，如贪污贿赂罪||贪污罪
+	
+2.  来自tmp_wxy表：
+	age_min ---- 被告最小年龄
+	history_new(二审，改名history_origin2) --- 不完整关联文书，||分割
+	history_new2 改名history -----完整关联文书
+	duration  ----- 审判时长
+	judge_chief_new（一审、二审都有，改名judge_chief_origin2）---- 审判长
+	judge_member_new，改名judge_member，可删除 ----- 审判员  
+	doc_oriligigation_new，改名doc_oriligigation---检察院
+	record_time_new，改名record_time----清洗的立案时间
+	defendant_new,改名defendant_origin2，可删除  ----被告律师
+	plaintiff_new，改名plaintiff，已经删除      ----原告律师
+	fact_finder_new，改名fact_finder   ----检察长	
+	age_max ---- 被告最大年龄
+	
+3.  来自tmp_raolu表：
+	district(备份)------审理地点（区/县）
+	new_office（一审、二审都有，可删除） ----一个被告律师事务所
+	new_lawyer（一审、二审都有，可删除） ----一个被告律师
+	law_office，可删除 ----律所	
+	
+4.  来自tmp_hzj表：
+	suspect_num------ 犯罪人数
+	prvs         ----- 证据
+	gender      ------ 被告性别（男，女）
+	nation      ------ 被告民族（汉族、维吾尔族......）
+	edu，改名edu_origin         ------ 被告文化程度（初中、高中、大专，小学....）
+	edu_new，改名edu     ------ 被告文化程度区间（小学及一下、中学文化、专科文化....）
+	birth_day   ------ 被告出生日期
+	native_place ----- 被告籍贯（唐山市......）
+
+	
+5. 来自tmp_liufang表：	
+	control_date  ----- 拘役时间（月）
+	lock_date     ----- 管制时间（月）
+	right_date    ----- 剥夺政治权利时间（月）
+	degree        ----- 刑罚严重程度
+	punish_cate   ----- 刑事判决类型（拘役或管制、有期徒刑、无期徒刑、死刑）
+	punish_date   ----- 有期徒刑期（月）
+	delay_date    ----- 缓刑期（月）
+	if_delay      ----- 是否缓刑	
+	punish_money  ----- 罚金	
+	crime_reason（可删除）  ----- 案由 （列表形式）
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,11 @@
+1、先安装pip,脚本方式安装:http://blog.lxx1.com/1420
+
+2、安装ipython,执行：pip install ipython
+遇到的问题如下：
+1.需安装gcc相关包：yum install gcc libffi-devel
+
+2.报错：fatal error: Python.h: No such file or directory
+yum install python-devel
+
+3.报错：collect2: fatal error: cannot find 'ld'
+解决：ln -s /usr/bin/ld.bfd /etc/alternatives/ld

@@ -1,0 +1,61 @@
+以下是跟Yarn有关的配置：
+参考：http://blog.csdn.net/bluishglc/article/details/42436321
+
+CDH集群现有配置：
+
+yarn.app.mapreduce.am.resource.mb：3G
+yarn.nodemanager.resource.memory-mb：32G
+yarn.scheduler.minimum-allocation-mb：3G
+yarn.scheduler.maximum-allocation-mb：32G
+mapreduce.map.memory.mb:    3G
+mapreduce.reduce.memory.mb: 6G
+mapreduce.map.java.opts : 2.5G
+mapreduce.reduce.java.opts: 5G
+===========================================================
+
+yarn.app.mapreduce.am.resource.mb：AM能够申请的最大内存，默认值为1536MB （mapred-default.xml）
+yarn.nodemanager.resource.memory-mb：nodemanager能够申请的最大内存，默认值为8192MB（yarn-default.xml）
+yarn.scheduler.minimum-allocation-mb：调度时一个container能够申请的最小资源，默认值为1024MB（yarn-site.xml）
+yarn.scheduler.maximum-allocation-mb：调度时一个container能够申请的最大资源，默认值为1167MB（最好改为8192）（yarn-site.xml）
+
+
+<property>
+<name>yarn.nodemanager.resource.memory-mb</name>
+<value>3072</value>
+<discription>每个节点可用内存,单位MB</discription>
+</property>
+<property>
+<name>yarn.scheduler.minimum-allocation-mb</name>
+<value>512</value>
+<discription>单个任务可申请最少内存，默认1024MB</discription>
+</property>
+<property>
+<name>yarn.scheduler.maximum-allocation-mb</name>
+<value>2048</value>
+<discription>单个任务可申请最大内存，默认8192MB</discription>
+</property>
+
+=============================================
+mapreduce任务配置：
+
+	<property>
+		<name>mapreduce.map.memory.mb</name>
+		<value>512</value>
+		<description>每个Map任务的物理内存限制</description>
+	</property>
+
+	<property>
+		<name>mapreduce.reduce.memory.mb</name>
+		<value>512</value>
+		<description>每个Reduce任务的物理内存限制</description>
+	</property>
+
+	<property>
+		<name>mapreduce.map.java.opts</name>
+		<value>-Xmx1024m</value>
+	</property>
+
+	<property>
+		<name>mapreduce.reduce.java.opts</name>
+		<value>-Xmx1024m</value>
+	</property>

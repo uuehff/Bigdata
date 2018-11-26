@@ -1,0 +1,79 @@
+链接：
+tensorflow官网：https://tensorflow.google.cn/deploy/distributed
+http://blog.csdn.net/hjimce/article/details/61197190
+https://www.jiqizhixin.com/articles/2017-12-10-5
+（原文：http://amid.fish/distributed-tensorflow-a-gentle-introduction）
+
+官网demo:https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/get_started/regression
+
+
+cpu：
+gpu:
+tensorflow：
+keras：keras不是一个框架，只是一个高级API，提供了多种框架（tensorflow,theano）的封装，keras最大的特点是很友好的API体验。
+keras已经集成到tf中，名为tf.keras的库。
+
+深度学习,名词：
+softmax:
+softmax
+
+
+
+可使用的设备名称写法：
+Unknown device: /job:ps/replica:0/task:0/device:GPU:0 all devices: /device:GPU:0,
+/job:worker/replica:0/task:0/gpu:0, GPU:0, /job:worker/replica:0/task:0/device:GPU:0,
+CPU:0, /device:CPU:0,
+ /job:worker/replica:0/task:0/cpu:0, /job:worker/replica:0/task:0/device:CPU:0
+
+
+nvidia -l
+nvidia -lms 1000 1秒显示一次
+
+top,  enter 1,查看多个cpu使用情况！
+
+分布式程序执行说明：
+1、共享变量的定义原则、初始化？
+共享变量的类型、初始值、变量名一致。（如果不同server的初始值不一样，则由于负责初始化的server不确定，而导致初始值也不确定）
+一般由ps负责共享变量的初始化。
+集群中的task，至少有一个执行：sess.run(tf.global_variables_initializer())，否则task会相互等待初始化变量。
+
+ps负责初始化，执行; tf.global_variables_initializer(), worker则基于以下条件来执行：
+while sess.run(tf.report_uninitialized_variables()):   #判断是否继续往下执行，report_uninitialized_variables，如果全部变量都已初始化，返回空数组。
+
+2、在所有服务器互联之前或在服务器脱离集群之后在集群上运行操作，会发生什么？
+    1）所有的task会等待集群定义的所有server全部join加入集群时，所有task才会继续执行，否则所有task会在执行第一个tf.run()之前等待。
+    2）短期内，只要我们试图运行的操作不在脱离的服务器上，似乎不会出现问题。（我没有测试过长期运行会发生什么）。
+    3）如果操作是在脱离的服务器上，则会报错。如果，当脱离的服务器又恢复了，则TensorFlow集群也不会进行自动恢复，操作也会报错！
+
+3、图内复制，图间复制？
+图内复制：每个task都定义集群中所有task的变量。
+图间复制：每个task中只定义集群中的共享变量和该task的本地变量（本地变量：变量的所有操作都在当前task执行）。
+
+4、集群的关闭？
+除了关闭启动服务器的进程之外，目前没有其它办法关闭服务器。
+
+5、共享变量默认定义设备：
+集群定义如下：
+"worker": [
+        "localhost:3333",
+        "localhost:3334",
+    ],
+    "ps": [
+        "localhost:3335"
+    ]
+a,b,c三台server对应task为:/job:worker/task:0,/job:worker/task:1,/job:ps/task:0
+三个机器上都定义变量var:
+注意：默认集群的变量定义在ps下面！
+ 1）都没有手动将变量定义在某个设备下时，则该变量是共享的变量，默认运行在运行在ps(/job:ps/task:0)上。
+ 2）当其中一个task手动将变量定义在了非ps设备下时（定义在ps设备下无影响），但其它变量默认定义在了ps设备下，因此就相当于存在了两个变量。
+ 3）若要将共享变量存储在work上时，则必须在每个task中，将该变量定义在指定的work下，如：
+           with tf.device("/job:worker/task:0"):        #这里注释也不会影响拥有与ps服务器有共同名称的变量
+               var1 = tf.Variable(0.0, name='var')
+
+
+名词：
+循环神经网络(RNN, Recurrent Neural Networks)
+Long Short Term 网络(LSTM) ,是一种 RNN 特殊的类型，可以学习长期依赖信息。
+卷积神经网络(Convolutional Neural Network, CNN)
+深度神经网络(Deep Neural Networks,DNN)
+

@@ -1,0 +1,29 @@
+参考:http://blog.csdn.net/suzyu12345/article/details/53885092
+
+1、下载Spark1.6.0、Hadoop2.6.0(\bin下有winutils.exe)安装包，并解压，
+Hadoop路径：  D:\hadoop\hadoop-2.6.0\hadoop-2.6.0
+Spark路径：   D:\spark-1.6.0-bin-hadoop2.6\spark-1.6.0-bin-hadoop2.6
+
+2、pytho2.7.5安装路径：C:\Python27
+
+3、配置环境变量：
+HADOOP_HOME   D:\hadoop\hadoop-2.6.0\hadoop-2.6.0
+JAVA_HOME	D:\Program Files\Java\jdk1.8.0_121
+PYTHON_HOME	C:\Python27
+SPARK_HOME	D:\spark-1.6.0-bin-hadoop2.6\spark-1.6.0-bin-hadoop2.6
+Path	D:\Program Files (x86)\scala\bin;%M2_HOME%\bin;%JAVA_HOME%\bin;C:\Python27;C:\Python27\Scripts;%SPARK_HOME%\bin;%SPARK_HOME%\sbin;%HADOOP_HOME%\bin;
+C:\ProgramData\Oracle\Java\javapath;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\ATI Technologies\ATI.ACE\Core-Static;%JAVA_HOME%\bin;C:\Python27;C:\Python27\Scripts;%SPARK_HOME%\bin;%SPARK_HOME%\sbin;%HADOOP_HOME%\bin;
+4、创建C:\Python27\Lib\site-packages\pyspark.pth，作用是程序中能找到并导入类似SparkContext的包：
+内容为：Spark解压包下的python目录，这里为：D:\spark-1.6.0-bin-hadoop2.6\spark-1.6.0-bin-hadoop2.6\python
+
+创建project:
+如果Run不能执行: Run/Debug Configurations中添加，参数：
+PYTHONPATH=D:\spark-1.6.0-bin-hadoop2.6\spark-1.6.0-bin-hadoop2.6\python
+SPARK_HOME=D:\spark-1.6.0-bin-hadoop2.6\spark-1.6.0-bin-hadoop2.6
+
+5、切记：直接执行pycharm中的程序，是通过D:\spark-1.6.0-bin-hadoop2.6\spark-1.6.0-bin-hadoop2.6\bin\spark-submit.cmd提交的，
+内容为：cmd /V /E /C %~dp0spark-submit2.cmd %*
+因此：	环境变量PATH系统默认值不能删除，值如下，新的值追加即可，（否则程序报错，cmd不是内部或外部命令）：
+%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\;
+
+=======================================

@@ -1,0 +1,3 @@
+统计hbase表行数：效率比使用count高，300万数据count使用4分钟，该mapreduce方式使用不到1分钟；
+##################################
+hbase  org.apache.hadoop.hbase.mapreduce.RowCounter "laws_doc:judgment_civil_all_v2"

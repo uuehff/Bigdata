@@ -1,0 +1,31 @@
+安装CDH前，将所有服务器/etc/profile中的代理 #export http_proxy https_proxy ftp_proxy no_proxy注释掉，source生效，重启网络。
+
+切记网络要保持一致，不能出现有的可以联网，有的不能联网！否则安装过程中界面会出现：不同主机将要安装的组件不一致！是因为可以上网的主机
+联网更新了manifest.json！
+
+安装后服务器监控日志tail -f /opt/cm-5.10.1/log/cloudera-scm-server/cloudera-scm-server.log会报错如下：不用理会，因为是离线安装的！
+2017-08-15 11:32:24,387 ERROR ParcelUpdateService:com.cloudera.parcel.components.ParcelDownloaderImpl: (19 skipped) Unable to retrieve remote parcel repository manifest
+java.util.concurrent.ExecutionException: java.net.ConnectException: https://archive.cloudera.com/cdh5/parcels/5.10/manifest.json
+
+
+日志中也可搜索到如下，说明使用了本地的安装包：
+2017-08-15 11:32:04,361 INFO ParcelUpdateService:com.cloudera.parcel.components.LocalParcelManagerImpl: (1 skipped) Found files CDH-5.10.1-1.cdh5.10.1.p0.10-el7.parcel,KAFKA-2.1.1-1.2.1.1.p0.18-el7.parcel under /opt/cloudera/parcel-repo
+
+注意：在线的服务器是禁用网络后离线安装的！
+
+线上环境注意事项：
+1、root用户开启/etc/profile中的代理，source后可以使用pip联网安装！同时另一个cdh的用户，没有source时，可以使用yum 使用ftp安装！
+开启代理，source后，不能再使用ftp的yum源！
+
+2、在线服务器，在浏览器中开启代理后，能连接www.baidu.com上网，但不能使用域名，如cdh-master来访问集群！可以使用ip访问！
+需要把浏览器中的代理设置为no proxy，才可以使用域名进行访问集群！
+
+3、通过跳板机，再连接目标机时，跳板机连接时，需加上-X 参数，即ssh -X host,但jumpserver中无法加-X参数，所以选择直连，-X参数相当于
+xshell中的隧道，连接到Xmanager!
+
+4、打开firefox时，只能使用ssh登录的用户打开，切换用户不行，因为切换用户后就不是同一个xshell session!可通过直连53.2的Xftp上传下载文件！
+
+5、hhly02切换用户：sudo sh -c "su root"
+    cdh切换用户：sudo su root
+
+6、git clone 时，地址需要使用https://协议，不能用git://，因为在线服务器有网络代理，会报错找不到主机名！

@@ -1,0 +1,14 @@
+开启bin-log:
+关闭mysql服务，在my.cnf中，添加如下：
+
+[mysqld]
+log-bin=mysql-bin #添加这一行就ok    #先注释，民法更新数据量太大,mysql-bin.*太大
+binlog-format=ROW #选择row模式
+server_id=1
+
+开启后，对数据库的增删改查都会保存到日志中：/data/mysql/mysql-bin.0000*、
+/data/mysql/mysql-bin.index,日志文件越来越大！
+
+关闭bin-log：
+
+关闭mysql服务，删除mysql-bin.*，mysql-bin.index文件,重启mysql服务。

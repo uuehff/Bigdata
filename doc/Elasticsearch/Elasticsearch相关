@@ -1,0 +1,139 @@
+ES install:http://blog.csdn.net/gamer_gyt/article/details/59077189
+https://www.cnblogs.com/wxw16/p/6150681.html
+
+
+ES 中文文档：https://www.elastic.co/guide/cn/index.html
+https://www.elastic.co/guide/cn/elasticsearch/guide/current/_Document_Metadata.html
+
+Kibana、x-pack插件：https://www.elastic.co/guide/index.html
+
+spark-Elasticsearch-http://blog.csdn.net/fighting_one_piece/article/details/51800817
+API: https://www.elastic.co/guide/en/elasticsearch/hadoop/current/install.html
+http://blog.csdn.net/haoxiaoyan/article/details/54093028
+
+ES-API:	https://www.elastic.co/guide/en/elasticsearch/reference/5.4/search-aggregations-metrics-avg-aggregation.html
+========================================================================================
+ES-API-https://www.elastic.co/guide/en/elasticsearch/reference/5.4/index.html
+Spark-ES-Maven-https://www.elastic.co/guide/en/elasticsearch/hadoop/5.4/install.html
+Spark-ES-API-https://www.elastic.co/guide/en/elasticsearch/hadoop/5.4/spark.html
+SparkStreaming-ES-API-https://www.elastic.co/guide/en/elasticsearch/hadoop/5.4/spark.html#spark-streaming
+Spark-ES-https://www.elastic.co/guide/en/elasticsearch/hadoop/5.4/configuration.html
+Spark-ES-ID-Type,-https://www.iteblog.com/archives/1728.html
+
+PySpark-ES
+https://stackoverflow.com/questions/45305721/pyspark-error-writing-dstream-to-elasticsearch
+https://stackoverflow.com/questions/34869772/how-to-write-data-in-elasticsearch-from-pyspark
+==================================================
+设置x-pack后：登录
+ES:	http://192.168.10.219:9200,会弹框输入用户密码。
+Kibana: http://192.168.10.219:5601,会弹框输入用户密码。
+head: http://192.168.10.219:9100?auth_user=elastic&auth_password=changeme，
+其中加上auth_user=elastic&auth_password=changeme后head才能连接集群。
+
+curl -H "Content-Type: application/json" -XPOST 'http://elastic:changeme@192.168.10.219:9200/bank2/account/_bulk?pretty&refresh' --data-binary "@accounts.json"
+
+GET /bank/_search?q=*&sort=account_number:asc&pretty
+GET /_cat/health?v
+GET /_cat/nodes?v
+GET /_cat/indices/
+PUT /cdhindex?pretty
+PUT /lawplatform/
+GET /customer
+PUT /customer/external/1?pretty
+{
+  "name": "John Doe"
+}
+GET /cdhindex
+GET _cat/shards
+POST /bank/account/_bulk?pretty&refresh -binary @accounts.json
+POST /bank/account/_bulk?pretty&consistency=POST /customer/external/_bulk?pretty
+POST /customer/external/_bulk?pretty
+{"index":{"_id":"1"}}
+{"name": "John Doe" }
+{"index":{"_id":"2"}}
+{"name": "Jane Doe" }
+POST /customer/external/_bulk?pretty
+{"update":{"_id":"1"}}
+{"doc": { "name": "John Doe becomes Jane Doe" } }
+{"delete":{"_id":"2"}}
+GET /bank/account/_search?_source=true
+GET /bank/account/_search?_source=age,city
+GET /bank/account/_search?_source_include=a*
+GET /bank/account/_search?_source_include=a*&_source_exclude=age
+DELETE /bank/account/24?
+GET bank/account/99?version=1
+GET /customer/_mapping/external
+
+GET /_cat/allocation?v
+POST /customer/external/_bulk?pretty
+{"index":{"_id":"3"}}
+{"user_name": "333333333" }
+
+
+POST customer/external/_delete_by_query
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+POST twitter,blog/tweet,post/_delete_by_query
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+GET bank/account/99?_source=age
+GET bank/account/99?_source=account_number,balance
+POST /bank/account/99/_update
+{
+    "doc": { "account_number": 990,"balance": 471590}
+    
+}
+
+GET /bank/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_age": {
+      "range": {
+        "field": "age",
+        "ranges": [
+          {
+            "from": 20,
+            "to": 30
+          },
+          {
+            "from": 30,
+            "to": 40
+          },
+          {
+            "from": 40,
+            "to": 50
+          }
+        ]
+      },
+      "aggs": {
+        "group_by_gender": {
+          "terms": {
+            "field": "gender.keyword"
+          },
+          "aggs": {
+            "average_balance": {
+              "avg": {
+                "field": "balance"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+GET /twitter/_search?q=user:kimchy
+GET /twitter/tweet,user/_search?q=user:kimchy
+GET /kimchy,elasticsearch/tweet/_search?q=tag:wow
+GET /_all/tweet/_search?q=tag:wow
+GET /_search?q=tag:wow

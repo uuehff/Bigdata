@@ -1,0 +1,187 @@
+=============================================
+
+
+1、pro_con.py模拟用户的生产与消费： 创建client创建client,获取topic1，topic2，基于获取的topic1创建producer1,基于topic2创建consumer2。
+2、word_direct.py 模拟sparkstreaming 读取kafka 的topic1 ,处理后使用foreachRDD(lambda rdd: rdd.foreachPartition(sendPartition))
+   和KafkaClient写入到topic2,供pro_con.py中的consumer2消费。
+
+==========================================
+删除topic：
+zookeeper-client -server cdh-master:2181
+rmr /brokers/topics/test_in3
+=============================================
+==========================================
+kafka:
+kafka-topics --delete --zookeeper cdh-master-slave1:2181  --replication-factor 1 --partitions 1 --topic test_in
+kafka-topics --delete --zookeeper cdh-master-slave1:2181  --replication-factor 1 --partitions 1 --topic test_out
+
+列出所有topic：
+kafka-topics --list --zookeeper cdh-master:2181
+
+查看话题的分区信息：
+kafka-topics --create --zookeeper cdh-master:2181  --replication-factor 1 --partitions 3 --topic test_in21
+kafka-topics --create --zookeeper cdh-master-slave1:2181,cdh-slave2:2181,cdh-slave3:2181  --replication-factor 1 --partitions 3 --topic test_in3
+kafka-topics --create --zookeeper cdh-master-slave1:2181,cdh-slave2:2181,cdh-slave3:2181  --replication-factor 1 --partitions 3 --topic test_out3
+kafka-topics --create --zookeeper cdh-master-slave1:2181,cdh-slave2:2181,cdh-slave3:2181  --replication-factor 1 --partitions 5 --topic test_in24
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --partitions 2 --replication-factor 2 --topic test_in3
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --partitions 1 --replication-factor 2 --topic test_in31
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --partitions 6 --replication-factor 1 --topic test_in32
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --partitions 6 --replication-factor 1 --topic test_in33
+=================
+kafka-topics --describe --zookeeper cdh-master:2181  --topic test_in21
+kafka-topics --describe --zookeeper cdh-master-slave1:2181  --topic test_in22
+kafka-topics --describe --zookeeper cdh-master-slave1:2181  --topic test_in23
+kafka-topics --describe --zookeeper cdh-master-slave1:2181  --topic test_in24
+kafka-topics --describe --zookeeper cdh-master-slave1:2181  --topic test_out3
+kafka-topics --describe --zookeeper cdh-master-slave1:2181  --topic test_in31
+
+==============================
+==================================
+kafka-console-producer --broker-list cdh-master:9092 --topic test_in21
+kafka-console-producer --broker-list cdh-master-slave1:9092 --topic test_in2
+kafka-console-producer --broker-list cdh-master-slave1:9092 --topic test_in3
+kafka-console-producer --broker-list cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 --topic test_in4
+
+kafka修改分区个数：
+kafka-topics --alter --zookeeper cdh-master-slave1:2181,cdh-slave2:2181,cdh-slave3:2181 --partitions 3 --topic test_in3
+
+
+删除
+kafka-topics --delete --zookeeper cdh-master-slave1:2181   --topic test_in2
+kafka-topics --delete --zookeeper cdh-master-slave1:2181   --topic test_out3e
+kafka-topics --delete --zookeeper cdh-master-slave1:2181   --topic test_in3
+
+kafka-topics --create --zookeeper cdh-master-slave1:2181,cdh-slave2:2181,cdh-slave3:2181  --replication-factor 1 --partitions 3 --topic test_in33
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --replication-factor 1 --partitions 1 --topic test_out3e
+
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --replication-factor 1 --partitions 1 --topic test_in3
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --replication-factor 1 --partitions 1 --topic test_out3
+
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --replication-factor 1 --partitions 1 --topic test_in2
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --replication-factor 1 --partitions 1 --topic test_out2
+
+
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --replication-factor 1 --partitions 3 --config max.message.bytes=20000001 replica.fetch.max.bytes=20000005  --topic test_in3
+
+kafka-topics --create --zookeeper cdh-master-slave1:2181  --replication-factor 1 --partitions 3 --config max.message.bytes=200000001 replica.fetch.max.bytes=20000005 --topic test_out3
+
+*****************************************************************************************************
+*** WARNING: you are creating a topic where the max.message.bytes is greater than the broker's    ***
+*** default max.message.bytes. This operation is potentially dangerous. Consumers will get        ***
+*** failures if their fetch.message.max.bytes (old consumer) or max.partition.fetch.bytes         ***
+*** (new consumer) < the value you are using.                                                     ***
+*****************************************************************************************************
+- value set here: 20000000
+- Default Old Consumer fetch.message.max.bytes: 1048576 Byte
+- Default New Consumer max.partition.fetch.bytes: 1048576  Byte
+- Default Broker max.message.bytes: 1000012
+
+fetch.message.max.bytes=20000000
+
+max_request_size=1000012,
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+创建topic:  --zookeeper 必须！
+生产者：--broker-list 和 --topic 必须！
+消费者：--zookeeper必须！--bootstrap-server可选！
+
+kafka-topics --describe --zookeeper cdh-master:2181  --topic test_in21
+
+kafka-topics --create --zookeeper cdh-master:2181  --replication-factor 1 --partitions 3 --topic test_in21
+kafka-topics --create --zookeeper cdh-master:2181  --replication-factor 1 --partitions 3 --topic test_in22
+
+
+
+kafka-console-producer --broker-list cdh-slave2:9092 --topic test_in21
+kafka-console-producer --broker-list cdh-master-slave1:9092 --topic test_in22
+kafka-console-producer --broker-list cdh-master-slave1:9092 --topic test_in3
+kafka-console-producer --broker-list cdh-master-slave1:9092 --topic test_out3
+kafka-console-producer --broker-list cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 --topic test_in3
+kafka-console-producer --broker-list cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 --topic test_out2
+
+
+kafka-console-consumer --zookeeper cdh-master:2181  --topic test_in21 --from-beginning
+kafka-console-consumer --zookeeper cdh-master:2181  --topic test_in22 --from-beginning
+kafka-console-consumer --zookeeper cdh-master-slave1:2181  --bootstrap-server cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 --topic test_in3 --from-beginning
+kafka-console-consumer --zookeeper cdh-master-slave1:2181  --bootstrap-server cdh-master-slave1:9092 --topic test_in3 --from-beginning
+kafka-console-consumer --zookeeper cdh-master-slave1:2181  --bootstrap-server cdh-master-slave1:9092 --topic test_out3 --from-beginning
+kafka-console-consumer --zookeeper cdh-master-slave1:2181  --bootstrap-server cdh-master-slave1:9092 --topic test_out2 --from-beginning
+kafka-console-consumer --zookeeper cdh-master-slave1:2181  --bootstrap-server cdh-master-slave1:9092 --consumer-property fetch.message.max.bytes=20000000 --topic test_in2 --from-beginning
+==============================================================
+==============================================================
+==============================================================
+=================================================================================================================
+空RDD任务优化：
+====================================================================
+
+1、lines.foreachRDD(lambda rdd:rdd.foreachPartition(sendPartition))
+
+	sendPartition内容如下，两种方式：
+	#方式一：
+        for record1 in iter:
+            topic = 'test_out4'
+            producer = KafkaProducer(bootstrap_servers="cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092")
+            break
+        for record in iter:
+            producer.send(topic, str(record).encode('utf-8'))
+        producer.close()
+	#方式二：
+
+        record_list = []
+        for record in iter:
+            record_list.append(record)
+        if record_list:
+            topic = 'test_out4'
+            producer = KafkaProducer(bootstrap_servers="cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092")
+            for record in record_list:
+                producer.send(topic, str(record).encode('utf-8'))
+            producer.close()
+
+2、lines.foreachRDD(sendRDD)      #2、和3、的sendPartition内容一样
+3、lines.foreachRDD(lambda rdd: None  if rdd.isEmpty() else rdd.foreachPartition(sendPartition) )
+	def sendRDD(rdd):
+			if not rdd.isEmpty():
+				rdd.foreachPartition(sendPartition)
+	sendPartition内容：
+	        topic = 'test_out4'
+	        producer = KafkaProducer(bootstrap_servers="cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092")
+	        for record in iter:
+	            producer.send(topic, str(record).encode('utf-8'))
+	        producer.close()
+
+====================================================================
+====================================================================
+====================================================================
+
+
+spark-submit --master spark://cdh-master-slave1:7077 --name direct_kafka_wordcount \
+--executor-cores 2 --executor-memory 4g --total-executor-cores 6 \
+word_direct.py  cdh-master-slave1:9092 test_in4 test_out4
+
+
+kafka接受数据运行direct_kafka_wordcount.py：
+
+and then run the example
+    `$ bin/spark-submit --jars \
+      external/kafka-assembly/target/scala-*/spark-streaming-kafka-assembly-*.jar \
+      examples/src/main/python/streaming/direct_kafka_wordcount.py \
+      localhost:9092 test`
+
+spark-submit --master spark://cdh-master-slave1:7077 --name direct_kafka_wordcount \
+--executor-cores 2 --executor-memory 4g --total-executor-cores 4 \
+direct_kafka_wordcount.py  cdh-master-slave1:9092 test
+
+spark-submit --master spark://cdh-master-slave1:7077 --name test.py --driver-memory 8g --executor-cores 3 --executor-memory 10g bm_task_cache.py  cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 test_in3 test_out3
+spark-submit --master spark://cdh-master-slave1:7077  --driver-memory 18g bm_task_cache.py  cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 test_in3 test_out3
+
+spark-submit --master spark://cdh-master-slave1:7077 --name test.py --driver-memory 8g --executor-cores 3 --executor-memory 10g bm_task_cache.py  cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 test_in3 test_out3
+spark-submit --master spark://cdh-master-slave1:7077 --name test.py  test.py
+UnboundLocalError: local variable 'sum' referenced before assignment
+
+spark-submit --master spark://cdh-master-slave1:7077 word_direct.py cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 test_in3 test_out3
+
+spark-submit --master spark://cdh-master-slave1:7077 --driver-memory 6g --executor-cores 2 --executor-memory 4g --total-executor-cores 4 word_direct.py cdh-master-slave1:9092,cdh-slave2:9092,cdh-slave3:9092 test_in3 test_out3

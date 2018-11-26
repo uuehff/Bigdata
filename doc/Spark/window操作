@@ -1,0 +1,2 @@
+countByValue、countByValueAndWindow在python中的bug：结果只返回int，而非（key,Long）！
+bug说明如下地址：https: // stackoverflow.com / questions / 34114585 / spark - streaming - in -python - bugs - in -countbyvalue - and -countbyvalueandwindow

@@ -1,0 +1,6 @@
+spark-submit --master spark://cdh-master:7077  --driver-memory 1g  --executor-memory 10g  uuidsMapToLawlist.py
+spark-submit --master spark://cdh-master:7077 --class es.SparkSaveES --driver-memory 2g --executor-cores 2 --executor-memory 2g --total-executor-cores 6  sparkstreaming-kafka-1.0-SNAPSHOT.jar
+
+spark-submit --master spark://cdh-master:7077 --driver-memory 2g --executor-cores 6 --executor-memory 2g --total-executor-cores 6 --jars elasticsearch-spark-13_2.10-5.4.3.jar  sparkstreaming-kafka-1.0-SNAPSHOT.jar
+
+spark-submit --master spark://cdh-master:7077 --class sca.SparkSaveES_Socket --driver-memory 10g --executor-cores 12 --executor-memory 16g --total-executor-cores 24 --jars elasticsearch-spark-13_2.10-5.4.3.jar  sparkstreaming-kafka-1.0-SNAPSHOT.jar

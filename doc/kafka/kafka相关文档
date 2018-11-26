@@ -1,0 +1,18 @@
+Kafka官网，python语言的客户端列表（包括pykafka、kafka-python等等）：
+https://cwiki.apache.org/confluence/display/KAFKA/Clients#Clients-Python
+
+kafka-python客户端,Github链接主页：https://github.com/dpkp/kafka-python，有问题可查询其中的Issues。
+kafka-python API: http://kafka-python.readthedocs.io/en/master/apidoc/modules.html
+
+
+pykafka客户端,Github链接主页：https://github.com/Parsely/pykafka，有问题可查询其中的Issues。
+pykafka API：   http://pykafka.readthedocs.io/en/latest/
+
+pykafka和kafka-python比较：
+http://opslinux.com/2015/07/14/python%E8%BF%9E%E6%8E%A5kafka/
+https://chenjiehua.me/linux/kafka.html
+https://github.com/Parsely/pykafka/issues/334
+
+kafka理解应用：
+http://blog.csdn.net/suifeng3051/article/details/48053965
+https://www.ibm.com/developerworks/cn/opensource/os-cn-kafka/index.html

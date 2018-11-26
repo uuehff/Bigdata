@@ -1,0 +1,359 @@
+happybase 官网API: http://happybase.readthedocs.io/en/latest/
+	参考：http://classfoo.com/ccby/article/rfJ3bVG
+
+
+	
+非自动连接：
+
+connection = happybase.Connection('somehost', autoconnect=False)
+connection.open()
+自动连接：
+
+connection = happybase.Connection('somehost') #自动连接
+指定以后所涉及的表实际都是以指定前缀开头的（当然前缀后还有个'_'）：
+
+connection = happybase.Connection('somehost', table_prefix='myproject') 
+连接（Connection）提供的方法：
+
+connection.tables() # 获取表格列表
+connection.create_table(
+'mytable',
+{'cf1': dict(max_versions=10),
+'cf2': dict(max_versions=1, block_cache_enabled=False),
+'cf3': dict(), # use defaults
+}) # 第二个参数是个 map<string, map> 的结构，内层的 map 用于设置创建的列的参数配置
+table = connection.table('mytable') # 获取表对象
+========================
+=============================================================	
+import happybase
+
+connection = happybase.Connection('cdh-master-slave1', autoconnect=False)
+connection.open()
+
+connection = happybase.Connection('cdh-master-slave1')
+table = connection.table('t5')  
+=============================
+row = table.row('b5')
+===========================
+print row
+{'f1:name': 'value_new', 'data2:name': 'value_1'}
+==============================
+print row['f1:name']
+value_new
+==============================
+In [60]: row.get('f1:name')
+Out[60]: 'value_new'
+=============================
+In [71]: print row.keys()
+['f1:name', 'data2:name']
+================================
+In [68]: print row.values()
+['value_new', 'value_1']
+==============================
+In [70]: for key in row.keys():
+    ...:     print key
+    ...:     
+    ...:     
+f1:name
+data2:name
+===============================
+In [99]: for key in row.keys():
+    ...:     print row.get(key)
+    ...:     
+value_new
+value_1
+======================================
+In [69]: for key in row.values():
+    ...:     print key
+    ...:     
+    ...:     
+value_new
+value_1
+====================
+=============================================
+In [76]: rows = table.rows(['a5','b5'])  #查询多行,指定rowkey的列表！
+In [77]: for key, row in rows:
+    ...:     print key,row
+    ...:     
+a5 {'f1:name': 'value_new', 'f1:age': '20', 'data2:name': 'value_1'}
+b5 {'f1:name': 'value_new', 'data2:name': 'value_1'}
+===================================================
+In [102]: for key,row in rows:
+     ...:     print key ,row.keys()
+     ...:     
+     ...:     
+     ...:     
+a5 ['f1:name', 'f1:age', 'data2:name']
+b5 ['f1:name', 'data2:name']
+===========================================
+In [103]: for key,row in rows:
+     ...:     print key ,row.values()
+     ...:     
+     ...:     
+     ...:     
+     ...:     
+a5 ['value_new', '20', 'value_1']
+b5 ['value_new', 'value_1']
+==========================================
+table.row('a5')，指定rowkey的值，查询一行,返回的是一个{}；
+table.rows(['a5','b5'])，查询多行,返回的是一个Map[rowkey,{一行}]，rowkey是为了区别返回的每行，
+	单行就没必要区别了；
+=============================================
+row和rows方法参数：
+row(row, columns=None, timestamp=None, include_timestamp=False)
+rows(rows, columns=None, timestamp=None, include_timestamp=False)
+==========================================================================================
+print table.row('a5', columns=['f1:name'])  #注意columns类型是list或tuple，哪怕只有一个值！
+{'f1:name': 'value_new'}
+
+In [117]: print table.row('a5', columns=['f1:name','f1:age'])
+{'f1:name': 'value_new', 'f1:age': '20'}
+
+In [118]: print table.row('a5', columns=['f1'])   #直接指定列族f1，代表该列族下的所有列！
+{'f1:name': 'value_new', 'f1:age': '20'}
+
+In [119]: print table.row('a5', columns=['f1','data2'])
+{'f1:name': 'value_new', 'f1:age': '20', 'data2:name': 'value_1'}
+
+=============================================================
+hbase shell命令行：
+hbase(main):015:0> get 't5','a5'
+COLUMN              CELL                                                
+ data2:name         timestamp=1494225486263, value=value_1              
+ f1:age             timestamp=1494225531735, value=20                   
+ f1:name            timestamp=1494225379103, value=value_new
+===================================
+指定时间戳：
+In [123]: print table.row('a5',timestamp=1494225379103)
+{'f1:name': 'v6'}
+
+In [127]: print table.row('a5', columns=['f1','data2'],timestamp=1494225379103)
+{'f1:name': 'v6'}
+
+In [128]: print table.row('a5', columns=['f1:age'],timestamp=1494225379103)
+{}
+==============================
+指定include_timestamp字段：
+1、
+In [135]: print table.row('a5', columns=['f1:age'],include_timestamp=True)
+{'f1:age': ('20', 1494225531735)}
+2、
+In [146]: print table.rows(['a5','b5'],include_timestamp=True)
+[('a5', {'f1:name': ('value_new', 1494225379103), 'f1:age': ('20', 1494225531735), 'data2:name': ('value_1', 1494225486263)}), ('b5', {'f1:name': ('value_new', 1494225419631), 'data2:name': ('value_1', 1494225506474)})]
+3、
+In [147]: print table.rows(['a5','b5'])
+[('a5', {'f1:name': 'value_new', 'f1:age': '20', 'data2:name': 'value_1'}), ('b5', {'f1:name': 'value_new', 'data2:name': 'value_1'})]
+========================================================
+#多行查询，包括时间戳，Map遍历。
+In [183]: map1 =  table.rows(['a5','b5'],include_timestamp=True)
+
+In [184]: map1
+Out[184]: 
+[('a5',
+  {'data2:name': ('value_1', 1494225486263),
+   'f1:age': ('20', 1494225531735),
+   'f1:name': ('value_new', 1494225379103)}),
+ ('b5',
+  {'data2:name': ('value_1', 1494225506474),
+   'f1:name': ('value_new', 1494225419631)})]
+
+
+In [188]: for k,v in map1:
+     ...:     print k,v
+     ...:     
+     ...:     
+a5 {'f1:name': ('value_new', 1494225379103), 'f1:age': ('20', 1494225531735), 'data2:name': ('value_1', 1494225486263)}
+b5 {'f1:name': ('value_new', 1494225419631), 'data2:name': ('value_1', 1494225506474)}   
+   
+==========================================================================================================================================
+获取多版本的信息，cells方法：取得是单元格的值，只包括value和timestamp。
+
+注意这里的单元格指的是两列：timestamp + value。（Hbase官方指定的单元格）
+cells(row, column, versions=None, timestamp=None, include_timestamp=False)，这里的row只能有一个，
+column只能有一个（因为versions参数是基于每个列族的）， 直接是'f1'或'f1:name'，如下：
+
+In [211]: cells2 = table.cells('a5', 'f1:name', versions=3, include_timestamp=True)
+In [212]: cells2
+Out[212]: [('value_new', 1494225379103), ('v6', 1493865689838)]
+==========================
+In [205]: cells2 = table.cells('a5', 'f1', versions=3, include_timestamp=True)
+In [206]: cells2
+Out[206]: [('20', 1494225531735), ('value_new', 1494225379103), ('v6', 1493865689838)]
+===============================================================================================
+scan 方法：
+scan(row_start=None, row_stop=None, row_prefix=None, columns=None, filter=None, 
+timestamp=None, include_timestamp=False, batch_size=1000, scan_batching=None, 
+limit=None, sorted_columns=False, reverse=False)
+
+如下：
+In [223]: for key, row in table.scan(limit= 5):
+     ...:     print key, row
+     ...:     
+a5 {'f1:name': 'value_new', 'f1:age': '20', 'data2:name': 'value_1'}
+b5 {'f1:name': 'value_new', 'data2:name': 'value_1'}
+c6 {'f1:name': 'v6'}
+
+=====================================================
+connection = happybase.Connection('cdh-master-slave1')
+table = connection.table('t5')
+
+from happybase import ConnectionPool
+#建立连接池：class happybase.ConnectionPool(size, **kwargs)
+
+with pool.connection() as connection:
+...     table = connection.table('t5')
+
+单条存储：
+table.put('w1', {'f1:col1': 'value1','f1:col2': 'value2'}) 
+table.put('w1', {'f1:col1': 'value2'}, timestamp=123456789)
+
+批量存储：
+In [250]: with table.batch(timestamp=987654321) as b:
+     ...:     b.put('row-key-1', {'f1:col1': 'value1', 'f1:col2': 'value2'})
+     ...:     b.put('row-key-2', {'f1:col2': 'value2', 'f1:col3': 'value3'})
+     ...:     b.put('row-key-2', {'f1:col2': 'value2', 'f1:col3': 'value3'})
+     ...:     b.put('row-key-3', {'f1:col3': 'value3', 'f1:col4': 'value4'})
+     ...:     b.send()
+结果：
+ row-key-1            column=f1:col1, timestamp=987654321, value=value1         
+ row-key-1            column=f1:col2, timestamp=987654321, value=value2         
+ row-key-2            column=f1:col2, timestamp=987654321, value=value2         
+ row-key-2            column=f1:col3, timestamp=987654321, value=value3         
+ row-key-3            column=f1:col3, timestamp=987654321, value=value3         
+ row-key-3            column=f1:col4, timestamp=987654321, value=value4
+ 
+with table.batch(batch_size=1000) as b:
+for i in range(10):
+b.put('row-%04d' % i, {'f1:c1': 'v1','f1:c2': 'v2',})
+b.send()
+部分结果：
+ row-0000             column=f1:c1, timestamp=1494237929054, value=v1           
+ row-0000             column=f1:c2, timestamp=1494237929054, value=v2           
+ row-0001             column=f1:c1, timestamp=1494237929054, value=v1           
+ row-0001             column=f1:c2, timestamp=1494237929054, value=v2           
+ row-0002             column=f1:c1, timestamp=1494237929054, value=v1           
+ row-0002             column=f1:c2, timestamp=1494237929054, value=v2           
+ row-0003             column=f1:c1, timestamp=1494237929054, value=v1           
+ row-0003             column=f1:c2, timestamp=1494237929054, value=v2           
+ row-0004             column=f1:c1, timestamp=1494237929054, value=v1           
+ row-0004             column=f1:c2, timestamp=1494237929054, value=v2           
+ row-0005             column=f1:c1, timestamp=1494237929054, value=v1           
+ row-0005             column=f1:c2, timestamp=1494237929054, value=v2
+================================================================
+删除数据：
+
+table.delete('row-key')
+table.delete('row-key', columns=['cf1:col1', 'cf1:col2'])
+=======================================
+=========================================================================================================================================
+happybase的批量操作：http://happybase.readthedocs.io/en/latest/user.html#performing-batch-mutations
+
+conn = happybase.Connection(host='cdh-slave1',port=9090,timeout=7200000)
+t = conn.table('laws_doc:judgment_all')
+# t_batch = t.batch()
+
+# batch理解：batch只能以table.batch()这种方式创建，其中有put,delete,send方法，使用table的put，delete操作时，每一个
+# put 或delete都会立刻向thrift server发一个请求，比如在一个循环里执行put，delete，那请求次数太频繁，且效率不高。
+# 可以使用table.batch()创建一个表的batch对象，使用它的put,delete操作，然后执行send()，将操作发送到hbase thrift server。
+
+# 三种情况下才会真正执行put,delete操作：
+# 1）使用with t.batch() as b:创建batch对象，在下面执行put,delete操作时，当with语句执行完，会自动调用send()。
+# 比如：
+# with t.batch() as b:
+#     b.put(b'row-key-1', {b'cf:col1': b'value1', b'cf:col2': b'value2'})
+#     b.put(b'row-key-2', {b'cf:col2': b'value2', b'cf:col3': b'value3'})
+#     b.put(b'row-key-3', {b'cf:col3': b'value3', b'cf:col4': b'value4'})
+#     b.delete(b'row-key-4')
+
+# 2） 不使用with创建batch对象，手动调用batch.send()方法，例如：
+# b = t.batch()
+# for i in range(1200):
+#     b.put(b'row-%04d' % i, {
+#         b'cf1:col1': b'v1',
+#         b'cf1:col2': b'v2',
+#     })
+# b.send()
+
+# 如果with代码块中包含很多的put，delete请求，在with语句默认最后一次性提交（或不使用with方式创建的batch，t.batch()创建batch方式时，
+# 但for循环最后手动send提交）的数据会很大，因此可以设置：batch_size=1000，当put或delete次数等于batch_size时，也会触发提交（send）,
+# 通过batch_size的大小控制分批发送操作。就是下面第三种方法。
+# 3）在使用t.batch(batch_size=1000)，其中指定batch_size大小时，当put或delete次数等于batch_size时，就会自动发送操作到hbase thrit server!
+
+# with t.batch(batch_size=1000) as b:  #或 b =t.batch(batch_size=1000)
+#     for i in range(1200):
+#         # this put() will result in two mutations (two cells)
+#         #batch_size=1000,batch_size的意思是指以一个单元格为单位，也即是一个字段的put，delete就相当于batch_size=1。
+#         #下面的put操作，一次put就插入两个字段的值（cf1:col1，cf1:col2），涉及两个单元格,两个字段，因此对应的batch_size值为2。
+#         #基于batch_size=1000，1200次循环，一次循环中的put操作,插入两个字段的值，因此，循环1200次会有2400个字段值的插入，而batch_size=1000，
+#          因此会产生三个batch，发送三次，第一个batch有1000个插入，第二个batch有1000个插入，第三个batch有400个插入。
+#         # 换句话说,i为499时发送一次，999时发送一次，1199时发送一次！
+#         b.put(b'row-%04d' % i, {
+#             b'cf1:col1': b'v1',
+#             b'cf1:col2': b'v2',
+#         })
+
+#with语句中产生的batch对象，transaction=True是开启了事务的，在with语句执行结束前，with中有报错，
+# 则该batch中的数据都不会提交到服务器在执行。
+# try:
+#     with t.batch(transaction=True) as b:
+#         b.put(b'row-key-1', {b'cf:col1': b'value1', b'cf:col2': b'value2'})
+#         b.put(b'row-key-2', {b'cf:col2': b'value2', b'cf:col3': b'value3'})
+#         b.put(b'row-key-3', {b'cf:col3': b'value3', b'cf:col4': b'value4'})
+#         b.delete(b'row-key-4')
+#         raise ValueError("Something went wrong!")
+# except ValueError:
+#     # error handling goes here; nothing is sent to HBase
+#     pass
+
+
+q = t.scan(filter="QualifierFilter(=, 'binary:id') AND KeyOnlyFilter()")  #过滤id字段，且只保留key
+# q = t.scan(limit=20)
+
+
+#  hbaseFor example, this will result in three round-trips to the server (two batches with 1000 cells, and one with the remaining 400):
+# with table.batch(batch_size=1000) as b:
+#     for i in range(1200):
+#         # this put() will result in two mutations (two cells)
+#         b.put(b'row-%04d' % i, {
+#             b'cf1:col1': b'v1',
+#             b'cf1:col2': b'v2',
+#         })
+
+try:
+    # t_batch添加的操作达到10000个时，会自动执行send，发送命令到服务器端，执行到with语句结束，不足10000个操作，
+    # 也会自动调用send，因为是基于with语句创建的t_batch的上下文管理器。
+    with t.batch(batch_size=10000) as t_batch: #这句是经典的语句，一般都这样使用，with加batch_size。
+        for k,vs in q:
+            t_batch.delete(k,['d:plaintiff_company','d:defendant_company','d:plaintiff_judge_result','d:defendant_judge_result'])
+        # t_batch.send()
+
+        raise ValueError("Something went wrong!")
+except ValueError:
+    pass
+finally:
+    # print d
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

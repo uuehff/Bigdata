@@ -1,0 +1,825 @@
+# 国家与首钢声量对比 双柱图
+var myData = ['微信','贴吧','网媒','微博','论坛'];
+var databeast = {
+    2006: [40,56,188,138,3]
+
+};
+var databeauty = {
+    2006: [69,9,56,20,1]
+};
+var timeLineData = [2006];
+
+option = {
+    baseOption: {
+        backgroundColor: '#ffffff',
+        timeline: {
+            show: true,
+            axisType: 'category',
+            tooltip: {
+                show: true,
+                formatter: function(params) {
+                    console.log(params);
+                    return params.name + '年数据统计';
+                }
+            },
+            autoPlay: true,
+            currentIndex: 6,
+            playInterval: 1000,
+            label: {
+                normal: {
+                    show: true,
+                    interval: 'auto',
+                    formatter: '{value}年',
+                },
+            },
+            data: [],
+        },
+        title: {
+            //   text:'少数民族帅哥美女统计', 
+            textStyle: {
+                color: '#fff',
+                fontSize: 16,
+            },
+        
+        },
+        legend: {
+            data: ['中国国家冰球俱乐部','北京首钢冰球国家队俱乐部'],
+            top: 4,
+            right: '15%',
+            textStyle: {
+                color: '#000',
+            },
+        },
+        tooltip: {
+            show: true,
+            trigger: 'axis',
+            formatter: '{b}<br/>{a}: {c}人',
+            axisPointer: {
+                type: 'shadow',
+            }
+        },
+        toolbox: {
+            feature: {
+                dataView: {
+                    show: true,
+                    readOnly: false
+                },
+                restore: {
+                    show: true
+                },
+                saveAsImage: {
+                    show: true
+                }
+            }
+        },
+        grid: [{
+            show: false,
+            left: '5%',
+            top: 60,
+            bottom: 60,
+            containLabel: true,
+            width: '40%',
+        }, {
+            show: false,
+            left: '50%',
+            top: 80,
+            bottom: 60,
+            width: '20%',
+        }, {
+            show: false,
+            right: '20%',
+            top: 60,
+            bottom: 60,
+            containLabel: true,
+            width: '26%',
+        }, ],
+
+        xAxis: [
+            {
+            type: 'value',
+            inverse: true,
+            axisLine: {
+                show: false,
+            },
+            axisTick: {
+                show: false,
+            },
+            
+            position: 'top',
+            axisLabel: {
+                max:200,
+                show: true,
+                textStyle: {
+                    color: '#B2B2B2',
+                    fontSize: 12,
+                },
+            },
+            splitLine: {
+                show: true,
+                lineStyle: {
+                    color: '#ffffff',
+                    width: 1,
+                    type: 'solid',
+                },
+            },
+        }, {
+            gridIndex: 1,
+            show: false,
+        }, {
+            gridIndex: 2,
+            type: 'value',
+            axisLine: {
+                show: false,
+            },
+            axisTick: {
+                show: false,
+            },
+            position: 'top',
+            axisLabel: {
+                show: true,
+                textStyle: {
+                    color: '#B2B2B2',
+                    fontSize: 12,
+                },
+            },
+            splitLine: {
+                show: true,
+                lineStyle: {
+                    color: '#ffffff',
+                    width: 1,
+                    type: 'solid',
+                },
+            },
+        }, ],
+        yAxis: [{
+            type: 'category',
+            inverse: true,
+            position: 'right',
+            axisLine: {
+                show: false
+            },
+            axisTick: {
+                show: false
+            },
+            axisLabel: {
+                show: false,
+                margin: 8,
+                textStyle: {
+                    color: '#D9EA0',
+                    fontSize: 12,
+                },
+
+            },
+            data: myData,
+        }, {
+            gridIndex: 1,
+            type: 'category',
+            inverse: true,
+            position: 'left',
+            axisLine: {
+                show: false
+            },
+            axisTick: {
+                show: false
+            },
+            axisLabel: {
+                show: true,
+                textStyle: {
+                    color: '#8D9EA0',
+                    fontSize: 12,
+                },
+
+            },
+            data: myData.map(function(value) {
+                return {
+                    value: value,
+                    textStyle: {
+                        align: 'center',
+                    }
+                }
+            }),
+        }, {
+            gridIndex: 2,
+            type: 'category',
+            inverse: true,
+            position: 'left',
+            axisLine: {
+                show: false
+            },
+            axisTick: {
+                show: false
+            },
+            axisLabel: {
+                show: false,
+                textStyle: {
+                    color: '#8D9EA0',
+                    fontSize: 12,
+                },
+
+            },
+            data: myData,
+        }, ],
+        series: [],
+
+    },
+
+    options: [],
+
+
+};
+
+for (var i = 0; i < timeLineData.length; i++) {
+    option.baseOption.timeline.data.push(timeLineData[i]);
+    option.options.push({
+        title: {
+            text: '信息源分布',
+            textStyle:{color:'#000'}
+        },
+        series: [{
+                name: '中国国家冰球俱乐部',
+                type: 'bar',
+                barGap: 20,
+                barWidth: 25,
+                label: {
+                    normal: {
+                        show: false,
+                    },
+                    emphasis: {
+                        show: true,
+                        position: 'left',
+                        offset: [0, 0],
+                        textStyle: {
+                            color: '#fff',
+                            fontSize: 14,
+                        },
+                    },
+                },
+                itemStyle: {
+                    normal: {
+                        color: '#db5f5b',
+                    },
+                    emphasis: {
+                        color: '#08C7AE',
+                    },
+                },
+                data: databeast[timeLineData[i]],
+            },
+
+
+            {
+                name: '北京首钢冰球国家队俱乐部',
+                type: 'bar',
+                barGap: 20,
+                barWidth: 25,
+                xAxisIndex: 2,
+                yAxisIndex: 2,
+                label: {
+                    normal: {
+                        show: false,
+                    },
+                    emphasis: {
+                        show: true,
+                        position: 'right',
+                        offset: [0, 0],
+                        textStyle: {
+                            color: '#fff',
+                            fontSize: 14,
+                        },
+                    },
+                },
+                itemStyle: {
+                    normal: {
+                        color: '#5a6d7b',
+                    },
+                    emphasis: {
+                        color: '#F84646',
+                    },
+                },
+                data: databeauty[timeLineData[i]],
+            }
+        ]
+    });
+}
+
+# 条形图
+
+
+option = {
+    backgroundColor:'#ffffff',
+    title: {
+        text: '微博综合指数top',
+        left:'center'
+        
+    },
+    tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'shadow'
+        }
+    },
+    
+    grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+    },
+    xAxis: {
+        type: 'value',
+        boundaryGap: [0, 0.05],
+        splitLine:{show:false}
+    },
+    yAxis: {
+        type: 'category',
+        data: ['体育广角镜','','体育产业生态圈','GQ实验室','首钢体育']
+    },
+
+    series: [
+        {
+            name: '2011年',
+            type: 'bar',
+            barWidth:25,
+            data: [1.83,2.03,2.19,2.21,2.87],
+            itemStyle:{normal:{color:'#86bec4'}}
+
+        }
+        
+    ]
+};
+
+#雷达图
+option = {
+    backgroundColor:'#FFFFFF',
+    title: {
+        text: '北京首钢冰球国家队媒体渠道比较',
+        x:'center'
+    },
+    tooltip: {},
+    legend: {
+        data: ['微博', '贴吧','网媒','微信','论坛'],
+        y:'bottom'
+    },
+    radar: {
+        // shape: 'circle',
+        indicator: [
+           { name: '关键词曝光', max: 100},
+           { name: '媒体数', max: 50},
+           { name: '文章数', max: 70},
+            { name: '评论数', max: 200}
+        ],
+        
+        
+    },
+    name: {
+                textStyle: {
+                    color:'#fff',
+                    fontsize:100
+                    
+                }
+            },
+    series: [{
+        name: '媒体比较',
+        type: 'radar',
+        // areaStyle: {normal: {}},
+        data : [
+            {
+                value : [8,18,20,8],
+                name : '微博'
+            },
+             {
+                value : [33,5,9,81],
+                name : '贴吧'
+            },
+            {
+                value : [30,31,56,4],
+                name : '网媒'
+            },
+            {
+                value : [65,41,69,139],
+                name : '微信'
+            },
+            {
+                value : [1,1,1,6],
+                name : '论坛'
+            }
+        ]
+    }]
+};
+
+#信息源堆积柱图
+var bcBySeriesIndex = ['B', 'B', 'B', 'B', 'C', 'C', 'C', 'C'];
+
+option = {
+    backgroundColor:'#ffffff',
+    title:{
+        text:"信息源",
+        x:"left"
+    },
+    tooltip : {
+        trigger: 'axis',
+        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+        },
+        formatter: function (params) {
+            var html = [];
+            
+            var category = {};
+            echarts.util.each(params, function (param) {
+                var catName = param.seriesName;
+                var bc = bcBySeriesIndex[param.seriesIndex];
+                if (!category[catName]) {
+                    category[catName] = {};
+                }
+                category[catName][bc] = param.value;
+            });
+            console.log(category);
+            echarts.util.each(category, function (cate, key) {
+                html.push(
+                    '<tr>',
+                    '<td>', key, '</td>',
+                    '<td>', cate.B, '</td>',
+                    '<td>', cate.C, '</td>',
+                    '</tr>'
+                );
+            })
+            
+            return '<table border=1><tbody>'
+                + '<tr><td></td><td>B</td><td>C</td></tr>' 
+                + html.join('') 
+                + '</tbody></table>';
+        }
+    },
+    legend: {
+        data: [
+            '贴吧', '微博', '新闻','微信'
+        ],
+        x:'right'
+    },
+    grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+    },
+    xAxis : [
+        {
+            type : 'category',
+            data : ['KHL','VHL','MHL','CWHL'],
+            'axisLabel':{
+                interval:'0'
+            }
+        }
+    ],
+    yAxis : [
+        {
+            type : 'value'
+        }
+    ],
+    series : [
+        {
+            name:'贴吧',
+            type:'bar',
+            barWidth : 20,
+            stack: 'B',
+            data:[10,16,3,3]
+        },
+        {
+            name:'微博',
+            type:'bar',
+            stack: 'B',
+            data:[428,95,12,27]
+        },
+        {
+            name:'新闻',
+            type:'bar',
+            stack: 'B',
+            data:[128,165,40,104]
+        },
+        {
+            name:'微信',
+            type:'bar',
+            barWidth : 20,
+            stack: 'B',
+            data:[22,92,45,83]
+        }
+       
+    ]
+};
+
+饼图
+option = {
+    backgroundColor:'#ffffff',
+    title: {
+        text: "昆仑鸿星信息源",
+        x: "center"
+    },
+    tooltip: {
+        trigger: "item",
+        formatter: "{b} : {c} ({d}%)"
+    },
+    legend: {
+        x: "center",
+        y:"bottom",
+        data: ["贴吧", "微博", "网媒","微信","论坛"]
+    },
+    label: {
+        normal: {
+            formatter: "{b}:{c}({d}%)",
+            position: "insideTopRight"
+        }
+    },
+    labelLine: {
+        normal: {
+            smooth: .6
+        }
+    },
+    toolbox: {
+        show: !0,
+        feature: {
+            mark: {
+                show: !0
+            },
+            dataView: {
+                show: !0,
+                readOnly: !1
+            },
+            magicType: {
+                show: !0,
+                type: ["pie", "funnel"]
+            },
+            restore: {
+                show: !0
+            },
+            saveAsImage: {
+                show: !0
+            }
+        }
+    },
+    calculable: !0,
+    series: [{
+        name: "昆仑鸿星信息源",
+        type: "pie",
+        
+        label: {
+            normal: {
+                show: !0
+            },
+            emphasis: {
+                show: !0
+            }
+        },
+        lableLine: {
+            normal: {
+                show: !0
+            },
+            emphasis: {
+                show: !0
+            }
+        },
+        data: [{
+            value: 40,
+            name: "贴吧"
+        }, {
+            value: 1261,
+            name: "微博"
+        }, {
+            value: 335,
+            name: "网媒"
+        }, {
+            value: 48,
+            name: "微信"
+        },{
+            value:40,
+            name:"论坛"
+        }]
+    }]
+}
+# 折线图
+option = {
+    backgroundColor:'#ffffff',
+    title: {
+        x:'left',
+        text: '信息走势'
+    },
+    tooltip: {
+        trigger: 'axis'
+    },
+    legend: {
+        x:'center',
+        data:['KHL','VHL','MHL','CWHL']
+    },
+    grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+    },
+    toolbox: {
+        feature: {
+            saveAsImage: {}
+        }
+    },
+
+    xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: ['2017/5/1','2017/5/2','2017/5/3','2017/5/4','2017/5/5','2017/5/6','2017/5/7','2017/5/8','2017/5/9','2017/5/10','2017/5/11','2017/5/12','2017/5/13','2017/5/14','2017/5/15','2017/5/16','2017/5/17','2017/5/18','2017/5/19','2017/5/20','2017/5/21','2017/5/22','2017/5/23','2017/5/24','2017/5/25','2017/5/26','2017/5/27','2017/5/28','2017/5/29','2017/5/30','2017/5/31','2017/6/1','2017/6/2','2017/6/3','2017/6/4','2017/6/5','2017/6/6','2017/6/7','2017/6/8','2017/6/9','2017/6/10','2017/6/11','2017/6/12','2017/6/13','2017/6/14','2017/6/15','2017/6/16','2017/6/17','2017/6/18','2017/6/19','2017/6/20','2017/6/21','2017/6/22','2017/6/23','2017/6/24','2017/6/25','2017/6/26','2017/6/27','2017/6/28','2017/6/29','2017/6/30','2017/7/1','2017/7/2','2017/7/3','2017/7/4','2017/7/5','2017/7/6','2017/7/7','2017/7/8','2017/7/9','2017/7/10','2017/7/11','2017/7/12','2017/7/13','2017/7/14','2017/7/15','2017/7/16','2017/7/17','2017/7/18','2017/7/19','2017/7/20','2017/7/21','2017/7/22','2017/7/23','2017/7/24','2017/7/25','2017/7/26','2017/7/27','2017/7/28','2017/7/29','2017/7/30','2017/7/31','2017/8/1','2017/8/2','2017/8/3','2017/8/4','2017/8/5','2017/8/6','2017/8/7','2017/8/8','2017/8/9','2017/8/10','2017/8/11','2017/8/12','2017/8/13','2017/8/14','2017/8/15','2017/8/16','2017/8/17','2017/8/18','2017/8/19','2017/8/20','2017/8/21','2017/8/22','2017/8/23','2017/8/24','2017/8/25','2017/8/26','2017/8/27','2017/8/28','2017/8/29','2017/8/30','2017/8/31','2017/9/1','2017/9/2','2017/9/3','2017/9/4','2017/9/5','2017/9/6','2017/9/7','2017/9/8','2017/9/9','2017/9/10','2017/9/11','2017/9/12','2017/9/13','2017/9/14','2017/9/15','2017/9/16','2017/9/17','2017/9/18','2017/9/19','2017/9/20','2017/9/21','2017/9/22','2017/9/23','2017/9/24','2017/9/25','2017/9/26','2017/9/27','2017/9/28','2017/9/29','2017/9/30','2017/10/1','2017/10/2','2017/10/3','2017/10/4','2017/10/5','2017/10/6','2017/10/7','2017/10/8','2017/10/9','2017/10/10']
+    },
+    yAxis: {
+        type: 'value'
+    },
+    series: [
+        {
+            name:'KHL',
+            type:'line',
+            
+            data:[1,0,0,1,3,0,0,1,0,0,1,0,0,0,0,0,2,0,0,1,1,0,0,0,2,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,0,1,3,0,0,0,1,2,1,4,2,1,2,0,0,4,3,3,2,2,4,1,3,2,5,3,3,0,1,2,2,2,1,2,2,1,4,3,1,5,4,3,1,3,1,0,1,1,12,4,9,18,4,7,4,4,1,13,12,18,15,23,23,7,15,9,8,4,16,6,17,1,6,8,4,4,33,4,24,7,13,10,9,6,2,3,8,10,5,6,1,0,0,12,3,5,1,7,4,2,0,7,6,5,2,1,5,4],
+            markPoint: {
+                data: [
+                    {type: 'max', name: '最大值'}
+
+                ],
+                
+            },
+
+            markLine : {
+                data : [
+                    {type : 'average', name : '平均值'}
+                ]
+            }
+        },
+        {
+            name:'VHL',
+            type:'line',
+            
+            data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,2,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,7,7,3,6,10,5,1,0,0,2,0,1,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,10,2,1,2,0,0,1,2,2,0,2,0,0,0,3,1,1,6,9,4,11,2,3,3,4,2,2,1,2,0,1,3,11,5,4,5,2,6,18,13,5,14,23,12,11,16,11,11,3,2,1,2,2,4,3,1,3,6,1,0,1,1,3,0,3,1,8,9],
+            markPoint: {
+                data: [
+                    {type: 'max', name: '最大值'},
+                ],
+     
+            },
+            markLine : {
+                data : [
+                    {type : 'average', name : '平均值'}
+                ]
+            }
+        },
+        {
+            name:'MHL',
+            type:'line',
+            
+            data:[2,0,0,1,0,2,0,0,2,0,0,0,0,0,0,1,1,1,0,1,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1,0,1,1,0,0,0,1,0,0,0,0,3,1,0,0,0,0,0,0,0,0,1,2,1,1,1,0,1,0,0,2,1,3,0,1,0,1,2,0,0,0,1,1,0,1,1,0,0,2,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,3,0,0,0,2,1,1,0,0,0,0,0,0,0,3,0,0,1,1,2,7,2,2,1,2,1,0,0,1,0,1,3,0,2,0,0,0,2,1,1,1,2,0,0,1,0,0,1,0,1,0,0,0,1],
+            markPoint: {
+                data: [
+                    {type: 'max', name: '最大值'}
+
+                ]
+                
+            },
+            
+            markLine : {
+                data : [
+                    {type : 'average', name : '平均值'}
+                ]
+            }
+        },
+        {
+            name:'CWHL',
+            type:'line',
+            
+            data:[2,2,4,1,1,0,0,1,3,2,1,2,1,0,3,6,4,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,17,8,0,1,6,1,6,3,2,0,1,0,1,1,0,1,0,1,4,2,3,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,7,6,1,3,0,1,2,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,1,3,5,1,0,0,2,5,3,2,2,0,2,0,0,1,0,0,0,0,1,0,0,4,4,0,2,5,2,0,0,2,0,0,0,1,7,3,1,1,2,1,3,1,0,6,0,2,1,0,0,3,0,1,2,1,1],
+            markPoint: {
+                data: [
+                    {type: 'max', name: '最大值'},
+                ],
+            },
+            markLine : {
+                data : [
+                    {type : 'average', name : '平均值'}
+                ]
+            }
+        }
+    ]
+}
+# 地图
+http://gallery.echartsjs.com/editor.html?c=xrJ1kIfeub
+
+var chinaContourUrl = "/asset/get/s/data-1469097271266-SkyrH7CP.json";
+
+$.getJSON(chinaContourUrl, function (json) {
+    echarts.registerMap('china-contour', json);
+    
+    myChart.setOption({
+        geo: [{
+            map: 'china',
+            itemStyle: {
+                normal: {
+                    borderWidth: 2,
+                    shadowBlur: 50,
+                    shadowColor: 'rgba(0, 0, 0, 0.2)',
+                    borderColor: '#aaa',
+                }
+            }
+        }]
+    });
+});
+var uploadedDataURL = "/asset/get/s/data-1487164546975-SyiFER-Yg.txt";
+
+
+function randomData() {
+    return Math.round(Math.random()*1000);
+}
+
+option = {
+    backgroundColor:'#ffffff',
+    title: {
+        text: '地区分布',
+        left: 'center'
+    },
+    tooltip: {
+        trigger: 'item'
+    },
+    legend: {
+        orient: 'vertical',
+        left: 'left',
+        data:['2017年']
+    },
+    visualMap: {
+        min: 0,
+        max: 50,
+        left: 'left',
+        top: 'bottom',
+        text: ['高','低'],           // 文本，默认为数值文本
+        calculable: true,
+        inRange: {
+                color: [ '#ffecec','#a50026']
+            }
+    },
+    toolbox: {
+        show: true,
+        orient: 'vertical',
+        left: 'right',
+        top: 'center',
+        feature: {
+            dataView: {readOnly: false},
+            restore: {},
+            saveAsImage: {}
+        }
+    },
+    series: [
+        {
+            name: '2016年',
+            type: 'map',
+            mapType: 'china',
+            roam: false,
+            label: {
+                normal: {
+                    show: true
+                },
+                emphasis: {
+                    show: true
+                }
+            },
+            data:[
+                {name: "青海",value:2},
+                {name: "辽宁",value:7},
+                {name: "贵州",value:2},
+                {name: "北京",value:904},
+                {name: "广西",value:3},
+                {name: "广东",value:11},
+                {name: "上海",value:50},
+                {name: "云南",value:7},
+                {name: "甘肃",value:1},
+                {name: "山东",value:5},
+                {name: "宁夏",value:2},
+                {name: "海南",value:1},
+                {name: "湖南",value:5},
+                {name: "台湾",value:1},
+                {name: "河北",value:1},
+                {name: "西藏",value:1},
+                {name: "其他",value:23},
+                {name: "吉林",value:10},
+                {name: "黑龙江",value:132},
+                {name: "福建",value:8},
+                {name: "天津",value:4},
+                {name: "内蒙古",value:1},
+                {name: "安徽",value:6},
+                {name: "海外",value:38},
+                {name: "山西",value:3},
+                {name: "四川",value:1},
+                {name: "重庆",value:4},
+                {name: "湖北",value:3},
+                {name: "江苏",value:3},
+                {name: "河南",value:5},
+                {name: "浙江",value:7},
+                {name: "香港",value:1}
+
+                
+
+            ]
+        },
+        
+        
+    ]
+};

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+        <style>
+            .chart{width:50%;height:350px;float:left;}
+            .lay{width:100%;height:100%;}
+            p{text-indent:3%}
+            .layer{float:left;margin-top:60px;width:100%;border-top: 1px solid #cdcdcd;}
+            .tt {color: #214293;font-size: 24px;}
+        </style>
+    </head>
+    <body>
+        <div style="width:80%;margin:auto;min-width:911px">
+            <p class="tt"><img src="title.png" alt="" style="vertical-align:middle;"> 案例展示4. 媒体价值分析 </p>
+            <div>
+                <p>相关性热图，颜色越深表示属性之间的相关度越高。贴吧可以看出评论数和关注数有高度相关性；微博的热图中显示点赞数与粉丝数、微博数相关度高。</p>
+                <div class="chart">
+                    <div id="postBar" class="lay"></div>
+                </div>
+                <div class="chart">
+                    <div id="weibo" class="lay"></div>
+                </div>
+            </div>
+            <div class="layer">
+                <p>贴吧中：围棋吧的关注度最高。所以，围棋吧的宣传力度也是最大的。</p>
+                <p>微博中：top10微博用户，其中有8个官微，2个个人认证。他们微博关注度都很高，宣传力度也很明显，尤其是人民网的官微。</p>
+                <div class="chart">
+                    <div id="postBarFollow" class="lay"></div>
+                </div>
+                <div class="chart">
+                    <div id="weiboFollow" class="lay"></div>
+                </div>
+            </div>
+            
+            <div class="layer">
+                <p>通过各个渠道中的关键词曝光数、传播范围（粉丝数越多，传播范围就越广）、文章数以及媒体个数等因素综合比较，媒体的价值排名即：新闻>微博>微信>贴吧。</p>
+                <p>不同形式的关注度表明直播的形式关注度最高，尤其是人民网对名人战总决赛的直播关注度最高。</p>
+                <div class="chart">
+                    <div id="mediaCompare" class="lay"></div>
+                </div>
+                <div class="chart">
+                    <div id="mediaForm" class="lay"></div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="./js/jquery.js">
+    </script><script src="js/echarts.min.js"></script>
+    <script type="text/javascript">
+        function resize(obj){
+            $(window).resize(function(){
+                obj.resize();
+            });
+        }
+        (function() {
+            var mycharts = echarts.init($('#postBar')[0]);
+            var hours = ['文章数', '总评论数', '关注数','帖子数'];
+            var days = ['帖子数','关注数','总评论数','文章数'];
+            var data = [[3,0,1.0],[3,1,0.351485],[3,2,0.514088],[3,3,0.521088],[2,0,0.351485],[2,1,1.0],[2,2,0.931497],[2,3,0.935789],[1,0,0.514088],[1,1,0.931497],[1,2,1.0],[1,3,0.999789],[0,0,0.521088],[0,1,0.935789],[0,2,0.999789],[0,3,1.0]];
+            data = data.map(function (item) {
+                return [item[1], item[0], item[2] || '-'];
+            });
+            option = {
+                title: {
+                    top: 0,
+                    left: 'center',
+                    text: '贴吧数据相关度热图'
+                },
+                tooltip: {
+                    position: 'top'
+                },
+                animation: false,
+                grid: {
+                    height: '65%',
+                    y: '10%'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: hours,
+                    splitArea: {
+                        show: true
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: days,
+                    splitArea: {
+                        show: true
+                    }
+                },
+                visualMap: {
+                    min: 0,
+                    max: 1,
+                    calculable: true,
+                    orient: 'horizontal',
+                    left: 'center',
+                    bottom: '0',
+                    inRange: {
+                        color: ['#ffffff','#3296D4'],
+                    }
+                },
+                series: [{
+                    name: '贴吧相关',
+                    type: 'heatmap',
+                    data: data,
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+            mycharts.setOption(option);
+            resize(mycharts);
+
+
+
+            var mycharts = echarts.init($('#weibo')[0]);
+            var hours = ['评论数','粉丝数','关注数','同主题微博数','微博总数','点赞数','转发数'];
+            var days = ['转发数','点赞数','微博总数','同主题微博数','关注数','粉丝数','评论数'];
+            var data = [
+                    [0,0,0.9851574576041112],[0,1,0.28754693458563085],[0,2,0.17143173262036435],[0,3,0.9186571866803974],[0,4,0.4159759978557017],[0,5,0.7231443172007278],[0,6,1.0],
+                    [1,0,0.6153681220592924],[1,1,0.859376410982374],[1,2,0.4746925513161337],[1,3,0.49295325983027577],[1,4,0.7726051212854064],[1,5,1.0],[1,6,0.7231443172007278],
+                    [2,0,0.3217368673280784],[2,1,0.7835655614133478],[2,2,0.6991921806438505],[2,3,0.20095800415427645],[2,4,1.0],
+                    [2,5,0.7726051212854064],[2,6,0.4159759978557017],
+
+                    [3,0,0.9239000201790429],[3,1,-0.011611144700778162],[3,2,-0.008403590941178719],[3,3,1.0],[3,4,0.20095800415427645],[3,5,0.49295325983027577],[3,6,0.9186571866803974],
+
+                    [4,0,0.10931230267667348],[4,1,0.5526887987591411],[4,2,1.0],[4,3,-0.008403590941178719],[4,4,0.6991921806438505],[4,5,0.4746925513161337],[4,6,0.17143173262036435],
+
+                    [5,0,0.1557376763063364],[5,1,1.0],[5,2,0.5526887987591411],[5,3,0.-0.011611144700778162],[5,4,0.7835655614133478],[5,5,0.859376410982374],[5,6,0.28754693458563085],
+
+                    [6,0,1.0],[6,1,0.1557376763063364],[6,2,0.10931230267667348],[6,3,0.9239000201790429],[6,4,0.3217368673280784],[6,5,0.6153681220592924],[6,6,0.9851574576041112],
+            ];
+            data = data.map(function (item) {
+                return [item[1], item[0], item[2] || '-'];
+            });
+            option = {
+                title: {
+                    top: 0,
+                    left: 'center',
+                    text: '微博数据相关度热图'
+                },
+                tooltip: {
+                    position: 'top'
+                },
+                animation: false,
+                grid: {
+                    height: '65%',
+                    y: '10%'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: hours,
+                    splitArea: {
+                        show: true
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: days,
+                    splitArea: {
+                        show: true
+                    }
+                },
+                visualMap: {
+                    min: 0,
+                    max: 1,
+                    calculable: true,
+                    orient: 'horizontal',
+                    left: 'center',
+                    bottom: '0',
+                    inRange: {
+                        color: ['#ffffff','#3296D4'],
+                    }
+                },
+                series: [{
+                    name: '贴吧相关',
+                    type: 'heatmap',
+                    data: data,
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+            mycharts.setOption(option);
+            resize(mycharts);
+        })();
+    
+        
+        (function(){
+            var mycharts = echarts.init($('#postBarFollow')[0]);
+            option = {
+                title: {
+                    text: '贴吧关注度排行',
+                    top: 0,
+                    left: 'center',
+                },
+                color: ['#30abf9'],
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '13%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    boundaryGap: [0, 0.01],
+                    min: 0,
+                    max: 18,
+                    name:'关注人数（万）',
+                    nameLocation: 'middle',
+                    nameGap: 30,
+                    axisLine: {
+                        show: false
+                    },
+                    axisTick: {
+                        show: false
+                    },
+                },
+                yAxis: {
+                    axisLine: {
+                        show: false
+                    },
+                    axisTick: {
+                        show: false
+                    },
+                    type: 'category',
+                    data:['21点游戏吧','胡晓苓棋艺俱乐部吧','范廷钰吧','围棋宝典吧','围棋吧']
+
+                },
+                series: [
+                    {
+                        type: 'bar',
+                        barCategoryGap:'55%',
+                        data: [0.0020,0.0023,0.0203,0.3979,15.2830]
+                    }
+                ]
+            };
+
+            mycharts.setOption(option);
+            resize(mycharts);
+
+
+
+            var mycharts = echarts.init($('#weiboFollow')[0]);
+            option = {
+                title: {
+                    text: '微博粉丝数排行',
+                    top: 0,
+                    left: 'center',
+                },
+                color: ['#30abf9'],
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '13%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    boundaryGap: [0, 0.01],
+                    min: 0,
+                    max: 4000,
+                    name:'粉丝数（万）',
+                    nameLocation: 'middle',
+                    nameGap: 30,
+                    axisLine: {
+                        show: false
+                    },
+                    axisTick: {
+                        show: false
+                    },
+                },
+                yAxis: {
+                    axisLine: {
+                        show: false
+                    },
+                    axisTick: {
+                        show: false
+                    },
+                    type: 'category',
+                    data: ['盐亭通','下棋想赢怕输','人民体育','中国棋院官网','浅层地震预报研究员余晓飞','绵阳心连心','今日绵阳','宁夏新闻网','棋牌新闻','人民网']
+                },
+                series: [
+                    {
+                        type: 'bar',
+                        data: [0.3197,0.3378,0.6357,1.7973,2.9890,8.9904,13.8217,71.8272,82.9963,3801.8711]
+                    }
+                ]
+            };
+
+            mycharts.setOption(option);
+            resize(mycharts);
+        })();
+        
+
+        (function(){
+            var mycharts = echarts.init($('#mediaCompare')[0]);
+            option = {
+                title: {
+                    text: '媒体价值比较',
+                    left: 'center'
+                },
+                legend: {
+                    bottom: 0,
+                    left: 'center',
+                    data: ["\u65b0\u95fb", "\u5fae\u4fe1", "\u5fae\u535a", "\u8d34\u5427"]
+                },
+                tooltip: {},
+                radar: {
+                    center: ['50%', '50%'], //中心（圆心）坐标，数组的第一项是横坐标，第二项是纵坐标。
+                    radius: '60%',
+                    name: {
+                        textStyle: {
+                            color: '#333333'
+                        }
+                    },
+                    indicator: [
+                       { name: '\u5173\u952e\u8bcd\u6570', max: 200},
+                       { name: '\u6587\u7ae0\u6570', max: 300},
+                       { name: '\u4f20\u64ad\u8303\u56f4', max: 60000000},
+                       { name: '\u5a92\u4f53\u6570', max: 100}
+                    ]
+                },
+                color: ['#30abf9','#f29c47','#fb716a','#4fcac8'],
+                series: [{
+                    name: '',
+                    type: 'radar',
+                    data : [
+                        {
+                            value : [142,293,58671360,86],
+                            name : '\u65b0\u95fb'
+                        },
+                        {
+                            value : [165, 203, 39866700, 59],
+                            name : '\u5fae\u4fe1'
+                        },
+                        {
+                            value : [164, 111, 1445316, 43],
+                            name : '\u5fae\u535a'
+                        },
+                        {
+                            value : [7, 63, 157055, 5],
+                            name : '\u8d34\u5427'
+                        }
+                    ]
+                }]
+            };
+            mycharts.setOption(option);
+            resize(mycharts);
+
+
+
+            var mycharts = echarts.init($('#mediaForm')[0]);
+            option = {
+                title: {
+                    text: '不同形式的关注度',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: "{a} <br/>{b} : {c} ({d}%)"
+                },
+                legend: {
+                    bottom: 0,
+                    left: 'center',
+                    data: ["\u76f4\u64ad", "\u5176\u4ed6\u56fe\u6587\u5f62\u5f0f"],
+                    itemWidth: 12,
+                    itemHeight: 12
+                },
+                series: [{
+                    name: '关注度',
+                    type: 'pie',
+                    radius: '60%',
+                    center: ['50%', '50%'],
+                    clockwise: false,
+                    data: [{
+                        value: 1172,
+                        name: '\u76f4\u64ad'
+                    }, {
+                        value: 980,
+                        name: '\u5176\u4ed6\u56fe\u6587\u5f62\u5f0f'
+                    }],
+                    label: {
+                        normal: {
+                            textStyle: {
+                                color: '#333',
+                                fontSize: '14px',
+                            }
+                        }
+                    },
+                    labelLine: {
+                        normal: {
+                            show: false
+                        }
+                    },
+                    itemStyle: {
+                        normal: {
+                            borderWidth: 1,
+                            borderColor: '#ffffff',
+                        },
+                        emphasis: {
+                            borderWidth: 0,
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }],
+                color: ['#b7dd70','#30abf9']
+            };
+            mycharts.setOption(option);
+            resize(mycharts);
+        })();
+    </script>
+</html>

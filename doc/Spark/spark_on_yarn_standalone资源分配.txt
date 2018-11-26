@@ -1,0 +1,1055 @@
+https://archive.cloudera.com/cdh5/redhat/6/x86_64/cdh/5.7.3/mirrors
+master启动：start-master.sh
+slave启动：start-slaves.sh spark://tipdm:7077
+在conf下的spark-defalut中。
+val textCount = sc.textFile("hdfs://tipdm:8020/a.txt")
+val count=textCount.flatMap(line=>line.split(" ")).map(word=>(word,1)).reduceByKey(_+_)
+count.saveAsTextFile("11116")
+
+count.collect()
+=============================================
+val pathfilein = "/a.txt"
+val pathfileout = "/spark"
+val sc = new SparkContext(conf)
+val line = sc.textFile(pathfilein)
+val result = line.flatMap(_.split(" ")).map((_, 1)).reduceByKey(_+_)
+
+Programming Guides:
+http://spark.apache.org/docs/latest/programming-guide.html#initializing-spark
+scala api:
+http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.package
+
+SparkPi 10 --master local[2]
+
+提交任务：http://blog.csdn.net/book_mmicky/article/details/25714545
+./bin/spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master spark://tipdm:7077 \
+  ./lib/spark-examples-1.6.1-hadoop2.6.0.jar \
+  100
+standalone方式：
+http://server2:18080/  可以跳到4040。
+http://server2:4040/jobs/ 任务详细信息
+yarn 方式：
+http://8088 点击 AM 可跳到类似spark的4040，查看job信息。
+
+Error:scalac: IO error while decoding with GBK
+Please try specifying another one using the -encoding option
+spark-shell --name test_Utils --master local[4]
+spark-shell --name test_sparkshell --master spark://tipdm:7077
+spark-shell --name test_sparkshell --master yarn-client
+
+1）本地模式：
+spark-submit --class org.apache.spark.examples.SparkPi  --master local[3] /opt/spark-1.6.1-bin-hadoop2.6/lib/spark-examples-1.6.1-hadoop2.6.0.jar 10
+2）yarn模式：
+--master yarn-client == --master yarn --deploy-mode client    结果在命令行可见！
+--master yarn-cluster == --master yarn --deploy-mode cluster 
+
+spark-submit --class org.apache.spark.examples.SparkPi  --master yarn-client /opt/spark-1.6.1-bin-hadoop2.6/lib/spark-examples-1.6.1-hadoop2.6.0.jar 10
+spark-submit --class org.apache.spark.examples.SparkPi  --master yarn --deploy-mode cluster /opt/spark-1.6.1-bin-hadoop2.6/lib/spark-examples-1.6.1-hadoop2.6.0.jar 10
+spark-submit --class org.apache.spark.examples.SparkPi  --master yarn --deploy-mode cluster /opt/cloudera/parcels/CDH/lib/spark/lib/spark-examples-1.6.0-cdh5.10.1-hadoop2.6.0-cdh5.10.1.jar 10
+================================================
+================================================
+================================================================================================
+================================================
+================================================
+================================================
+
+spark-submit --master yarn --deploy-mode cluster --executor-memory 1g \
+--name wordcount --conf "spark.app.id=wordcount" examples/lib/wordcount.py /data/inputfile.txt 
+
+spark-submit --master yarn --deploy-mode client  \
+--name wordcount --conf "spark.app.id=wordcount" examples/lib/wordcount.py hdfs://cdh-master-slave1/data/inputfile.txt
+
+spark-submit --master yarn --deploy-mode client \
+--name wordcount  examples/lib/wordcount.py /data/inputfile.txt 
+=======================
+========================
+spark-submit --master spark://cdh-master-slave1:7077 --name pi  examples/lib/pi.py  2 
+
+
+spark-submit --master spark://cdh-master-slave1:7077 --deploy-mode client  \
+--name ww --conf "spark.app.id=ww" 
+
+8 10:13:08
+
+spark-submit --master spark://cdh-master-slave1:7077 --name test test.py
+8 10:47:13
+
+
+examples/lib/wordcount.py /data/inputfile.txt
+
+
+spark.driver.extraClassPath=hdfs://cdh-master-slave1:8020/jar/mongo-spark-connector_2.10-1.0.0.jar:hdfs://cdh-master-slave1:8020/jar/mongo-java-driver-3.2.2.jar
+spark.driver.extraClassPath=hdfs://cdh-master-slave1:8020/jar/mongo-java-driver-3.2.2.jar:hdfs://cdh-master-slave1:8020/jar/mongo-spark-connector_2.10-1.0.0.jar
+
+只能修改/etc/spark/conf/spark-defaults.conf ，所有机器都要添加如下（driver和executor），且只能在本地，且本地对应目录一致都有jar包，且权限为755,可执行，重启spark服务：
+spark.driver.extraClassPath=/home/weiwc/mongo-java-driver-3.2.2.jar:/home/weiwc/mongo-spark-connector_2.10-1.0.0.jar
+spark.executor.extraClassPath=/home/weiwc/mongo-java-driver-3.2.2.jar:/home/weiwc/mongo-spark-connector_2.10-1.0.0.jar
+========================================
+
+动态资源分配：
+
+已有任务占用资源如下：
+slave1：2核，5G  / 4core,15G
+slave2: 未被占用 / 6core,20G
+slave3: 2核，5G /  4core,15G
+
+1、使用动态分配时：
+1）程序中指定driver memory没有用，需在命令行指定。
+2）先使用所有没被使用的核，4,4,6 会起三个executor，默认内存1G，指定spark.executor.memory=15G和
+spark.executor.cores=3时，4/3~~1,4/3~~1,6/3=2 共4个executor，但要根据spark.executor.memory=15G来最后确定executor个数。这里的空任务都是0.2s。
+
+3）driver memory的指定跟worker的内存没关系，可以指定18G，应该是free -h 只要可用的内存就可以用。可以大于32-20=12G。
+
+4）但只指定spark.executor.memory=18G，将会用6个核，在slave2上起一个executor，slave1,slave3起不起来，可用内存只有15G，空任务是4s。
+5) 指定了 set("spark.cores.max","6") 和 spark.executor.cores","3" 起两个任务，但空任务是4s。限制了最大core数，已经没有动态分配的意义了，动态分配就是先给你所有的核，
+具体你根据spark.executor.cores 和 spark.executor.memory计算 最后具体使用了多少核，并非限制你的核数。
+6） 只指定 .set("spark.cores.max","6") 时，不指定spark.executor.cores ，会起3个executor，一个2核。空任务是0.2s。
+7)  set("spark.cores.max","6").set("spark.executor.memory", "16G")  会在slave2起一个executor，用6核，但空任务是4s。
+
+程序中设置参数，关闭动态分配时：
+
+8）不管是否动态，默认都会使用所有核
+9) 程序中指定driver memory也没有用。
+10） conf = SparkConf().setMaster("spark://cdh-master-slave1:7077").set("spark.python.worker.reuse", "true")
+.setAppName('bm25_cache_worddirect').set("spark.dynamicAllocation.enabled","false")
+.set("spark.executor.memory", "15G").set("spark.executor.cores","3")
+ 空任务是0.2s，使用了9个核。
+ 
+11） set("spark.python.worker.reuse", "true").setAppName('bm25_cache_worddirect').set("spark.dynamicAllocation.enabled","false")
+.set("spark.executor.memory", "10G").set("spark.executor.cores","3")
+ 空任务是0.2s，使用了12个核，4个executor，在slave2上起两个！总之，如果不指定spark.cores.max，不管是否动态分配，程序都会先使用所有没被使用的核，然后再根据
+ spark.executor.cores 和 spark.executor.memory计算 最后具体使用了多少核，起多少个executor！
+12） set("spark.executor.memory", "16G").set("spark.executor.cores","3") 与4）对比，4）没有指定spark.executor.cores，且内存spark.executor.memory=18G，因此
+只能在slave2上起一个executor！这里指定了set("spark.executor.cores","3") 将会用3个核，且set("spark.executor.memory", "16G")，也只能在slave2上起一个executor，
+slave1,slave3起不起来，可用内存只有15G，与4）一样空任务是4s。
+13） set("spark.dynamicAllocation.enabled","false").set("spark.executor.memory", "10G")
+	.set("spark.executor.cores","3").set("spark.cores.max","6")
+对比5）,与5的结果一样，起两个任务，空任务是4s。
+
+
+=============================================
+
+yarn 和 standalone 都可用：
+--driver-cores：只在cluster下可用，默认为1。
+--executor-cores：cluster和client都可用，(Default: 1 in YARN mode,
+                              or all available cores on the worker in standalone mode)
+--driver-memory ：cluster和client都可用，Memory for driver (e.g. 1000M, 2G) (Default: 1024M).
+--executor-memory ：cluster和client都可用，Memory per executor (e.g. 1000M, 2G) (Default: 1G).
+================================================
+================================================
+================================================
+================================================
+9 11:34:44
+
+cluster方式：8088中任务名称：org.apache.spark.examples.SparkPi，结果：Pi is roughly 3.143308在日志中保存，命令行不可见。
+client方式：8088中任务名称：Spark Pi，结果：Pi is roughly 3.143308在命令行打印出来，客户端Ctrl+C 退出，则程序也会退出；
+
+3）standalone模式：
+spark-submit --class org.apache.spark.examples.SparkPi  --master spark://tipdm:7077 --name stand1 /opt/spark-1.6.1-bin-hadoop2.6/lib/spark-examples-1.6.1-hadoop2.6.0.jar 10
+http://tipdm:8080/中可看到任务名称：Spark Pi
+
+
+<testOrNot> <table> <columns> <output> <numClusters> <numIterations> <pmml>"
+spark-submit --name test3 --master yarn-client --class com.tipdm.spark.clustering.KMeansMC     example-1.0-SNAPSHOT.jar "false" "kmeans_train" "x1,x2,x3" "/user/root/model/kmeans2" "3" "10" "true"
+
+/opt/spark-1.6.1-bin-hadoop2.6/lib/datanucleus-api-jdo-3.2.6.jar:/opt/spark-1.6.1-bin-hadoop2.6/lib/datanucleus-rdbms-3.2.9.jar:/opt/spark-1.6.1-bin-hadoop2.6/lib/datanucleus-core-3.2.10.jar
+
+
+/opt/spark-1.6.1-bin-hadoop2.6/lib/datanucleus-api-jdo-3.2.6.jar,/opt/spark-1.6.1-bin-hadoop2.6/lib/datanucleus-rdbms-3.2.9.jar,/opt/spark-1.6.1-bin-hadoop2.6/lib/datanucleus-core-3.2.10.jar
+
+
+F:\\spark\\spark-1.6.1-bin-hadoop2.6\\spark-1.6.1-bin-hadoop2.6\\lib\\datanucleus-api-jdo-3.2.6.jar,F:\\spark\\spark-1.6.1-bin-hadoop2.6\\spark-1.6.1-bin-hadoop2.6\\lib\\datanucleus-rdbms-3.2.9.jar,F:\\spark\\spark-1.6.1-bin-hadoop2.6\\spark-1.6.1-bin-hadoop2.6\\lib\\datanucleus-core-3.2.10.jar
+
+
+spark-submit --class jtest.LowerUpperCaseConvert --files /opt/apache-hive-1.2.1-bin/conf/hive-default.xml.template --master yarn-client --name WordCountByscala7  wc.jar 
+spark-submit --class jtest.LowerUpperCaseConvert --master yarn-client --name low2  wc.jar 
+
+spark-submit --class test.WordCount  --master yarn-client --name onyarn22  wc.jar hdfs://tipdm:8020/a.txt
+
+spark.executor.extraClassPath=/opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/hive/*
+spark.driver.extraClassPath=/opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/hive-hcatalog/*
+
+spark-submit --class jtest.LowerUpperCaseConvert --master yarn-client --name low2 --jars /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/hive-hcatalog/share/hcatalog/hive-hcatalog-core-1.1.0-cdh5.7.3.jar --files /etc/hive/conf/hive-site.xml wc.jar
+
+spark-submit --class jtest.LowerUpperCaseConvert --master yarn-client --executor-memory 500M --name low2 --jars /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/hive-hcatalog/share/hcatalog/hive-hcatalog-core-1.1.0-cdh5.7.3.jar --files /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/hive/conf/hive-site.xml wc.jar
+
+spark.yarn.jar=hdfs://master:9000/user/spark-assembly-1.5.0-hadoop2.6.0.jar
+spark-submit --class org.apache.spark.examples.SparkPi  --master yarn-client /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/spark/lib/spark-assembly-1.6.0-cdh5.7.3-hadoop2.6.0-cdh5.7.3.jar 100
+spark-submit --class org.apache.spark.examples.SparkPi  --master yarn --deploy-mode cluster --executor-memory 500M /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/spark/lib/spark-examples-1.6.0-cdh5.7.3-hadoop2.6.0-cdh5.7.3.jar 100
+
+
+E - Element (在集合中使用，因为集合中存放的是元素)
+ T - Type（Java 类）
+ K - Key（键）
+ V - Value（值）
+ N - Number（数值类型）
+？ -  表示不确定的java类型
+ S、U、V  - 2nd、3rd、4th types
+
+
+spark-submit --class org.apache.spark.examples.SparkPi --master yarn --deploy-mode cluster /opt/spark-1.6.1-bin-hadoop2.6/lib/spark-examples-1.6.1-hadoop2.6.0.jar 10
+--master yarn --deploy-mode cluster   等同于 --master yarn-cluster
+yarn-client 模式，Driver在本地客户端，println结果输出到shell客户端，客户端Ctrl+C 退出，则程序也会退出；
+yarn-cluster，Driver在Yarn集群中（在某个NodeManager中），println结果输出8088的stdout日志中，Ctrl+C，程序不会退出。
+
+standalone 模式，--deploy-mode cluster
+======================================================
+spark-shell  --name sparkShell5 --jars /root/test.jar
+spark-submit --name s1 --class sca01.T1  /root/test2.jar /a.txt /out_a7
+spark-submit --name s1 --class sca01.T1 --jars /root/test.jar /root/test2.jar /a.txt /out_a6
+
+
+
+scala:http://www.scala-lang.org/files/archive/api/2.10.5/
+spark-javaApi:http://spark.apache.org/docs/1.6.0/api/java/index.html
+spark-ScalaApi:http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext
+Usage: spark-submit [options] <app jar | python file> [app arguments]
+Usage: spark-submit --kill [submission ID] --master [spark://...]
+Usage: spark-submit --status [submission ID] --master [spark://...]
+
+Options:
+  --master MASTER_URL         spark://host:port, mesos://host:port, yarn, or local.
+  --deploy-mode DEPLOY_MODE   Whether to launch the driver program locally ("client") or
+                              on one of the worker machines inside the cluster ("cluster")
+                              (Default: client).
+  --class CLASS_NAME          Your application's main class (for Java / Scala apps).
+  --name NAME                 A name of your application.
+  --jars JARS                 Comma-separated list of local jars to include on the driver
+                              and executor classpaths.
+  --packages                  Comma-separated list of maven coordinates of jars to include
+                              on the driver and executor classpaths. Will search the local
+                              maven repo, then maven central and any additional remote
+                              repositories given by --repositories. The format for the
+                              coordinates should be groupId:artifactId:version.
+  --exclude-packages          Comma-separated list of groupId:artifactId, to exclude while
+                              resolving the dependencies provided in --packages to avoid
+                              dependency conflicts.
+  --repositories              Comma-separated list of additional remote repositories to
+                              search for the maven coordinates given with --packages.
+  --py-files PY_FILES         Comma-separated list of .zip, .egg, or .py files to place
+                              on the PYTHONPATH for Python apps.
+  --files FILES               Comma-separated list of files to be placed in the working
+                              directory of each executor.
+
+  --conf PROP=VALUE           Arbitrary Spark configuration property.
+  --properties-file FILE      Path to a file from which to load extra properties. If not
+                              specified, this will look for conf/spark-defaults.conf.
+
+  --driver-memory MEM         Memory for driver (e.g. 1000M, 2G) (Default: 1024M).
+  --driver-java-options       Extra Java options to pass to the driver.
+  --driver-library-path       Extra library path entries to pass to the driver.
+  --driver-class-path         Extra class path entries to pass to the driver. Note that
+                              jars added with --jars are automatically included in the
+                              classpath.
+
+  --executor-memory MEM       Memory per executor (e.g. 1000M, 2G) (Default: 1G).
+
+  --proxy-user NAME           User to impersonate when submitting the application.
+
+  --help, -h                  Show this help message and exit
+  --verbose, -v               Print additional debug output
+  --version,                  Print the version of current Spark
+
+ Spark standalone with cluster deploy mode only:
+  --driver-cores NUM          Cores for driver (Default: 1).
+
+Spark standalone or Mesos with cluster deploy mode only:
+  --supervise                 If given, restarts the driver on failure.
+  --kill SUBMISSION_ID        If given, kills the driver specified.
+  --status SUBMISSION_ID      If given, requests the status of the driver specified.
+
+ Spark standalone and Mesos only:
+  --total-executor-cores NUM  Total cores for all executors.
+
+ Spark standalone and YARN only:
+  --executor-cores NUM        Number of cores per executor. (Default: 1 in YARN mode,
+                              or all available cores on the worker in standalone mode)
+
+ YARN-only:
+  --driver-cores NUM          Number of cores used by the driver, only in cluster mode
+                              (Default: 1).
+  --queue QUEUE_NAME          The YARN queue to submit to (Default: "default").
+  --num-executors NUM         Number of executors to launch (Default: 2).
+  --archives ARCHIVES         Comma separated list of archives to be extracted into the
+                              working directory of each executor.
+  --principal PRINCIPAL       Principal to be used to login to KDC, while running on
+                              secure HDFS.
+  --keytab KEYTAB             The full path to the file that contains the keytab for the
+                              principal specified above. This keytab will be copied to
+                              the node running the Application Master via the Secure
+                              Distributed Cache, for renewing the login tickets and the
+                              delegation tokens periodically.
+--master，--deploy-mode，--conf，--driver-memory，--executor-memory，--driver-cores，
+--total-executor-cores，--executor-cores，--driver-cores，--num-executors
+
+spark.master,spark.app.name，spark.driver.memory，spark.submit.deployMode，
+spark.executor.memory，spark.yarn.jar
+===========================================================================
+yarn 和 standalone 都可用：
+--driver-cores：只在cluster下可用，默认为1。
+--executor-cores：cluster和client都可用，(Default: 1 in YARN mode,
+                              or all available cores on the worker in standalone mode)
+--driver-memory ：cluster和client都可用，Memory for driver (e.g. 1000M, 2G) (Default: 1024M).
+--executor-memory ：cluster和client都可用，Memory per executor (e.g. 1000M, 2G) (Default: 1G).
+
+yarn-only:
+--num-executors NUM         Number of executors to launch (Default: 2).
+							  
+===========================================================================
+
+
+
+
+
+
+
+
+
+
+如果要使用--properties-file的话，在--properties-file中定义的属性就不必要在spark-sumbit中再定义了。
+比如默认文件conf/spark-defaults.conf 中定义了spark.master，就可以不使用--master了。
+--properties-file可以指定其他文件。如果在当前节点执行spark-submit，就会读取当前节点的spark-defaults.conf
+文件中的属性值，用当前文件中的属性值填充--master,--executor-memory等值。类似于直接指定--master,--executor-memory提交任务一样，
+因此其他节点spark-defaults.conf是什么都没关系，就像命令行参数方式提交任务不受影响一样。
+关于Spark属性的优先权为：SparkConf方式 > 命令行参数方式 >文件配置方式
+yarn-client模式：AM  = spark.yarn.am.memory + 384
+yarn-cluster模式：AM  = spark.driver.memory + 384 参看代码：
+	amMemory = driverMemory
+	amCores = driverCores
+
+client或cluster：
+container=  spark.executor.memory + 384
+
+
+spark-submit --class org.apache.spark.examples.SparkPi  --master yarn-client /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/spark/lib/spark-assembly-1.6.0-cdh5.7.3-hadoop2.6.0-cdh5.7.3.jar 100
+spark-submit --class org.apache.spark.examples.SparkPi   /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/spark/lib/spark-examples-1.6.0-cdh5.7.3-hadoop2.6.0-cdh5.7.3.jar 100
+yarn:client模式
+spark-submit  --master yarn --deploy-mode cluster --executor-memory 500M --driver-memory 1500M 
+spark-submit  --master yarn --deploy-mode cluster --executor-memory 500M --driver-memory 500M 
+spark-submit  --master yarn --deploy-mode cluster --executor-memory 500M --driver-memory 500M 
+spark-submit  --master yarn --deploy-mode cluster --executor-memory 500M --driver-memory 500M 
+spark-submit  --master yarn --deploy-mode cluster --executor-memory 500M --driver-memory 500M 
+spark-submit  --class caic.spark.hiveinout.WordCount --master yarn-cluster   sparkwc.jar /a.txt /user/root/workflow_demos/dataout/spark/0001
+
+spark-sql 	--master spark://tipdm:7077 --name count1
+spark-shell --master local --name count2
+
+spark on yarn 原理理解：
+http://www.aboutyun.com/thread-12294-1-1.html
+https://www.iteblog.com/archives/1223
+spark on yarn 内存理解：
+
+spark.driver.memory：默认值512m
+spark.executor.memory：默认值512m
+spark.yarn.am.memory：默认值512m
+spark.yarn.executor.memoryOverhead：值为executorMemory * 0.1, with minimum of 384
+
+val MEMORY_OVERHEAD_FACTOR = 0.10
+  val MEMORY_OVERHEAD_MIN = 384
+val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead",
+    math.max((MEMORY_OVERHEAD_FACTOR * executorMemory).toInt, MEMORY_OVERHEAD_MIN))
+	
+val executorMemoryOverhead = sparkConf.getInt("spark.yarn.executor.memoryOverhead",
+    math.max((MEMORY_OVERHEAD_FACTOR * executorMemory).toInt, MEMORY_OVERHEAD_MIN))
+	
+	
+spark.yarn.driver.memoryOverhead：值为driverMemory * 0.07, with minimum of 384
+spark.yarn.am.memoryOverhead：值为AM memory * 0.07, with minimum of 384
+
+
+
+以下是跟Yarn有关的配置：
+
+yarn.app.mapreduce.am.resource.mb：AM能够申请的最大内存，默认值为1536MB （mapred-default.xml）
+yarn.nodemanager.resource.memory-mb：nodemanager能够申请的最大内存，默认值为8192MB（yarn-default.xml）
+yarn.scheduler.minimum-allocation-mb：调度时一个container能够申请的最小资源，默认值为1024MB（yarn-site.xml）
+yarn.scheduler.maximum-allocation-mb：调度时一个container能够申请的最大资源，默认值为1167MB（最好改为8192）（yarn-site.xml）
+
+
+<property>
+<name>yarn.nodemanager.resource.memory-mb</name>
+<value>3072</value>
+<discription>每个节点可用内存,单位MB</discription>
+</property>
+<property>
+<name>yarn.scheduler.minimum-allocation-mb</name>
+<value>512</value>
+<discription>单个任务可申请最少内存，默认1024MB</discription>
+</property>
+<property>
+<name>yarn.scheduler.maximum-allocation-mb</name>
+<value>2048</value>
+<discription>单个任务可申请最大内存，默认8192MB</discription>
+</property>
+	
+=============================================
+mapreduce任务配置：
+
+	<property>
+		<name>mapreduce.map.memory.mb</name>
+		<value>512</value>
+		<description>每个Map任务的物理内存限制</description>
+	</property>
+	
+	<property>
+		<name>mapreduce.reduce.memory.mb</name>
+		<value>512</value>
+		<description>每个Reduce任务的物理内存限制</description>
+	</property>
+	
+	<property>
+		<name>mapreduce.map.java.opts</name>
+		<value>-Xmx1024m</value>
+	</property>
+	
+	<property>
+		<name>mapreduce.reduce.java.opts</name>
+		<value>-Xmx1024m</value>
+	</property>
+============================================================================
+============================================================================
+
+python读取数据到spark:  https://docs.mongodb.com/spark-connector/v2.0/python/read-from-mongodb/
+spark python api: https://spark.apache.org/docs/1.6.0/api/python/pyspark.sql.html#pyspark.sql.SQLContext
+
+
+报错：
+Traceback (most recent call last):
+  File "test.py", line 5, in <module>
+    from pyspark.sql import SQLContext
+ImportError: No module named pyspark.sql
+
+解决如下：
+vi ~/.bashrc 添加如下：
+export TEST="test"
+export SPARK_HOME="/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/spark/"
+export PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH
+export PYTHONPATH=$SPARK_HOME/python/lib/py4j-0.9-src.zip:$PYTHONPATH
+
+Apache Kafka is publish-subscribe messaging rethought as a distributed commit log. Before adding this service, ensure that either the Kafka parcel is activated or the Kafka package is installed.
+
+
+spark.driver.extraClassPath       client方式，只能命令行--jars 或spark-default.conf 代替，不能在程序中直接指定
+spark.executor.extraClassPath     client方式，只能命令行--jars 或spark-default.conf 代替，不能在程序中直接指定
+ 
+spark.driver.cores	1	Number of cores to use for the driver process, only in cluster mode.
+
+spark.driver.memory  1g，client方式，只能命令行--driver-memory 代替，不能在程序中直接指定
+
+spark.executor.memory   1g	Amount of memory to use per executor process (e.g. 2g, 8g).
+
+spark.executor.cores     1 in YARN mode, all the available cores on the worker in standalone mode.
+
+conf = SparkConf().setAppName('lawbot').setMaster("spark://cdh-master-slave1:7077")
+.set("spark.driver.memory", "2G")
+.set("spark.executor.cores","2").set("spark.executor.memory","5g").set("spark.cores.max",6)
+
+1、set("spark.cores.max",6) 将会启动3个executor。
+2、set("spark.cores.max",5) 将会启动2个executor，因为set("spark.executor.cores","2")。
+3、set("spark.cores.max",3) 将会启动1个executor，因为set("spark.executor.cores","2")。
+4、不设置spark.cores.max，默认会用所有的cores，将会启动9个executor，每个executor包含2个core，因为set("spark.executor.cores","2")。
+5、不设置spark.cores.max，也不设置spark.executor.cores，默认会用所有的cores，将会启动3个executor，每个worker默认一个executor，每个executor包含6个core。
+
+spark.cores.max、spark.deploy.defaultCores相当于：--total-executor-cores 
+
+--total-executor-cores NUM  Total cores for all executors.
+
+In addition, you can configure spark.deploy.defaultCores on the cluster master process to change the default for applications that don’t set spark.cores.max to something less than infinite. Do this by adding the following to conf/spark-env.sh:
+export SPARK_MASTER_OPTS="-Dspark.deploy.defaultCores=<value>"
+
+
+SPARK_WORKER_CORES=6
+SPARK_WORKER_MEMORY=20G
+
+	
+SPARK_MASTER_HOST	Bind the master to a specific hostname or IP address, for example a public one.
+SPARK_MASTER_PORT	Start the master on a different port (default: 7077).
+SPARK_MASTER_WEBUI_PORT	Port for the master web UI (default: 8080).
+SPARK_MASTER_OPTS	Configuration properties that apply only to the master in the form "-Dx=y" (default: none). See below for a list of possible options.
+SPARK_LOCAL_DIRS	Directory to use for "scratch" space in Spark, including map output files and RDDs that get stored on disk. This should be on a fast, local disk in your system. It can also be a comma-separated list of multiple directories on different disks.
+SPARK_WORKER_CORES	Total number of cores to allow Spark applications to use on the machine (default: all available cores).
+SPARK_WORKER_MEMORY	Total amount of memory to allow Spark applications to use on the machine, e.g. 1000m, 2g (default: total memory minus 1 GB); note that each application's individual memory is configured using its spark.executor.memory property.
+SPARK_WORKER_PORT	Start the Spark worker on a specific port (default: random).
+SPARK_WORKER_WEBUI_PORT	Port for the worker web UI (default: 8081).
+SPARK_WORKER_DIR	Directory to run applications in, which will include both logs and scratch space (default: SPARK_HOME/work).
+SPARK_WORKER_OPTS	Configuration properties that apply only to the worker in the form "-Dx=y" (default: none). See below for a list of possible options.
+SPARK_DAEMON_MEMORY	Memory to allocate to the Spark master and worker daemons themselves (default: 1g).
+SPARK_DAEMON_JAVA_OPTS	JVM options for the Spark master and worker daemons themselves in the form "-Dx=y" (default: none).
+SPARK_PUBLIC_DNS	The public DNS name of the Spark master and workers (default: none).
+Note: The launch scripts do not currently support Windows. To run a Spark cluster on Windows, start the master and workers by hand.
+
+SPARK_MASTER_OPTS supports the following system properties:
+
+Property Name	Default	Meaning
+spark.deploy.retainedApplications	200	The maximum number of completed applications to display. Older applications will be dropped from the UI to maintain this limit.
+spark.deploy.retainedDrivers	200	The maximum number of completed drivers to display. Older drivers will be dropped from the UI to maintain this limit.
+spark.deploy.spreadOut	true	Whether the standalone cluster manager should spread applications out across nodes or try to consolidate them onto as few nodes as possible. Spreading out is usually better for data locality in HDFS, but consolidating is more efficient for compute-intensive workloads. 
+spark.deploy.defaultCores	(infinite)	Default number of cores to give to applications in Spark's standalone mode if they don't set spark.cores.max. If not set, applications always get all available cores unless they configure spark.cores.max themselves. Set this lower on a shared cluster to prevent users from grabbing the whole cluster by default. 
+spark.deploy.maxExecutorRetries	10	Limit on the maximum number of back-to-back executor failures that can occur before the standalone cluster manager removes a faulty application. An application will never be removed if it has any running executors. If an application experiences more than spark.deploy.maxExecutorRetries failures in a row, no executors successfully start running in between those failures, and the application has no running executors then the standalone cluster manager will remove the application and mark it as failed. To disable this automatic removal, set spark.deploy.maxExecutorRetries to -1. 
+spark.worker.timeout	60	Number of seconds after which the standalone deploy master considers a worker lost if it receives no heartbeats.
+SPARK_WORKER_OPTS supports the following system properties:
+
+Property Name	Default	Meaning
+spark.worker.cleanup.enabled	false	Enable periodic cleanup of worker / application directories. Note that this only affects standalone mode, as YARN works differently. Only the directories of stopped applications are cleaned up.
+spark.worker.cleanup.interval	1800 (30 minutes)	Controls the interval, in seconds, at which the worker cleans up old application work dirs on the local machine.
+spark.worker.cleanup.appDataTtl	7 * 24 * 3600 (7 days)	The number of seconds to retain application work directories on each worker. This is a Time To Live and should depend on the amount of available disk space you have. Application logs and jars are downloaded to each application work dir. Over time, the work dirs can quickly fill up disk space, especially if you run jobs very frequently.
+spark.worker.ui.compressedLogFileLengthCacheSize	100	For compressed log files, the uncompressed file can only be computed by uncompressing the files. Spark caches the uncompressed file size of compressed log files. This property controls the cache size.
+
+
+
+=========================================
+def maximum(x, y):
+    if x > y:
+        return x
+    else:
+        return y
+
+print maximum(2, 3)
+===============================
+if else:
+
+number = 23
+guess = int(raw_input('Enter an integer : '))
+
+if guess == number:
+    print 'Congratulations, you guessed it.' # New block starts here
+    print "(but you do not win any prizes!)" # New block ends here
+elif guess < number:
+    print 'No, it is a little higher than that' # Another block
+    # You can do whatever you want in a block ...
+else:
+    print 'No, it is a little lower than that' 
+    # you must have guess > number to reach here
+====================
+While:
+
+number = 23
+running = True
+
+while running:
+    guess = int(raw_input('Enter an integer : '))
+
+    if guess == number:
+        print 'Congratulations, you guessed it.' 
+        running = False # this causes the while loop to stop
+    elif guess < number:
+        print 'No, it is a little higher than that' 
+    else:
+        print 'No, it is a little lower than that' 
+else:
+    print 'The while loop is over.' 
+    # Do anything else you want to do here
+
+print 'Done'
+=====================
+Global 变量：
+#!/usr/bin/python
+# Filename: func_global.py
+
+def func():
+    global x
+
+    print 'x is', x
+    x = 2
+    print 'Changed local x to', x
+
+x = 50
+func()
+print 'Value of x is', x
+（源文件：code/func_global.py）
+
+输出
+
+$ python func_global.py
+x is 50
+Changed global x to 2
+Value of x is 2
+
+==================
+列表：
+#!/usr/bin/python
+# Filename: using_list.py
+
+# This is my shopping list
+shoplist = ['apple', 'mango', 'carrot', 'banana']
+
+print 'I have', len(shoplist),'items to purchase.'
+
+print 'These items are:', # Notice the comma at end of the line
+for item in shoplist:
+    print item,
+
+print '\nI also have to buy rice.'
+shoplist.append('rice')
+print 'My shopping list is now', shoplist
+
+print 'I will sort my list now'
+shoplist.sort()
+print 'Sorted shopping list is', shoplist
+
+print 'The first item I will buy is', shoplist[0]
+olditem = shoplist[0]
+del shoplist[0]
+print 'I bought the', olditem
+print 'My shopping list is now', shoplist
+==========
+元组打印：
+#!/usr/bin/python
+# Filename: print_tuple.py
+
+age = 22
+name = 'Swaroop'
+
+print '%s is %d years old' % (name, age)
+print 'Why is %s playing with that python?' % name
+========================================
+元组：
+#!/usr/bin/python
+# Filename: using_tuple.py
+
+zoo = ('wolf', 'elephant', 'penguin')
+print 'Number of animals in the zoo is', len(zoo)
+
+new_zoo = ('monkey', 'dolphin', zoo)
+print 'Number of animals in the new zoo is', len(new_zoo)
+==================================================
+from pyspark import SparkContext, SparkConf
+from pyspark.sql import SQLContext
+
+
+	conf = SparkConf().setAppName("bm25")
+    sc = SparkContext(conf=conf)
+    sqlContext = SQLContext(sc)
+
+    inverted_df = sqlContext.read.json('input/xaa')
+    sqlContext.registerDataFrameAsTable(inverted_df, 'inverted_table')
+    sqlContext.cacheTable('inverted_table')
+    # 触发cacheTable的操作
+    df = sqlContext.sql("SELECT * FROM inverted_table where key='32716.29'").collect()
+
+Spark Python编程：
+===========
+============
+===========
+
+data = [(3, 6),(5,4),(6, 2)]
+rdd1 = sc.parallelize(data, 2) 
+sum = 0  
+def t(x):
+    print((x[0],sum+x[1]) + '--' + sum)  
+    sum = sum + t[1] 
+rdd1.foreach(t)  
+
+=========================
+==================================
+===========================
+HBase官网: http://hbase.apache.org/1.2/book.html#shell
+命名空间：
+在HBase中，namespace命名空间指对一组表的逻辑分组，类似RDBMS中的database，方便对表在业务上划分。
+HBase系统默认定义了两个缺省的namespace
+hbase：系统内建表，包括namespace和meta表
+default：用户建表时未指定namespace的表都创建在此
+
+name_space操作：
+create_namespace 'datamanage'
+describe_namespace 'datamanage'
+create 'datamanage:testtable','colfam01'
+list_namespace_tables 'datamanage'
+
+disable 'datamanage:testtable'
+drop 'datamanage:testtable'
+
+drop_namespace 'datamanage'
+describe 'datamanage'
+
+
+
+权限管理：
+1）分配权限
+# 语法 : grant <user> <permissions> <table> <column family> <column qualifier> 参数后面用逗号分隔
+# 权限用五个字母表示： "RWXCA".
+# READ('R'), WRITE('W'), EXEC('X'), CREATE('C'), ADMIN('A')
+# 例如，给用户‘test'分配对表t1有读写的权限，
+hbase(main)> grant 'test','RW','t1'
+
+2）查看权限
+
+# 语法：user_permission <table>
+# 例如，查看表t1的权限列表
+hbase(main)> user_permission 't1'
+3）收回权限
+
+# 与分配权限类似，语法：revoke <user> <table> <column family> <column qualifier>
+# 例如，收回test用户在表t1上的权限
+hbase(main)> revoke 'test','t1'
+========================
+================
+============================
+
+修改表结构：
+# 例如：修改表test1的列族的TTL为180天
+disable 'test1'
+alter 'test1',{NAME=>'body',TTL=>'15552000'},{NAME=>'meta', TTL=>'15552000'}
+enable 'test1'
+
+修改列族版本数：
+alter 't5', NAME => 'data', VERSIONS => 5
+alter 't1', 'f1', {NAME => 'f2', IN_MEMORY => true}, {NAME => 'f3', VERSIONS => 5}
+
+删除列族：
+alter 'ns1:t1', NAME => 'f1', METHOD => 'delete'
+alter 'ns1:t1', 'delete' => 'f1'
+
+添加列族data：
+alter 't5','data'  #默认设置
+
+
+
+创建表：
+create 't1', 'f1', 'f2', 'f3'		
+create 't1', {NAME => 'f1'}, {NAME => 'f2'}, {NAME => 'f3'}
+create 't6', {NAME => 'f1', VERSIONS => 2, TTL => 2592000, BLOCKCACHE => true}
+
+
+1、创建表时，列族的VERSIONS为1，只是不能通过指定{VERSIONS => 4}，查询时显示多个版本，
+	但之前的版本也是有保存的，可以通过指定{TIMESTAMP => 1493794919189}来显示。
+create 'tt', 'f1'	
+put 'tt', 'r1', 'f1:name', 'v2'		
+put 'tt', 'r1', 'f1:name', 'v3'
+get 'tt', 'r1', {COLUMN => 'f1', TIMESTAMP => 1493794919189}  	#指定v2的时间戳，获取值
+
+2、创建表时，列族的VERSIONS大于1时，直接使用scan或get不行（默认获取1个版本），
+	需要指定{VERSIONS => 4}才能显示多版本，且不能比创建表时定义的VERSIONS大。
+	
+HBase可以设置每个列族保存的最大VERSION数，还可以设置VERSION保存的最大时间TTL(Time To Live)。
+
+列族：
+1、HBase表中的每个列都归属于某个列族，列族必须作为表模式(schema)定义的一部分预先给出；
+2、列名以列族作为前缀，每个“列族”都可以有多个列成员(column)；
+3、HBase把同一列族里面的数据存储在同一目录下，由几个文件保存。
+4、目前hbase不能很好地处理多个列族 ，建议只用 1 ~ 3个列族
+	
+时间戳：
+
+1、不同版本的单元格数据按照时间倒序排序，最新的数据版本排在最前面；
+2、时间戳可以有Hbase在数据写入是自动赋值，此时时间戳是精确到毫秒的当前系统时间；
+3、时间戳也可以由客户显式赋值，如果应用程序要避免数据版本的冲突，就必须自己生成唯一性时间戳。
+4、最新的数据是根据时间戳来定的!新插入的数据时间戳设置的比原有数据还小，那scan 的结果，还是原有
+	的时间戳最大的数据。
+
+CELL，单元格：
+1、由{row key, column( =<family> + <label>), version} 唯一确定的单元。
+2、cell中的数据是没有类型的，全部是字节码形式存贮。
+
+
+TTL:
+1、TTL参数设置的单位为秒，默认值是Integer.MAX_VALUE,即2147483647秒。使用默认值的数据即为永久保留；
+2、TTL的设置只针对列族,哪个列族设置了，只对哪个列族起作用！
+
+
+行存储，列存储区别：
+
+1、列存储将所有记录中相同字段的数据聚合存储;
+2、行存储将每条记录的所有字段的数据聚合存储;
+
+SQL语言共分为四大类：
+
+数据查询语言DQL（查询），数据操纵语言DML（增删改），数据定义语言DDL（创建），数据控制语言DCL。
+
+
+
+======================================
+======================
+
+get 't9', 'r1', {COLUMN => 'f1', TIMESTAMP => 8}
+get 't9', 'r1', {COLUMN => 'f1', VERSIONS => 4}
+
+get 'tt', 'r1', {COLUMN => 'f1', VERSIONS => 4}
+
+get 't9', 'r1', {COLUMN => 'f1', TIMERANGE => [ts1, ts2], VERSIONS => 4}
+
+create 't8', {NAME => 'f1', VERSIONS => 1, TTL => 2592000, BLOCKCACHE => true}
+
+create 't9', {NAME => 'f1', VERSIONS => 3, TTL => 2592000, BLOCKCACHE => true}
+create 't9', {NAME => 'f1', VERSIONS => 3},{NAME => 'f2', VERSIONS => 2},{NAME => 'f3', VERSIONS => 1}
+
+
+create 't5', {NAME => 'f1', VERSIONS => 6}
+put 't5', 'r1', 'f1:name', 'v1',456
+put 't5', 'r1', 'f1:name', 'v2'
+put 't5', 'r1', 'f1:name', 'v3',123
+put 't5', 'r1', 'f1:name', 'v4'
+put 't5', 'r1', 'f1:name', 'v5',789
+put 't5', 'r1', 'f1:name', 'v6'
+
+get 't5', 'r1', {COLUMN => 'f1', VERSIONS => 4}
+get 't5', 'r1', {COLUMN => 'f1', TIMESTAMP => 1493797862632}
+
+get 't5', 'r1', {COLUMN => 'f1', TIMESTAMP => 123}
+get 't5', 'r1', {COLUMN => 'f1', TIMESTAMP => 123}
+
+create 't9', {NAME => 'f1', VERSIONS => 3, TTL => 2592000, BLOCKCACHE => true}
+create 't9', {NAME => 'f1', VERSIONS => 3},{NAME => 'f2', VERSIONS => 2},{NAME => 'f3', VERSIONS => 1}
+
+create 'tt', 'f1'	
+put 'tt', 'r1', 'f1:name', 'v2'		
+put 'tt', 'r1', 'f1:name', 'v3'
+get 'tt', 'r1', {COLUMN => 'f1', TIMESTAMP => 1493794919189}
+get 'tt', 'r1', {COLUMN => 'f1', VERSIONS => 4}
+
+scan 't9',{VERSIONS => 3}
+
+============================
+=========================================================
+
+
+增删改查：注意：put的是一个cell,get的是一行或单元格。put,get,delete,deleteall作用范围是一行!
+
+
+1）添加数据
+# 语法：put <table>,<rowkey>,<family:column>,<value>,<timestamp>
+注：version为数值型，且不加引号。
+
+put 'ns1:t1', 'r1', 'c1', 'value'   #插入的数据，没有指定列：默认列为'c1:',查询时使用，
+									get 'ns1:t1','r1','c1:' 获取默认列的值，只返回c1:列的值。
+									不同于get 'ns1:t1','r1','c1'，该方法获取c1列族的所有列。
+
+t = get_table 't'
+t.put 'r1', 'c1', 'value'
+									
+put 't1', 'r1', 'c1', 'value', 2 
+put 't1', 'r1', 'c1', 'value', 3, {ATTRIBUTES=>{'mykey'=>'myvalue'}}
+
+# 例如：给表t1的添加一行记录：rowkey是rowkey001，family name：f1，column name：col1，value：value01，timestamp：系统默认
+
+hbase(main)> put 't1','rowkey001','f1:col1','value01'
+
+
+
+
+2）查询数据
+
+a）查询某行记录
+
+# 语法：get <table>,<rowkey>,[<family:column>,....]
+	get 't5','r1',{COLUMN => 'f1',VERSIONS =>2}  #指定VERSIONS时，必须指定列族，因为VERSIONS是基于列族的。
+	get 't5','r1',{COLUMN => 'f1',TIMESTAMP =>123}
+  hbase> get 'ns1:t1', 'r1'
+  hbase> get 't1', 'r1'
+  hbase> get 't1', 'r1', 'c1'
+  hbase> get 't1', 'r1', 'c1', 'c2'
+  hbase> get 't1', 'r1', 'c1', 'c2'
+  hbase> get 't1', 'r1', {TIMERANGE => [ts1, ts2]}
+  hbase> get 't1', 'r1', {COLUMN => 'c1'}
+  hbase> get 't1', 'r1', {COLUMN => ['c1', 'c2', 'c3']}
+  hbase> get 't1', 'r1', {COLUMN => 'c1', TIMESTAMP => ts1}
+  hbase> get 't1', 'r1', {COLUMN => 'c1', TIMERANGE => [ts1, ts2], VERSIONS => 4}
+  hbase> get 't1', 'r1', {COLUMN => 'c1', TIMESTAMP => ts1, VERSIONS => 4}
+  hbase> get 't1', 'r1', {FILTER => "ValueFilter(=, 'binary:abc')"}
+
+
+
+# 例如：查询表t1，rowkey001中的f1下的col1的值
+hbase(main)> get 't1','rowkey001', 'f1:col1'
+# 或者：
+hbase(main)> get 't1','rowkey001', {COLUMN=>'f1:col1'}
+# 查询表t1，rowke002中的f1下的所有列值
+hbase(main)> get 't1','rowkey001'
+
+
+
+
+
+b）扫描表
+
+# 语法：scan <table>, {COLUMNS => [ <family:column>,.... ], LIMIT => num}
+# 另外，还可以添加TIMERANGE, FILTER, LIMIT, STARTROW, STOPROW, ROWPREFIXFILTER, TIMESTAMP,
+MAXLENGTH or COLUMNS, CACHE or RAW, VERSIONS, ALL_METRICS or METRICS等高级功能.
+
+scan 'ns1:t1', {COLUMNS => ['c1', 'c2'], LIMIT => 10, STARTROW => 'xyz'}
+scan 't1', {COLUMNS => ['c1', 'c2'], LIMIT => 10, STARTROW => 'xyz'}
+scan 't1', {COLUMNS => 'c1', TIMERANGE => [1303668804, 1303668904]}
+
+t = get_table 't'
+t.scan
+
+# 例如：扫描表t1的前5条数据
+hbase(main)> scan 't1',{LIMIT=>5}
+
+put 't5', 'r2', 'f1:name', 'v6'
+put 't5', 'r3', 'f1:name', 'v6'
+put 't5', 'a5', 'f1:name', 'v6'
+put 't5', 'a4', 'f1:name', 'v6'
+put 't5', 'a3', 'f1:name', 'v6'
+put 't5', 'b5', 'f1:name', 'v6'
+put 't5', 'c6', 'f1:name', 'v6'
+
+命令：scan 't5'	#结果按rowkey得升序存放，结果如下：
+ a3                  column=f1:name, timestamp=1493865689902, value=v6         
+ a4                  column=f1:name, timestamp=1493865689867, value=v6         
+ a5                  column=f1:name, timestamp=1493865689838, value=v6         
+ b5                  column=f1:name, timestamp=1493865689931, value=v6         
+ c6                  column=f1:name, timestamp=1493865690821, value=v6         
+ r1                  column=f1:name, timestamp=1493862630618, value=v6         
+ r2                  column=f1:name, timestamp=1493865689747, value=v6         
+ r3                  column=f1:name, timestamp=1493865689811, value=v6
+
+t5 = get_table 't5'
+t5.scan STARTROW => 'a5',STOPROW => 'r1'  等价于下面命令，注意，没有{}！
+ 
+命令：scan 't5',{STARTROW =>'a5',STOPROW =>'r1'}  #可见范围是前闭后开的！
+
+ROW                  COLUMN+CELL                                               
+ a5                  column=f1:name, timestamp=1493865689838, value=v6         
+ b5                  column=f1:name, timestamp=1493865689931, value=v6         
+ c6                  column=f1:name, timestamp=1493865690821, value=v6
+ 
+ 
+c）查询表中的数据行数
+
+# 语法：count <table>, {INTERVAL => intervalNum, CACHE => cacheNum}
+# INTERVAL设置多少行显示一次及对应的rowkey，默认1000；CACHE每次去取的缓存区大小，默认是10，调整该参数可提高查询速度
+# 例如，查询表t1中的行数，每100条显示一次，缓存区为500
+hbase(main)> count 't1', {INTERVAL => 100, CACHE => 500}
+
+命令：count 't5',{INTERVAL =>3}
+结果：
+Current count: 3, row: a5     #a5及以上，三行。                                              
+Current count: 6, row: r1     # a5以下，到r1，三行。                                             
+8 row(s) in 0.0090 seconds
+=> 8
+
+3）删除数据，delete 和 delete all作用范围是一行！
+
+a )删除行中的某个列值（指定版本或全部版本）
+
+# 语法：delete <table>,<rowkey>,<family:column>,<timestamp>,必须指定具体列名f1:name,只指定f1不行!
+delete删除的是一个具体列的一个或多个版本！
+
+delete 't5','r1','f1:name'		#将删除该行f1:name列所有版本的数据！
+delete 't5','r1','f1:name',123   #将删除该行f1:name列时间戳为123的数据！
+	
+get 't5','r1',{COLUMN => 'f1',TIMESTAMP=>123}
+
+b )删除行
+
+# 语法：deleteall <table>, <rowkey>,  <family:column> , <timestamp>，可以不指定列名，删除整行数据
+
+
+deleteall 't1','rowkey001'		# 例如：删除表t1，rowk001的数据
+
+deleteall 't5','a3','f1:name',1493870115931   #将删除该行f1:name列时间戳为1493870115931的数据！与delete类似！
+
+c）清空表中的所有数据
+
+# 语法： truncate <table>
+# 其具体过程是：disable table -> drop table -> create table
+# 例如：删除表t1的所有数据
+hbase(main)> truncate 't1'
+
+HBase其他高级应用！http://blog.csdn.net/zreodown/article/details/7917538/
+1、tools！
+2、incr ！
+3、get_counter累加器！
+4、filter等，
+5、HBaserowKey的设计，索引，二级索引！
+
+
+
+HBase创建预分区：http://blog.csdn.net/maomaosi2009/article/details/46986463
+
+1、在创建Hbase表的时候默认一张表只有一个region，所有的put操作都会往这一个region中填充数据，
+当这个一个region过大时就会进行split。如果在创建HBase的时候就进行预分区则会减少当数据量猛增时
+由于region split带来的资源消耗。
+2、HBase表的预分区需要紧密结合业务场景来选择分区的key值，每个region都有一个startKey和一个endKey来
+表示该region存储的rowKey范围。因为所有数据rowkey的值是有顺序的，所有region之间及其内部都是有序的！
+
+创建包含预分区表的命令如下：
+
+1、create 't1', 'cf', SPLITS => ['20150501000000000', '20150515000000000', '20150601000000000']
+或者
+create 't2', 'cf', SPLITS_FILE => '/home/hadoop/splitfile.txt'
+
+其中/home/hadoop/splitfile.txt中存储内容如下：
+20150501000000000
+20150515000000000
+20150601000000000
+
+2、该语句会创建4个region：
+
+                startkey                    endkey
+region0         -                           20150501000000000
+region1         20150501000000000           20150515000000000
+region2         20150515000000000           20150601000000000
+region3         20150601000000000           -
+
+// region0没有startKey
+// region3没有endKey
+
+3、put 't1','20150516000000000','cf:name','v1'
+// 当put的一条数据rowKey值为20150516000000000时则会放入region2中。
+
+监控中，进入每个表里，可看到分区情况：
+http://cdh-master-slave1:60010/master-status#catalogTables
+
+================================================
+================================================
+hbase编码问题：
+
+E6B58BE8AF95
+\xE4\xBD\xA0\xE5\xA5\xBD = E4BDA0E5A5BD  = 你好
+
+print '\xE6\xB5\x8B\xE8\xAF\x95'.decode('utf-8')
+
+==================
+==========
+create 'a1','f1'
+put 'a1','hello-你好','f1:name','hive'
+put 'a1','hello-你好','f1:列','hive组件'
+scan 'a1'
+结果：
+ROW                     COLUMN+CELL                                                       
+ hello-\xE4\xBD\xA0\xE5 column=f1:name, timestamp=1494072836785, value=hive               
+ \xA5\xBD                                                                                 
+ hello-\xE4\xBD\xA0\xE5 column=f1:\xE5\x88\x97, timestamp=1494073013806, value=hive\xE7\xB
+ \xA5\xBD               B\x84\xE4\xBB\xB6
+=============================================================
+put、get使用的是汉字，存放到hbase后，scan出来的是16进制，在程序中使用.decode('utf-8')进行解码，显示汉字。
+
+读取：get 'a1','hello-你好'
+
+COLUMN                  CELL                                                             
+ f1:name                timestamp=1494072836785, value=hive                              
+ f1:\xE5\x88\x97        timestamp=1494073013806, value=hive\xE7\xBB\x84\xE4\xBB\xB6
+======================== 
+hbase shell中的rowkey、字段名、value的值，除了列族名之外，只要用到了中文，就会将中文那部分转换为16进制，
+可以将那部分复制出来，在ipython中打印出来！如下：
+print '\xE4\xBD\xA0\xE5\xA5\xBD'.decode('utf-8')
+你好
+==========================
+==============================================
+
+connection = happybase.Connection('cdh-master-slave1')
+table = connection.table('t5') 
+print '\xE4\xB8\xAD\xE5\x9B\xBD'.decode('utf-8')
+
+print '\xC3\xA5\xC2\xA5\xC2\xBD'.decode('utf-8')
+
+C3A5C2A5C2BD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

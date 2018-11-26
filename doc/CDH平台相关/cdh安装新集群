@@ -1,0 +1,239 @@
+cp /opt/mysql-connector-java-5.1.41-bin.jar  /opt/cm-5.10.1/share/cmf/lib/
+
+cp /data/opt/cm-5.10.1/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar /data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/sqoop
+sudo mkdir /var/lib/cloudera-scm-server
+sudo mkdir /opt/cm-5.10.1/run/cloudera-scm-agent
+sudo mkdir /opt/cm-5.10.1/run/cloudera-scm-server
+sudo /data/opt/cm-5.10.1/share/cmf/schema/scm_prepare_database.sh mysql cm -h cdh5-master-slave1 -uroot -pHhly2017@13322.com --scm-host cdh5-master-slave1 scm scm scm
+报错：Error: JAVA_HOME is not set and Java could not be found
+解决：（三节点都执行下）
+mkdir -p /usr/java/default
+ln -s /data/opt/jdk1.8.0_121 /usr/java/default
+source /etc/profile
+
+报错：java.sql.SQLException: Your password does not satisfy the current policy requirements
+解决：my.cnf下，[mysqld]下添加：validate_password = off
+重启数据库生效。
+vi /opt/cm-5.10.1/etc/cloudera-scm-agent/config.ini
+server_host=cdh_master_slave1
+
+
+sudo scp -r /opt/cm-5.10.1/ cdh@cdh_slave2:/opt/
+sudo scp -r /opt/cm-5.10.1/ cdh@cdh_slave3:/opt/
+
+sudo mkdir /var/lib/cloudera-scm-server
+sudo mkdir /data/opt/cm-5.10.1/run/cloudera-scm-agent
+sudo mkdir /data/opt/cm-5.10.1/run/cloudera-scm-server
+
+
+
+useradd --system --home=/opt/cm-5.10.1/run/cloudera-scm-server/ --no-create-home --shell=/bin/false --comment "Cloudera SCM User" cloudera-scm
+chown -R cloudera-scm:cloudera-scm /opt/cm-5.10.1/run/cloudera-scm-agent
+chown -R cloudera-scm:cloudera-scm /opt/cm-5.10.1/run/cloudera-scm-server
+
+chown -R cloudera-scm:cloudera-scm /opt/cloudera/parcel-repo
+chown -R cloudera-scm:cloudera-scm /opt/cloudera/parcels
+
+/usr/lib/cmf/agent/build/env/bin/python /usr/lib/cmf/agent/build/env/bin/cmf-agent --package_dir /usr/lib/cmf/service --agent_dir /var/run/cloudera-scm-agent --lib_dir /var/lib/cloudera-scm-agent --logfile /var/log/cloudera-scm-agent/cloudera-scm-agent.log --comm_name cmf-agent --pidfile /var/run/cloudera-scm-agent/cloudera-scm-agent.pid
+
+/opt/cm-5.10.1/etc/init.d/cloudera-scm-server start
+/opt/cm-5.10.1/etc/init.d/cloudera-scm-agent start
+
+/data/opt/cm-5.10.1/etc/init.d/cloudera-scm-server stop
+/data/opt/cm-5.10.1/etc/init.d/cloudera-scm-agent stop
+
+
+tail -f /opt/cm-5.10.1/log/cloudera-scm-server/cloudera-scm-server.log
+tail -f /opt/cm-5.10.1/log/cloudera-scm-agent/cloudera-scm-agent.out
+=======================
+sudo tail -f /opt/cm-5.10.1/log/cloudera-scm-server/cloudera-scm-server.log
+sudo tail -f /opt/cm-5.10.1/log/cloudera-scm-agent/cloudera-scm-agent.out
+
+agent的log:
+cat /dev/null > cloudera-scm-agent.log
+cat /dev/null > cloudera-scm-agent.out
+
+server的log:
+rm -f cloudera-scm-server.log.*
+rm -f cmf-server-perf.log.*
+cat /dev/null > cloudera-scm-server.log
+
+sudo cp /data/opt/cm-5.10.1/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar /data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/hive/lib/
+sudo cp /data/opt/cm-5.10.1/share/cmf/lib/mysql-connector-java-5.1.41-bin.jar /data/opt/cloudera/parcels/CDH-5.10.1-1.cdh5.10.1.p0.10/lib/oozie/lib/
+问题1：
+在所有机器上：
+1）echo 0 > /proc/sys/vm/swappiness(临时生效)
+2）vi /etc/sysctl.conf,在最后添加：
+# Controls the maximum number of shared memory segments, in pages
+kernel.shmall = 4294967296
+vm.swappiness=0
+问题2：
+1）echo never > /sys/kernel/mm/transparent_hugepage/defrag(临时生效)
+2）vi /etc/rc.local					(开启自启)
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+问题3：
+主机域名，只认第一个node41.tipdm.com。
+
+echo 10 > /proc/sys/vm/swappiness
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+#/sbin/sysctl vm.swappiness=10
+
+
+
+线下cdh集群自启动：所有节点添加如下：
+编辑/etc/rc.local文件，添加:/usr/bin/init_cdh_env.sh
+编辑：/usr/bin/init_cdh_env.sh，权限755
+cdh-master节点，init_cdh_env.sh如下：
+#!/bin/bash
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+echo 0 > /proc/sys/vm/swappiness
+#/sbin/sysctl vm.swappiness=10
+ntpdate cdh-master
+systemctl start ntpd
+systemctl start mysqld
+mount -o loop /mnt/CentOS-7-x86_64-DVD-1611.iso /media
+systemctl start vsftpd
+/data/opt/cm-5.10.1/etc/init.d/cloudera-scm-server start
+sleep 30
+/data/opt/cm-5.10.1/etc/init.d/cloudera-scm-agent start
+子节点如下：
+#!/bin/bash
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+echo 0 > /proc/sys/vm/swappiness
+#/sbin/sysctl vm.swappiness=10
+ntpdate cdh-master
+systemctl start ntpd
+/data/opt/cm-5.10.1/etc/init.d/cloudera-scm-agent start
+===========================================================
+===========================================================
+线上配置一样：
+只不过线上CDH安装路径为/opt，而不是/data/opt。
+
+Error: Package: 1:openssl-devel-1.0.1e-60.el7.x86_64 (c7-media)
+Requires: openssl-libs(x86-64) = 1:1.0.1e-60.el7
+Installed: 1:openssl-libs-1.0.2k-12.el7.x86_64 (@base)
+openssl-libs(x86-64) = 1:1.0.2k-12.el7
+Available: 1:openssl-libs-1.0.1e-60.el7.x86_64 (c7-media)
+openssl-libs(x86-64) = 1:1.0.1e-60.el7
+Error: Package: 2:postfix-2.10.1-6.el7.x86_64 (@anaconda)
+Requires: libmysqlclient.so.18()(64bit)
+Error: Package: MySQL-python-1.2.5-1.el7.x86_64 (c7-media)
+Requires: libmysqlclient.so.18(libmysqlclient_18)(64bit)
+Error: Package: MySQL-python-1.2.5-1.el7.x86_64 (c7-media)
+Requires: libmysqlclient.so.18()(64bit)
+Error: Package: 2:postfix-2.10.1-6.el7.x86_64 (@anaconda)
+Requires: libmysqlclient.so.18(libmysqlclient_18)(64bit)
+
+
+
+Error: Package: 1:openssl-devel-1.0.1e-60.el7.x86_64 (c7-media)
+Requires: openssl-libs(x86-64) = 1:1.0.1e-60.el7
+Installed: 1:openssl-libs-1.0.2k-12.el7.x86_64 (@base)
+openssl-libs(x86-64) = 1:1.0.2k-12.el7
+Available: 1:openssl-libs-1.0.1e-60.el7.x86_64 (c7-media)
+openssl-libs(x86-64) = 1:1.0.1e-60.el7
+You could try using --skip-broken to work around the problem
+You could try running: rpm -Va --nofiles --nodigest
+
+
+ln -s /data/opt/openssl-1.0.1e/apps/openssl.cnf /usr/local/ssl/openssl.cnf
+
+
+
+mv /usr/bin/openssl /usr/bin/openssl.old
+ln -s /data/opt/openssl-1.0.1e/libssl.so.1.0.0 /usr/lib64/libssl.so.1.0.0
+[root@cdh_slave2 openssl-1.0.1e]# ln -s /data/opt/openssl-1.0.1e/libcrypto.so /usr/lib64/libssl
+libcrypto.so        libcrypto.so.1.0.0
+
+
+ln -s /data/opt/openssl-1.0.1e/apps/openssl /usr/bin/openssl
+ln -s /data/opt/openssl-1.0.1e/libcrypto.so.1.0.0 /usr/lib64/libcrypto.so.1.0.0
+ln -s /data/opt/openssl-1.0.1e/apps/openssl.cnf /usr/local/ssl/openssl.cnf
+
+
+
+
+rm -f /usr/local/ssl/openssl.cnf
+rm -f /usr/lib64/libssl.so.1.0.0
+rm -f /usr/lib64/libcrypto.so.1.0.0
+rm -f  /usr/bin/openssl
+[root@cdh_slave2 openssl-1.0.1e]# mv /usr/bin/openssl.old /usr/bin/openssl
+
+
+Error: Package: 2:postfix-2.10.1-6.el7.x86_64 (@anaconda)
+Requires: libmysqlclient.so.18()(64bit)
+Error: Package: MySQL-python-1.2.5-1.el7.x86_64 (c7-media)
+Requires: libmysqlclient.so.18(libmysqlclient_18)(64bit)
+Error: Package: MySQL-python-1.2.5-1.el7.x86_64 (c7-media)
+Requires: libmysqlclient.so.18()(64bit)
+Error: Package: 2:postfix-2.10.1-6.el7.x86_64 (@anaconda)
+Requires: libmysqlclient.so.18(libmysqlclient_18)(64bit)
+
+
+https://www.cnblogs.com/kellyseeme/p/5525061.html
+
+Warning: RPMDB altered outside of yum.
+** Found 2 pre-existing rpmdb problem(s), 'yum check' output follows:
+2:postfix-2.10.1-6.el7.x86_64 has missing requires of libmysqlclient.so.18()(64bit)
+2:postfix-2.10.1-6.el7.x86_64 has missing requires of libmysqlclient.so.18(libmysqlclient_18)(64bit)
+
+
+
+https://blog.csdn.net/u010824591/article/details/51174099
+
+
+=======================
+配置和测试数据库连接。如果使用自定义数据库，请先依照Installation Guide的Installing and Configuring an External Database小节创建数据库。
+
+使用自定义数据库
+使用嵌入式数据库
+当使用嵌入式数据库时，将会自动生成密码。请将它们复制下来。
+
+Hive
+
+ 已跳过，Cloudera Manager 将在后续步骤中创建数据库。
+数据库主机名称:
+数据库类型:
+数据库名称 :
+用户名:
+密码:
+cdh5-master-slave1:7432		hive	hive	2y759aer3S
+Reports Manager
+
+ Successful
+当前被分配在 cdh5-master-slave1 上运行。
+数据库主机名称:
+数据库类型:
+数据库名称 :
+用户名:
+密码:
+cdh5-master-slave1:7432		rman	rman	L7Mo2ZvXhU
+Navigator Audit Server
+
+ Successful
+当前被分配在 cdh5-master-slave1 上运行。
+数据库主机名称:
+数据库类型:
+数据库名称 :
+用户名:
+密码:
+cdh5-master-slave1:7432		nav	nav	PLtPTNvBPH
+Navigator Metadata Server
+
+ Successful
+当前被分配在 cdh5-master-slave1 上运行。
+数据库主机名称:
+数据库类型:
+数据库名称 :
+用户名:
+密码:
+cdh5-master-slave1:7432		navms	navms	3nVldbbmKY
+
+镜像要有，/usr/java下面不能有俩jdk。
+
+您正在非生产模式下运行 Cloudera Manager，该模式使用嵌入式 PostgreSQL 数据库。请在移入生产环境之前切换为使用支持的外部数据库。

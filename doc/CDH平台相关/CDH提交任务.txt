@@ -1,0 +1,32 @@
+create table ydfx_zhuti (
+index1 varchar(50),
+yhbh,xydjdm,ydlbdm,dydjdm,hyfldm,htrl,cxdm,khfqbz,yxrl,jlzzfldm,label,dydj,xydj,ydlb,jlzz,cx,hyfl,htrlb,htrldj,khfxpf,yhztdm,ycyhbz  	              	                    
+
+Caused by: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.yarn.exceptions.InvalidResourceRequestException): Invalid resource request, requested memory < 0, or requested memory > max configured, requestedMemory=-1, maxMemory=8192
+
+
+yarn.nodemanager.env-whitelist
+
+JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME
+
+yarn.app.mapreduce.am.env = yarn.app.mapreduce.am.admin.user.env有此参数，但可能会被前面的参数替换
+LD_LIBRARY_PATH=$HADOOP_COMMON_HOME/lib/native:$JAVA_LIBRARY_PATH:HADOOP_MAPRED_HOME=$HADOOP_MAPRED_HOME
+
+mapreduce.admin.user.env
+LD_LIBRARY_PATH=$HADOOP_COMMON_HOME/lib/native:$JAVA_LIBRARY_PATH:HADOOP_MAPRED_HOME=$HADOOP_MAPRED_HOME
+
+mapred.xml:
+<name>mapreduce.application.classpath</name>
+    <value>$HADOOP_MAPRED_HOME/*,$HADOOP_MAPRED_HOME/lib/*,$MR2_CLASSPATH,$CDH_MR2_HOME</value>
+yarn-site.xml:
+<name>yarn.application.classpath</name>
+    <value>$HADOOP_CLIENT_CONF_DIR,$HADOOP_CONF_DIR,$HADOOP_COMMON_HOME/*,$HADOOP_COMMON_HOME/lib/*,$HADOOP_HDFS_HOME/*,$HADOOP_HDFS_HOME/lib/*,$HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*,$HADOOP_MAPRED_HOME/*,$HADOOP_MAPRED_HOME/lib/*</value>	
+	/opt/cloudera/parcels/CDH/lib/hadoop/etc/hadoop
+	/opt/cloudera/parcels/CDH/lib/hadoop/*
+	/opt/cloudera/parcels/CDH/lib/hadoop/lib/*
+	/opt/cloudera/parcels/CDH/lib/hadoop-hdfs/*
+	/opt/cloudera/parcels/CDH/lib/hadoop-hdfs/lib/*
+	/opt/cloudera/parcels/CDH/lib/hadoop-yarn/*
+	/opt/cloudera/parcels/CDH/lib/hadoop-yarn/lib/*
+	/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce/*
+	/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce/lib/*

@@ -1,0 +1,399 @@
+﻿CDH5安装参考：https://www.zybuluo.com/sasaki/note/242142
+
+/opt/cm-5.4.10/etc/init.d/cloudera-scm-server start
+/opt/cm-5.4.10/etc/init.d/cloudera-scm-server stop
+/opt/cm-5.4.10/etc/init.d/cloudera-scm-agent start
+/opt/cm-5.4.10/etc/init.d/cloudera-scm-agent stop
+rm -f /opt/cm-5.4.10/log/cloudera-scm-*/* 
+tail -f /opt/cm-5.4.10/log/cloudera-scm-server/cloudera-scm-server.log
+tail -f /opt/cm-5.4.10/log/cloudera-scm-agent/cloudera-scm-agent.log
+
+
+sudo /opt/cm-5.10.1/etc/init.d/cloudera-scm-server start
+sudo /opt/cm-5.10.1/etc/init.d/cloudera-scm-agent start
+
+sudo /opt/cm-5.10.1/etc/init.d/cloudera-scm-server stop
+sudo /opt/cm-5.10.1/etc/init.d/cloudera-scm-agent stop
+
+/opt/cm-5.7.2/etc/init.d/cloudera-scm-server stop
+/opt/cm-5.7.2/etc/init.d/cloudera-scm-agent stop
+rm -f /opt/cm-5.7.2/log/cloudera-scm-*/* 
+
+
+sudo tail -f /opt/cm-5.10.1/log/cloudera-scm-server/cloudera-scm-server.log
+sudo tail -f /opt/cm-5.10.1/log/cloudera-scm-agent/cloudera-scm-agent.out
+
+ps aux |grep cloudera-scm-agent
+
+cd /opt/cm-5.7.2/run
+cd /opt/cm-5.7.2/log
+rm -f cloudera-scm-*/*
+
+在主节点上：
+cp /opt/mysql-connector-java-5.1.32-bin.jar /opt/cm-5.7.2/share/cmf/lib
+cp /opt/mysql-connector-java-5.1.32-bin.jar /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/oozie/lib/
+页面首次启动oozie需要执行：cp /opt/mysql-connector-java-5.1.32-bin.jar /var/lib/oozie/
+
+cp /opt/cm-5.7.2/share/cmf/lib/mysql-connector-java-5.1.32-bin.jar /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/hive/lib/
+cp /opt/cm-5.7.2/share/cmf/lib/mysql-connector-java-5.1.32-bin.jar /opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/oozie/lib/
+
+useradd --system --home=/opt/cm-5.7.2/run/cloudera-scm-server/ --no-create-home --shell=/bin/false --comment "Cloudera SCM User" cloudera-scm
+/opt/cm-5.7.2/share/cmf/schema/scm_prepare_database.sh mysql cm -hlocalhost -uroot -phhly123456 --scm-host localhost scm scm scm
+
+scp -r cm-5.7.2/ root@slave1:/opt/
+scp -r cm-5.7.2/ root@slave2:/opt/
+
+问题1：
+在所有机器上：
+1）echo 0 > /proc/sys/vm/swappiness(临时生效)
+2）vi /etc/sysctl.conf,在最后添加：
+# Controls the maximum number of shared memory segments, in pages
+kernel.shmall = 4294967296
+vm.swappiness=0
+问题2：
+1）echo never > /sys/kernel/mm/transparent_hugepage/defrag(临时生效)
+2）vi /etc/rc.local					(开启自启)
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+问题3：
+主机域名，只认第一个node41.tipdm.com。
+
+echo 0 > /proc/sys/vm/swappiness
+echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+rm -rf /usr/lib/hadoop /usr/lib/hadoop* /usr/lib/hive /usr/lib/hbase /usr/lib/oozie /usr/lib/sqoop* /usr/lib/zookeeper /usr/lib/bigtop* /usr/lib/flume-ng /usr/lib/hcatalog
+rm -rf /usr/bin/hadoop* /usr/bin/zookeeper* /usr/bin/hbase* /usr/bin/hive* /usr/bin/hdfs /usr/bin/mapred /usr/bin/yarn /usr/bin/sqoop* /usr/bin/oozie
+rm -rf /opt/cloudera/parcel-cache /opt/cloudera/parcels
+
+mkdir /var/lib/cloudera-scm-server
+/opt/cm-5.7.2/share/cmf/schema/scm_prepare_database.sh mysql cm -hlocalhost -uroot -phhly123456 --scm-host localhost scm scm scm
+
+mkdir /opt/cm-5.7.2/run/cloudera-scm-agent
+useradd --system --home=/opt/cm-5.7.2/run/cloudera-scm-server/ --no-create-home --shell=/bin/false --comment "Cloudera SCM User" cloudera-scm
+chown -R cloudera-scm:cloudera-scm /opt/cm-5.7.2/run/cloudera-scm-agent
+chown -R cloudera-scm:cloudera-scm /opt/cm-5.7.2/run/cloudera-scm-server
+
+spark客户端配置报错，找不到java环境变量：参考：https://my.oschina.net/cjun/blog/698250
+mkdir -p /usr/java/default
+ln -s /usr/local/jdk1.7.0_79 /usr/java/default
+
+chmod 640 /etc/sudoers
+vi /etc/sudoers
+cloudera-scm    ALL=(ALL)       NOPASSWD:ALL
+
+NTP服务主节点同步于外网；
+子节点全部停不同步；
+
+
+NTP服务及agent启动失败：参考：http://www.cnblogs.com/jasondan/p/4011153.html
+
+1）删除/opt/cm-5.7.2/lib/cloudera-scm-agent/uuid目录下的所有文件。
+2）清空主节点CM数据库。
+
+oozie安装时报错，根据页面脚本提示,需要将mysql驱动放到安装节点的/var/lib/oozie中，权限修改为755。
+
+
+=========================
+安装完CDH后，启动HBase的Master实例时，报错，Master启动不起来，查看HBase的日志发现：Caused by: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.AccessControlException): Permission denied: user=hbase, access=WRITE, inode="/":hdfs:supergroup:drwxr-xr-x
+
+原因：master启动时会初始化hdfs上的/hbase目录（此时内部用的是hbase用户），由于对/根目录的
+权限不够，因此报错。
+解决：
+su hdfs
+hadoop fs -chmod -R 777 /
+
+
+1、
+1）ip：
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+DEVICE=eth0
+TYPE=Ethernet
+ONBOOT=yes
+NM_CONTROLLED=no
+BOOTPROTO=static
+IPADDR=192.168.222.40
+NETMASK=255.255.255.0
+GATEWAY=192.168.222.2
+DNS1=192.168.222.2
+DNS2=8.8.8.8
+rm -f /etc/udev/rules.d/70-persistent-net.rules
+2）hosts,hostname,
+3）iptables:
+service iptables stop
+
+chkconfig --level 2345 iptables off
+4）selinux:
+
+setenforce 0
+vi /etc/selinux/config
+5）JDK:tar.gz格式的上传到/opt下：
+tar -zxvf /opt/jdk-7u79-linux-x64.tar.gz -C /usr/local/
+rm -f /opt/jdk-7u79-linux-x64.tar.gz
+vi /etc/profile
+export JAVA_HOME=/usr/local/jdk1.7.0_79
+export CLASSPATH=.:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/dt.jar
+export PATH=$JAVA_HOME/bin:$PATH
+source /etc/profile
+
+
+2、ip,hostname,ntp.conf,ssh免密码，mysqld远程权限
+1）ip:	vi /etc/sysconfig/network-scripts/ifcfg-eth0
+2）hostname:
+3）ntp: 所有机器
+service ntpdate start
+ntpdate s1a.time.edu.cn
+hwclock --systohc
+master上：
+service ntpd start
+chkconfig --level 2345 ntpd on
+分别修改ntp.conf：
+slave上：
+ntpdate master
+service ntpd start
+chkconfig --level 2345 ntpd on
+查看：ntpq - p
+
+4）ssh免密码: http://www.2cto.com/os/201703/605077.html(安装cdh时用了weiwc用户，注意/home/weiwc权限755,
+	不能改为777，否则不能免密码登录)
+ssh-keygen，三回车。
+使用ssh-copy-id，自动生成.ssh/authorized_keys，且权限为600.
+ssh-keygen
+ssh-copy-id master-slave1
+ssh-copy-id slave2
+ssh-copy-id slave3
+
+
+
+7）ntp,ntpdate,mysqld,ssh
+yum install ntp ntpdate -y
+yum install openssh-clients.x86_64 -y
+yum install mysql-server.x86_64 -y
+子节点安装mysql，存爬取的数据,使用mysql57-community-release-el7-8.noarch.rpm，windows上有。https://www.cnblogs.com/xielisen/p/6266896.html
+修改数据存储目录：https://blog.csdn.net/zyw_java/article/details/78512285
+配置文件my.cnf中，mysqld和client下都要设置sock的路径。
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)：
+解决：https://www.linuxidc.com/Linux/2013-03/81331.htm
+
+mysql安装顺序：
+1，*.rpm安装mysql，默认密码登录，修改密码，添加用户，开启远程权限。https://www.cnblogs.com/xielisen/p/6266896.html
+初次登录mysql:
+密码：grep "password" /var/log/mysqld.log
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'Hhly2017@13322.com';
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'xhwlcdh01mysql';
+use mysql;
+delete from user where 1=1;
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'xhwlcdh01mysql' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+2，关闭mysql,mv /var/lib/mysql /data
+3，修改my.cnf，mysqld下修改data，sock目录，client下修改sock位置。
+4，添加各种默认引擎，编码等配置
+5，重启mysql。
+
+
+子节点作为vsftpd服务器，挂载iso镜像：
+mount  -o loop /data/opt/CentOS-6.5-x86_64-minimal.iso	 /data/media
+vi /etc/rc.local
+添加开机自启动：mount -o loop /opt/iso/CentOS-7-x86_64-DVD-1611.iso /media
+
+yum install vsftpd
+systemctl enable vsftpd
+
+一个大坑：
+vi /etc/vsftpd/vsftpd.conf
+需在最后一行添加：anon_root=/
+其他节点才能通过ftp方式安装，其他节点的baseurl路径为vsftpd服务器上，iso的挂载路径，如下：
+baseurl=ftp://cdh_slave2/data/media
+
+切记：不要修改anon_root=/对应的路径！！！！例如anon_root=/data,在客户端为：baseurl=ftp://cdh_slave2/media，这样是不行的，
+但网上有人这样配置！！！路径不是这样拼接起来的！！
+
+
+yum源:
+mkdir /etc/yum.repos.d/bak
+mv /etc/yum.repos.d/CentOS-* /etc/yum.repos.d/bak/
+mv /etc/yum.repos.d/bak/CentOS-Media.repo /etc/yum.repos.d/
+vi /etc/yum.repos.d/CentOS-Media.repo
+
+
+临时禁用IPV6：
+sudo sh -c 'echo 1 > /proc/sys/net/ipv6/conf/eth0/disable_ipv6'
+
+server:
+ERROR WebServerImpl:com.cloudera.server.web.cmf.search.components.SearchRepositoryManager: No write permission to the server storage directory [notifying ]
+2016-10-16 11:11:19,366 ERROR main:org.hibernate.engine.jdbc.spi.SqlExceptionHelper: Table 'cm.CM_VERSION' doesn't exist
+
+ERROR main:com.cloudera.server.web.cmf.cloud.EC2MetadataFetcher: 
+Request to EC2 metadata failed: I/O error: 
+The host did not accept the connection within timeout of 2000 ms; 
+nested exception is org.apache.commons.httpclient.ConnectTimeoutException: 
+The host did not accept the connection within timeout of 2000 ms
+
+agent:
+[17/Oct/2016 20:20:18 +0000] 4699 MainThread agent  ERROR  Failed to connect to previous supervisor.
+Traceback (most recent call last):
+  File "/opt/cm-5.7.2/lib64/cmf/agent/build/env/lib/python2.6/site-packages
+  /cmf-5.7.2-py2.6.egg/cmf/agent.py", line 2037, in find_or_start_supervisor
+
+  卸载：
+
+for u in hdfs mapred cloudera-scm hbase hue zookeeper oozie hive impala flume;
+do kill -9 $(ps -u $u -o pid=);
+done
+ps aux |grep hdfs
+ps aux |grep mapred
+ps aux |grep cloudera-scm
+ps aux |grep hive
+
+
+rm -rf /usr/share/cmf /var/lib/cloudera* /var/cache/yum/x86_64/6/cloudera* /var/log/cloudera* /var/run/cloudera*  /etc/cloudera* 
+rm -rf /var/lib/hadoop-* /var/lib/impala /var/lib/solr /var/lib/zookeeper 
+rm -rf /var/lib/hue /var/lib/oozie  /var/lib/pgsql  /var/lib/sqoop2  /data/dfs/  
+rm -rf /data/impala/ /data/yarn/  /dfs/ /impala/ /yarn/  /var/run/hadoop-*/ 
+rm -rf /var/run/hdfs-*/ /usr/bin/hadoop* /usr/bin/zookeeper* /usr/bin/hbase* 
+rm -rf /usr/bin/hive* /usr/bin/hdfs /usr/bin/mapred /usr/bin/yarn /usr/bin/sqoop* 
+rm -rf /usr/bin/oozie /etc/hadoop* /etc/zookeeper* /etc/hive* /etc/hue /etc/impala 
+rm -rf /etc/sqoop* /etc/oozie /etc/hbase* /etc/hcatalog
+rm -rf ` find /var/lib/alternatives/* ! -name "mta" ! -name "print" ! -name "zlibrary-ui"  -mtime -3` 
+rm -rf /etc/alternatives/*
+主节点：
+rm -rf /opt/cloudera/parcel-cache /opt/cloudera/parcels
+rm -rf /opt/cm-5.7.2/
+cd /opt/cloudera/parcel-repo
+rm -f CDH-5.7.3-1.cdh5.7.3.p0.5-el6.parcel.torrent
+mv CDH-5.7.3-1.cdh5.7.3.p0.5-el6.parcel* /opt/
+mv manifest.json /opt/
+rm -rf /opt/cloudera
+
+子节点：
+rm -rf /opt/*
+
+<property>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>node46.tipdm.com</value>
+</property>
+
+http://grepcode.com/file/repository.cloudera.com/content/repositories/releases/org.apache.hive.hcatalog/hive-hcatalog-core/0.12.0-cdh5.0.0/org/apache/hive/hcatalog/mapreduce/HCatInputFormat.java
+
+hcatalog用hiveserver2进程吗？还是只thrift//ip:9083
+spark-hive用hiveserver2吗？
+
+======================
+CDH：：页面修改参数，报错Error while commiting the transaction解决
+
+/etc/my.cnf内容如下：
+[mysqld]
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+user=mysql
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+default-character-set=utf8
+init_connect='SET NAMES utf8'
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+[client]
+default-character-set=utf8
+
+tail -f /opt/cm-5.7.2/log/cloudera-scm-server/cloudera-scm-server.log日志报错如下：
+
+Caused by: java.sql.SQLException: Incorrect string value: '\xE5\xB7\xB2\xE6\x9B\xB4...' for column 'MESSAGE' at row 1
+（这种问题一般是编码不一致导致）
+
+
+navicat 在cm数据库，使用:SELECT TABLE_NAME,COLUMN_NAME FROM information_schema.`COLUMNS` WHERE COLUMN_NAME = "MESSAGE";
+发现：AUDITS，REVISIONS表中包含有以上'MESSAGE'字段。
+
+show variables like 'character_set_database';
+使用show variables like 'character%';
+得到：
+character_set_client	utf8
+character_set_connection	utf8
+character_set_database	utf8
+character_set_filesystem	binary
+character_set_results	utf8
+character_set_server	utf8
+character_set_system	utf8
+character_sets_dir	/usr/share/mysql/charsets/
+可知数据库为utf8格式，但为什么还会报错呢？
+
+使用：show create table AUDITS;
+show create table REVISIONS;
+
+发现创建表时用了latin1编码(或者可通过navicat，选中表，对象信息，DDL语句最后面DEFAULT CHARSET=latin1可知)，
+因此需要将表REVISIONS，AUDITS的格式改为utf8，及MESSAGE字段。
+方法：（已验证）	
+	1）把表编码改为utf8（刷新可看到已改变）：
+	ALTER TABLE AUDITS DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci
+	ALTER TABLE REVISIONS DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci
+	2）把字段编码改为utf8：
+		1.直接通过navicat，设计REVISIONS，AUDITS表，选中字段，点击上面“选项”即可修改。
+		2.ALTER TABLE REVISIONS CHANGE ''MESSAGE' 'MESSAGE' VARCHAR( 45 ) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL 
+tablename表中 dd的字段编码改能够该为utf8
+
+关闭:（stop_cdh）
+/opt/cm-5.7.2/etc/init.d/cloudera-scm-server stop
+/opt/cm-5.7.2/etc/init.d/cloudera-scm-agent stop
+service mysqld stop
+开启：(start_cdh)
+service mysqld start
+/opt/cm-5.7.2/etc/init.d/cloudera-scm-server start
+/opt/cm-5.7.2/etc/init.d/cloudera-scm-agent start
+
+进入：node41:7180，即可修改参数。
+
+
+
+1.创建库时指定编码：create database testdb default charset GBK 
+2.修改库的编码： ALTER DATABASE `testtable` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci
+3.修改表的编码：ALTER TABLE `testtable` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci
+4.修改字段的编码：ALTER TABLE `tablename` CHANGE `dd` `dd` VARCHAR( 45 ) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL 
+将MYSQL数据库tablename表中 dd的字段编码改能够该为utf8
+
+添加hive服务，Caused by: MetaException(message:Version information not found in metastore. )解决：
+https://blog.godatadriven.com/upgrade-secure-cluster-CDH4-to-CDH5.html
+
+/opt/cloudera/parcels/CDH-5.7.3-1.cdh5.7.3.p0.5/lib/hive/bin/schematool
+
+
+org.apache.hadoop.hive.metastore.HiveMetaException: Schema initialization FAILED! Metastore state would be inconsistent !!
+/opt/cm-5.7.2/run/cloudera-scm-agent/process 全部删除
+
+tail -f /opt/cm-5.7.2/log/cloudera-scm-server/cloudera-scm-server.log
+tail -f /opt/cm-5.7.2/log/cloudera-scm-agent/cloudera-scm-agent.log
+
+hcatalog官网代码：
+https://cwiki.apache.org/confluence/display/Hive/HCatalog+InputOutput#HCatalogInputOutput-RunningMapReducewithHCatalog
+
+HcatalogDemo:http://stenographist11.rssing.com/chan-7008770/all_p753.html
+关键词：HCatOutputFormat
+
+export LIB_JARS=$HCAT_HOME/share/hcatalog/hive-hcatalog-core-1.1.0-cdh5.7.3.jar,
+$HIVE_HOME/lib/hive-metastore-1.1.0-cdh5.7.3.jar,
+$HIVE_HOME/lib/libthrift-0.9.2.jar,
+$HIVE_HOME/lib/hive-exec-1.1.0-cdh5.7.3.jar,
+$HIVE_HOME/lib/libfb303-0.9.2.jar,
+$HIVE_HOME/lib/jdo-api-3.0.1.jar,
+$HIVE_HOME/lib/log4j-1.2.16.jar
+
+
+cp  hive-metastore-1.1.0-cdh5.7.3.jar libthrift-0.9.2.jar hive-exec-1.1.0-cdh5.7.3.jar libfb303-0.9.2.jar jdo-api-3.0.1.jar  /opt/cloudera/parcels/CDH/lib/hadoop-mapreduce/lib/
+scp  hive-metastore-1.1.0-cdh5.7.3.jar libthrift-0.9.2.jar hive-exec-1.1.0-cdh5.7.3.jar libfb303-0.9.2.jar jdo-api-3.0.1.jar root@node44:/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce/lib/
+scp  hive-metastore-1.1.0-cdh5.7.3.jar libthrift-0.9.2.jar hive-exec-1.1.0-cdh5.7.3.jar libfb303-0.9.2.jar jdo-api-3.0.1.jar root@node45:/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce/lib/
+scp  hive-metastore-1.1.0-cdh5.7.3.jar libthrift-0.9.2.jar hive-exec-1.1.0-cdh5.7.3.jar libfb303-0.9.2.jar jdo-api-3.0.1.jar root@node46:/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce/lib/
+
+export HADOOP_CLASSPATH=$HCAT_HOME/share/hcatalog/hive-hcatalog-core-1.1.0-cdh5.7.3.jar:
+$HIVE_HOME/lib/hive-metastore-1.1.0-cdh5.7.3.jar:
+$HIVE_HOME/lib/libthrift-0.9.2.jar:
+$HIVE_HOME/lib/hive-exec-1.1.0-cdh5.7.3.jar:
+$HIVE_HOME/lib/libfb303-0.9.2.jar:
+$HIVE_HOME/lib/jdo-api-3.0.1.jar:
+$HIVE_HOME/conf:$HADOOP_HOME/conf:
+$HIVE_HOME/lib/log4j-1.2.16.jar
+
+$HIVE_HOME/lib/hive-metastore-0.10.0.jar:
+$HIVE_HOME/lib/libthrift-0.7.0.jar:
+$HIVE_HOME/lib/hive-exec-0.10.0.jar:
+$HIVE_HOME/lib/libfb303-0.7.0.jar:
+$HIVE_HOME/lib/jdo2-api-2.3-ec.jar:
+$HIVE_HOME/conf:$HADOOP_HOME/conf:
+$HIVE_HOME/lib/slf4j-api-1.6.1.jar

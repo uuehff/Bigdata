@@ -1,0 +1,15 @@
+http://blog.csdn.net/wyqlxy/article/details/9064175
+
+线上Redis（主从）：
+主：10.33.52.2（start_redis.sh/stop_redis.sh）
+从：10.33.51.2
+1、安装目录皆为：/data/redis
+2、主从密码皆为：HHly2017
+
+注意：配置文件中：
+bind，配置各自的IP
+requirepass 配置自己的密码，其他机器访问时，须知道该密码
+masterauth  从复制主时，需要的密码。
+
+从节点：slaveof， 主节点的IP，端口
+

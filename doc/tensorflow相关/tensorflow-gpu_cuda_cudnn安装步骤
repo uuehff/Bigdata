@@ -1,0 +1,230 @@
+查看当前服务器是运行在VM还是在实体机中：dmidecode -s system-product-name
+
+安装步骤参考：https://segmentfault.com/a/1190000008234390
+1、官网安装参考：显卡、显卡性能、系统版本、kernel、gcc等版本：
+    https://tensorflow.google.cn/install/install_linux
+    http://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile
+
+    0）检查是否有NVIDIA 显卡：(没有lspci命令，安装yum -y install pciutils)
+    lspci | grep -i vga  或者 lspci |grep -i NVIDIA
+
+    根据显卡的型号，查看其Compute Capability 是否大于3.0？
+       查看页面： https://developer.nvidia.com/cuda-gpus
+
+    1）rpm -qa | grep kernel*  是否有kernel-devel包，有的话版本和uname -a是否一致？
+    uname -a
+    不一致需要安装：yum install kernel-devel
+    最总要保证kernel kernel-headers kernel-devel 版本一致，无法降低版本，可以执行：
+    yum install kernel kernel-headers kernel-devel ,然后重启，再查看uname -a 是否达到一致？并且
+    /usr/src/kernels目录下生成对应版本的源码？（必要时可直接卸载kernel-devel、kernel-headers， rpm -e --nodeps 包名）
+
+    类似如下结果：
+[root@cdh-slave1 ~]# rpm -qa | grep kernel*
+kernel-tools-3.10.0-514.el7.x86_64
+kernel-headers-3.10.0-514.el7.x86_64
+kernel-devel-3.10.0-514.el7.x86_64
+kernel-tools-libs-3.10.0-514.el7.x86_64
+kernel-3.10.0-514.el7.x86_64
+[root@cdh-slave1 ~]# uname -a
+Linux cdh-slave1 3.10.0-514.el7.x86_64 #1 SMP Tue Nov 22 16:42:41 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux
+[root@cdh-slave1 ~]# ll /usr/src/kernels/3.10.0-514.el7.x86_64
+
+    2） 安装cuda时需要的包，否则报错：Missing recommended library: libGLU.so 。。。
+            注： 以下是centos7.4中的包名，安装时包名区分大小写，默认安装x86_64版本的。
+    yum install dkms freeglut  freeglut-devel  libX11 libX11-devel libXmu libXmu-devel libXi libXi-devel
+
+    3） rpm -qa |grep gcc-c++ 没有结果的话，需要安装：
+        yum install gcc-c++
+    4）lsmod | grep nouveau 如有结果显示，则需要禁用nouveau：
+    vi /etc/modprobe.d/blacklist-nouveau.conf，添加：
+blacklist nouveau
+options nouveau modeset=0
+
+    保存后，执行： dracut --force，之后重启，再lsmod | grep nouveau 无结果则OK。
+
+
+2、根据想使用的tensorflow版本，参考：tensorflow_cuda_cudnn版本对应.docx，决定使用：CUDA版本，cuDNN版本：
+ 下载nvidia 显卡驱动：www.nvidia.com/drivers   （选择对应的CUDA,显卡类型，系统Linux 64位，wget直接下载）
+ 下载CUDA：https://developer.nvidia.com/cuda-toolkit-archive  （下载local run文件，wget直接下载）
+ 下载：cuDNN：https://developer.nvidia.com/rdp/cudnn-download （需注册登录才可下载，因此在Linux上无法直接用wget下载）
+ 下载tensorflow:  TensorFlow各版本自主下载地址：
+     cpu版本：
+        https://pypi.python.org/pypi/tensorflow/1.4.0
+     gpu版本：
+        https://pypi.python.org/pypi/tensorflow-gpu/1.4.0
+     切换版本号下载：只要把后面的版本号改一下就行了，比如1.2.0,1.3.0等
+
+ 下载Python源码：https://www.python.org/downloads/
+
+1）安装nvidia显卡驱动：
+ chmod +x ./*
+./NVIDIA-Linux-x86_64-384.66.run --kernel-source-path /usr/src/kernels/3.10.0-693.11.1.el7.x86_64 --dkms -s
+    1.安装过程中，不安装32位的兼容包！
+    2.可以安装dkms。
+    安装大约2~3分钟。
+安装完：执行nvidia-smi，有结果则OK。
+
+执行nvidia-xconfig 生成驱动文件。
+2）安装CUDA：如果CUDA GA2的话有两个包，先安装主包，在安装补丁包，注意安装目录保持一致！
+   sh cuda_8.0.44_linux-run（也可以使用--silent模式安装，指定好必要的参数）
+   安装过程中：
+   不安装openlib包：n
+   不执行nvidia_xconfig：n
+   其他为y。
+   安装目录，回车，表示默认安装目录。
+
+安装结束：执行 nvidia-smi ，如果报错：
+NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.
+    原因：安装了cuda后，覆盖了安装显卡驱动时的/usr/lib/libGL.so！以下是官网安装的注释：http://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile
+Note: Installing Mesa may overwrite the /usr/lib/libGL.so that was previously installed by the NVIDIA driver, so a reinstallation of the NVIDIA driver might be required after installing these libraries.
+
+解决：卸载nvidia 显卡驱动，再重新安装！
+nvidia-uninstall
+./NVIDIA-Linux-x86_64-384.66.run --kernel-source-path /usr/src/kernels/3.10.0-693.11.1.el7.x86_64 --dkms -s
+再执行：nvidia-smi 有结果则OK！
+========
+测试CUDA安装是否成功：查看版本：nvcc -V
+[root@t01 deviceQuery]# cd ~/NVIDIA_CUDA-8.0_Samples/1_Utilities/deviceQuery
+[root@t01 deviceQuery]# make
+[root@t01 deviceQuery]# ~/NVIDIA_CUDA-8.0_Samples/bin/x86_64/linux/release/deviceQuery
+有结果输出PASS,则OK！
+
+
+注： 如需卸载CUDA，执行：/usr/local/cuda-8.0/bin/uninstall_cuda_8.0.pl
+
+3）安装cuDNN：
+解压：cuDNN包，得到cuda目录：
+执行：
+cp cuda/include/cudnn.h /usr/local/cuda-8.0/include/
+cp cuda/lib64/libcudnn* /usr/local/cuda-8.0/lib64/
+chmod a+r /usr/local/cuda/include/cudnn.h /usr/local/cuda-8.0/lib64/libcudnn*
+
+5）配置环境变量：
+
+vi ~/.bashrc ,添加
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-8.0/lib64:/usr/local/cuda-8.0/extras/CUPTI/lib64
+export CUDA_HOME=/usr/local/cuda-8.0
+export PATH=$CUDA_HOME/bin:$PATH
+
+source ~/.bashrc
+
+6）安装python虚拟环境
+下载pytho源码安装：https://www.python.org/downloads/
+解压后，进入目录：（其中以下使用root权限）
+./configure --enable-shared --prefix=/usr/local
+make && make altinstall
+
+
+
+pip install virtualenv
+   执行python3.6链接库路径，否则报错：error while loading shared libraries: libpython3.6m.so.1.0。。。。
+   vi /etc/ld.so.conf,添加：/usr/local/lib (就是python安装目录下的lib路径，--prefix/lib)
+   执行：/sbin/ldconfig -v
+virtualenv -p /usr/local/bin/python3.6 py36env
+
+执行python3.6链接库路径，否则报错：error while loading shared libraries: libpython3.6m.so.1.0。。。。
+   vi /etc/ld.so.conf,添加：/usr/local/lib (就是python安装目录下的lib路径，--prefix/lib)
+   执行：/sbin/ldconfig -v
+virtualenv -p /usr/local/bin/python3.6 py36env
+
+
+查看包是否存在： rpm -qa | grep openssl
+必须有如下包：openssl-devel 和 openssl*包才可以，否则进入虚拟环境，报错：
+SSLError: Can't connect to HTTPS URL because the SSL module is not available：
+
+解决：yum install  openssl-devel  openssl098e
+
+
+7）进入虚拟环境，安装tensorflow,ipython：
+source py36env/bin/activate
+pip install ./tensorflow_gpu-1.3.0-cp36-cp36m-manylinux1_x86_64.whl
+pip install ipython
+
+注：可能要退出虚拟环境，重新进入，才可在ipython中导入tensorflow！
+
+
+8）测试tensorflow-gpu：
+>>> import tensorflow as tf
+>>> hello = tf.constant('Hello, TensorFlow!')
+>>> sess = tf.Session()
+>>> print(sess.run(hello))
+Hello, TensorFlow!
+>>> a = tf.constant(10)
+>>> b = tf.constant(32)
+>>> print(sess.run(a + b))
+42
+
+
+其他：
+tensorflow  bug： ipython下执行：import tensorflow as tf 时，警告如下：
+/root/py36env/lib/python3.6/importlib/_bootstrap.py:205: RuntimeWarning: compiletime version 3.5 of module 'tensorflow.python.framework.fast_tensor_util' does not match runtime version 3.6
+  return f(*args, **kwds)
+可见tensorflow github :  https://github.com/tensorflow/tensorflow/issues/14182
+==================================================
+tensorflow官网：https://tensorflow.google.cn/install/install_windows
+
+windows中只支持基于python3.5.x 和 3.6.x 安装tensorflow！（TensorFlow supports Python 3.5.x and 3.6.x on Windows：）
+windows安装python多版本：http://www.jb51.net/article/110002.htm
+
+tensorflow github: https://github.com/tensorflow/tensorflow
+tensorflow版本信息，包括支持的cuda、cudnn版本：https://github.com/tensorflow/tensorflow/blob/master/RELEASE.md
+
+编译安装tensorflow，指定cuda,cudnn版本：http://blog.csdn.net/huangbo1221/article/details/78986959
+
+
+================================================
+非交互式安装CUDA：
+
+单机安装cuda,可以直接执行 ./cuda_8.0.XX_linux.run ，然后按照提示一步步的安装。但是当有多台机器的需要安装时，这种交互安装就麻烦了。最好有命令行的方式，一步安装。
+./cuda_8.0.xx_linux.run 提供了这种批量安装的方式：
+./cuda_8.0.44_linux.run  --silent   --driver --toolkit  --toolkitpath=/tmp/ --samples  --samplespath=/tmp/  --verbose
+
+--silent   执行无用户交互的安装，基于后面的参数进行用户定制化安装，必须要有这个参数
+--driver   安装cuda Driver
+--toolkit   安装CUDA Toolkit
+--toolkitpath=<path>  cuda  toolkit 的安装目录
+   Install the CUDA Toolkit to the <path> directory. If this flag is not
+    provided, the default path of /usr/local/cuda-8.0 is used.
+
+--samples 安装samples
+--samplespath=<path>         samples 的安装目录
+  Install the CUDA Samples to the <path> directory. If this flag is not
+    provided, the default path of /root/NVIDIA_CUDA-8.0_Samples is used.
+ --verbose 打印安装日志
+
+以下三个参数备用：
+
+ --no-opengl-libs
+    Prevents the driver installation from installing NVIDIA's GL libraries.
+    Useful for systems where the display is driven by a non-NVIDIA GPU.
+    In such systems, NVIDIA's GL libraries could prevent X from loading
+    properly.
+
+  --kernel-source-path=<path>
+    Tells the driver installation to use <path> as the kernel source directory
+    when building the NVIDIA kernel module. Required for systems where the
+    kernel source is installed to a non-standard location.
+
+  --run-nvidia-xconfig
+    Tells the driver installation to run nvidia-xconfig to update the system
+    X configuration file so that the NVIDIA X driver is used. The pre-existing
+    X configuration file will be backed up.
+
+    This option should not be used on systems that require a custom
+    X configuration, or on systems where a non-NVIDIA GPU is rendering the
+    display.
+
+
+
+
+
+
+[root@cdh_slave3 bin]# mv python* bak/
+[root@cdh_slave3 bin]# mv /usr/lib/python2.7 /usr/lib/python2.7_bak
+[root@cdh_slave3 bin]# mv /usr/lib64/python2.7 /usr/lib64/python2.7_bak
+[root@cdh_slave3 bin]# mv /etc/python /etc/python_bak
+[root@cdh_slave3 bin]# mv /usr/include/python2.7 /usr/include/python2.7_bak
+[root@cdh_slave3 bin]# mkdir /usr/share/man/man1/bak
+[root@cdh_slave3 bin]# mv /usr/share/man/man1/python* /usr/share/man/man1/bak
+
+

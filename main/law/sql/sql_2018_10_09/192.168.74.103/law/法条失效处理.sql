@@ -1,0 +1,1 @@
+select * from law_rule_result_article where effective_status = "0"

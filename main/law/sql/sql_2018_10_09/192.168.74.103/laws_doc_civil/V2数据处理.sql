@@ -1,0 +1,12 @@
+create table civil_other_fields_v2_800w_01_result like civil_other_fields_v2_800w_01;
+create table civil_other_fields_v2_800w_02_result like civil_other_fields_v2_800w_01;
+
+
+create table uuid_law_id_civil_etl_v2_800w_01_result like uuid_law_id_civil_etl_v2_800w_01;
+create table uuid_law_id_civil_etl_v2_800w_02_result like uuid_law_id_civil_etl_v2_800w_01;
+
+
+
+
+
+

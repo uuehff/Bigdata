@@ -1,0 +1,12 @@
+1、在Windows上安装wordcloud，需要编译器
+vc++编译器 for python2.7 下载地址（wordcloud安装需要）：
+https://www.microsoft.com/en-us/download/details.aspx?id=44266
+安装的wordcloud版本1.2.1，最新版是1.3.1,版本不同，代码不同
+
+2、在cdh-slave2上安装seaborn包，报错，
+File "/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py", line 52, in _init
+    _gtk.init_check()
+    RuntimeError: could not open display
+    解决：注释掉/usr/lib64/python2.7/site-packages/gtk-2.0/gtk/__init__.py中的_gtk.init_check()这一行，
+    安装完后，再松开。
+

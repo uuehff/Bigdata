@@ -1,0 +1,15 @@
+alter table judgment_all_50w 
+modify party_info longtext,
+modify trial_process longtext,
+modify trial_request longtext,
+modify court_find longtext,
+modify court_idea longtext,
+modify judge_result longtext,
+modify doc_footer longtext,
+modify court longtext,
+modify title longtext,
+modify reason_type longtext,
+modify caseid longtext,
+modify type longtext,
+modify casedate longtext,
+modify judge_type longtext;

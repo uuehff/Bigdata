@@ -1,0 +1,3 @@
+参考： http://dataunion.org/21528.html
+
+spark存入mysql时，当id自增时，在程序最后结果中的元组手动赋值为None时，存入时，可保证mysql的id自增。

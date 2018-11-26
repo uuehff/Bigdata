@@ -1,0 +1,1122 @@
+DELETE /cdh-doc
+GET /_cat/indices/cdh-doc
+GET cdh-doc/_settings
+GET /_cat/health?v
+GET /_cat/nodes?v
+GET /_cat/indices/
+GET _cat/shards
+GET /_cat/shards/cdh-doc
+
+GET /cdh-doc/_mapping
+
+PUT cdh-doc
+{
+  "settings": {
+      "index": {
+        "number_of_shards": "5",
+        "number_of_replicas": "1"
+      }
+    },
+
+  "mappings": {
+      "civil": {
+        "properties": {
+          "casedate": {
+            "type": "date"
+          },
+          "caseid": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "court": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "court_find": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "court_idea": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "court_uid": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "doc_footer": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "id": {
+            "type": "long"
+          },
+          "judge_result": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "judge_type": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "law_id": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "lawlist": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "party_info": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "province": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "reason": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "reason_type": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "reason_uid": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "title": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "trial_process": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "trial_request": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "type": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "uuid": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "uuid_old": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          }
+        }
+      }
+    }
+
+}
+
+
+GET /cdh-doc/civil/2
+GET /cdh-doc/_mapping/civil
+
+GET /cdh-doc/civil/_search
+{
+  "bool": {
+      "must": { "match":   { "email": "business opportunity" }},
+      "should": [
+          { "match":       { "starred": true }},
+          { "bool": {
+              "must":      { "match": { "folder": "inbox" }},
+              "must_not":  { "match": { "spam": true }}
+          }}
+      ],
+      "minimum_should_match": 1
+  }
+}
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+        "must":     { "match": { "court": "江苏省高级人民法院" }},
+        "must_not": { "match": { "reason":  "劳动" }},
+        "should":   { "match": { "casedate": "2017-04-11" }},
+        "filter":   { "range": { "id" : { "gt" :  10}} }
+    }
+  }
+}
+
+GET /cdh-doc/_mapping/civil
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+
+     "match_all": {}
+  }
+}
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "match": {
+       "casedate": "2017-03-30"
+     }
+  }
+}
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "match": {
+       "doc_footer": "章芳芳"
+     }
+  }
+}
+
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "match": {
+       "doc_footer.keyword": "章芳芳"
+     }
+  }
+}
+
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "multi_match": {
+       "query": "章芳芳",
+       "fields": ["doc_footer.keyword","trial_request"]
+     }
+  },
+
+  "_source": ["id","doc_footer","trial_request"]
+
+}
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "term": {
+       "id": 20
+     }
+  }  ,
+  "_source": ["id","casedate"]
+}
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "term": {
+       "casedate": "2017-06-02"
+     }
+  }  ,
+  "_source": ["id","casedate"]
+}
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "terms": {
+       "casedate": ["2017-05-08","2017-09-22"]
+     }
+  }  ,
+  "_source": ["id","casedate"]
+}
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "term": {
+       "lawlist.keyword": " "
+     }
+  }  ,
+  "_source": ["id","casedate","lawlist","caseid"]
+}
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+      "must": {
+        "term": {"caseid": "2401"}
+      },
+      "must": {
+        "term": {"caseid": "苏"}
+      }
+    }
+  }  ,
+  "_source": ["id","casedate","lawlist","caseid"]
+}
+
+GET /_analyze
+{
+  "analyzer": "standard",
+  "text": "（2016） 苏民申2401号"
+}
+
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "match": {
+       "caseid.keyword": "（2016） 苏民申2401号"
+     }
+  }  ,
+  "_source": ["id","casedate","lawlist"]
+}
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "range": {
+       "casedate": {
+         "gt": "2018",
+         "lt": "2021"
+       }
+     }
+  }
+
+  , "_source": ["id","casedate"]
+}
+
+GET cdh-doc/civil/_search
+{
+  "query": {
+     "range": {
+       "id": {
+         "gte": "1",
+         "lt": "10"
+       }
+     }
+  }
+
+  , "_source": ["id","casedate"]
+}
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "exists":{
+      "field":"lawlist"
+    }
+  }
+  , "_source": ["id","casedate","lawlist"]
+}
+
+
+
+# = missing
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+      "must_not": {
+        "exists": {
+          "field": "lawlist"
+        }
+      }
+    }
+  },
+  "_source": [
+    "id",
+    "casedate",
+    "lawlist"
+  ]
+}
+
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"": {
+          "casedate": {
+            "value": "2017-05-27"
+          }
+        }},
+        {"exists": {
+          "field":"lawlist"
+        }}
+        ]
+    }
+     }
+  , "_source": ["id","casedate","lawlist"]
+}
+
+
+
+# query explain and validate
+
+GET /cdh-doc/civil/_validate/query?explain
+{
+   "query": {
+      "match" : {
+         "caseid" : "刑事案号 "
+      }
+   }
+}
+
+
+# bool query
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+          "must":{ "match": { "reason_type": "民事" }},
+          "must_not": { "match": { "judge_type":   "判决" }},
+          "should": [
+              { "match": { "party_info": "判决" }},
+              { "range": { "casedate": { "gte": "2017-04-01" }}}
+          ]
+
+    }
+  },
+  "_source": ["id","reason_type","judge_type","party_info", "casedate"]
+}
+
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+          "must":{ "match": { "reason_type": "民事" }},
+          "must_not": { "match": { "judge_type":   "判决" }},
+          "should":
+              { "match": { "party_info": "判决" }},
+          "filter": {
+               "range": {"casedate": {"gte": "2017-04-01"}}}
+    }
+  }
+
+}
+
+#GET /cdh-doc/civil/_validate/query?explain
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+          "must": {"match": { "reason_type": "民事" }},
+          "must_not": { "match": { "judge_type":   "判决" }},
+          "should": { "match": { "party_info": "判决" }},
+
+          "filter": {
+            "bool": {
+                "must": [
+                    {"range": {"casedate": {"gte": "2017-04-01"}}},
+                    {"range": { "id": { "lte": 50 }}}
+                ],
+                "must":{"range": { "id": { "gte": 2 }}},
+                "must_not": { "term": { "reason": "劳动争议" }},
+                "must_not": { "term": { "reason.keyword": "劳动争议" }},
+                "must_not": { "match": { "reason": "劳动争议" }},
+                "must_not": { "match": { "reason.keyword": "劳动争议" }}
+            }
+        }
+    }
+  }
+}
+
+GET /cdh-doc/civil/_search
+{
+   "query" : {
+      "bool" : {
+         "filter" : {
+            "bool" : {
+              "should" : [
+                { "term" : {"productID" : "KDKE-B-9947-#kL5"}},
+                { "bool" : {
+                  "must" : [
+                    { "term" : {"productID" : "JODL-X-1937-#pV7"}},
+                    { "term" : {"price" : 30}}
+                  ]
+                }}
+              ]
+           }
+         }
+      }
+   }
+}
+
+GET /cdh-doc/civil/_search
+{
+  "range" : {
+    "title" : {
+        "gte" : "a",
+        "lt" :  "b"
+    }
+}
+}
+
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "term": {
+          "reason_type.keyword": "民事"
+        }
+      }
+    }
+  }
+}
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "must":{"term": {"reason_type.keyword": "民事"}},
+          "must_not":{"term": {"reason_type.keyword": "裁定"}}
+        }
+      }
+    }
+  }
+}
+
+"must":{"range": { "id": { "gte": 2 }}},
+          "must_not": { "term": { "reason": "劳动争议" }},
+          "must_not": { "term": { "reason.keyword": "劳动争议" }},
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "term": {
+          "reason_type.keyword": "民事"
+        }
+      }
+    }
+  }
+}
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "match_all": {}
+      }
+    }
+  }
+}
+
+
+GET /cdh-doc/civil/_search
+{
+    "query": {
+        "match": {
+            "caseid": {
+                "query":    "苏1145",
+                "operator": "and"
+            }
+        }
+    }
+}
+
+GET /_analyze
+{
+  "analyzer": "standard",
+  "text": "故意劳工"
+}
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "match": {
+      "reason": {
+        "query": "工纠纷",
+        "minimum_should_match": "2"
+      }
+    }
+  }
+}
+
+
+#"minimum_should_match"
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        { "match": { "reason": "劳" }},
+        { "match": { "reason": "动"   }},
+        { "match": { "reason": "争"   }},
+        { "match": { "reason": "议"   }}
+      ],
+      "minimum_should_match": 3
+    }
+  }
+}
+
+#must and must_not deep understand !
+GET /cdh-doc/civil/_search?size=23
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"match": { "reason": "劳动" }}
+      ],
+      "must_not": [
+        {"match": { "reason": "争议" }}
+      ]
+
+    }
+  },
+  "_source": ["id","reason"]
+}
+
+
+GET /_analyze
+{
+  "analyzer": "standard",
+  "text": "1234||3639"
+}
+
+
+
+GET /_analyze
+{
+  "analyzer": "standard",
+  "text": "人力资源经理"
+}
+
+# term vs  match_phrase：
+GET /cdh-doc/civil/_search
+{
+    "query": {
+        "term": {
+            "party_info": "董事长"
+        }
+    }
+}
+
+GET /cdh-doc/civil/_search
+{
+    "query": {
+        "match_phrase": {
+            "party_info": "董事长"
+        }
+    }
+}
+
+
+#match_phrase:
+GET /_analyze
+{
+  "analyzer": "standard",
+  "text": "劳动争议||装饰装修合同纠纷||合同纠纷"
+}
+
+GET /cdh-doc/civil/_search
+{
+    "query": {
+        "match_phrase": {
+            "reason": {
+                "query": "同纠合",
+                "slop":  1
+            }
+        }
+    }
+}
+
+
+# aggregations
+
+GET /cdh-doc/civil/_search
+{
+   "size" : 0,
+   "aggs": {
+      "reason_type_aggs": {
+         "terms": {
+            "field": "reason_type.keyword"
+         },
+         "aggs": {
+            "avg_id": { "avg": { "field": "id" }
+            },
+            "judge_type_aggs" : {
+                "terms" : {
+                    "field" : "judge_type.keyword"
+                },
+                "aggs" : {
+                    "min_id" : { "min": { "field": "id"} },
+                    "max_id" : { "max": { "field": "id"} }
+                }
+            }
+         }
+      }
+   }
+}
+
+GET /cdh-doc/civil/_search
+{
+   "aggs": {
+      "reason_type_aggs": {
+         "terms": {
+            "field": "reason_type.keyword"
+         },
+         "aggs": {
+            "avg_id": { "avg": { "field": "id" }
+            },
+            "judge_type_aggs" : {
+                "terms" : {
+                    "field" : "judge_type.keyword"
+                },
+                "aggs" : {
+                    "min_id" : { "min": { "field": "id"} },
+                    "max_id" : { "max": { "field": "id"} }
+                }
+            }
+         }
+      }
+   },
+   "_source": ["reason_type","judge_type"]
+
+}
+
+# range query and all_buckets！
+GET /cdh-doc/civil/_search
+{
+    "size" : 0,
+    "query" : {
+        "match" : {
+            "reason_type.keyword" : "民事"
+        }
+    },
+    "aggs" : {
+        "civil_avg_id": {
+            "avg" : { "field" : "id" }
+        },
+        "all_doc_aggs": {
+            "global" : {},
+            "aggs" : {
+                "all_avg_id": {
+                    "avg" : { "field" : "id" }
+                }
+
+            }
+        }
+    }
+}
+
+
+GET /cdh-doc/civil/_search
+{
+    "size" : 0,
+    "query" : {
+        "constant_score": {
+            "filter": {
+                "range": {
+                    "id": {
+                        "gte": 50
+                    }
+                }
+            }
+        }
+    },
+    "aggs" : {
+        "single_avg_id": {
+            "avg" : { "field" : "id" }
+        }
+    }
+}
+
+# filter buckets:
+GET /cdh-doc/civil/_search
+{
+
+   "query":{
+     "bool":{
+       "must": [
+         {"match": {"reason_type.keyword": "民事"}},
+         {"match": {"judge_type.keyword": "判决"}}
+         ]
+
+     }
+   },
+   "aggs":{
+      "id_gte_50": {
+         "filter": {
+            "range": {
+               "casedate": {
+                  "gte": "2015-09-08"
+               }
+            }
+         },
+         "aggs": {
+            "average_id":{
+               "avg": {
+                  "field": "id"
+               }
+            }
+         }
+      }
+   }
+}
+
+#post filter:
+GET /cdh-doc/civil/_search
+{
+    "size": 0,
+    "query": {
+        "match": {
+            "reason_type.keyword": "民事"
+        }
+    },
+    "post_filter": {
+        "term" : {
+            "reason.keyword": "劳动争议"
+        }
+    },
+    "aggs" : {
+        "all_reason": {
+            "terms" : { "field" : "reason.keyword" }
+        }
+    }
+}
+
+#filter buckets and post filter:
+GET /cdh-doc/civil/_search
+{
+
+   "query":{
+     "bool":{
+       "must": [
+         {"match": {"reason_type.keyword": "民事"}},
+         {"match": {"judge_type.keyword": "判决"}}
+         ]
+
+     }
+   },
+   "aggs":{
+      "id_gte_50": {
+         "filter": {
+            "range": {
+               "casedate": {
+                  "gte": "2015-09-08"
+               }
+            }
+         },
+         "aggs": {
+            "average_id":{
+               "avg": {
+                  "field": "id"
+               }
+            }
+         }
+      }
+   },
+    "post_filter": {
+        "term" : {
+            "reason.keyword": "劳动争议"
+        }
+    },
+    "_source": ["id","reason_type","judge_type"],
+    "sort": [
+      {
+        "id": {
+          "order": "desc"
+        }
+      }
+    ]
+}
+
+#aggs  order:
+GET /cdh-doc/civil/_search
+{
+    "aggs" : {
+        "reason_aggs" : {
+            "terms" : {
+              "field" : "reason.keyword",
+              "order": {
+                "_count" : "desc"
+              }
+            }
+        }
+    },
+    "_source": ["reason","id"]
+}
+
+#aggs order and query result sort:
+GET /cdh-doc/civil/_search
+{
+    "aggs" : {
+        "reason_aggs" : {
+            "terms" : {
+              "field" : "reason.keyword",
+              "order": {
+                "avg_id" : "desc"
+              }
+            },
+            "aggs": {
+                "avg_id": {
+                    "avg": {"field": "id"}
+                }
+            }
+        }
+    },
+    "sort": [
+      {
+        "id": {
+          "order": "asc"
+        }
+      }
+    ],
+    "_source": ["id","reason"]
+
+}
+
+#aggs order and query result sort:
+GET /cdh-doc/civil/_search
+{
+    "sort" : [
+        { "post_date" : {"order" : "asc"}},
+        "user",
+        { "name" : "desc" },
+        { "age" : "desc" },
+        "_score"
+    ],
+    "query" : {
+        "term" : { "user" : "kimchy" }
+    }
+}
+
+
+#query result sort:
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": "id",
+  "_source": ["id","reason"]
+
+}
+
+
+PUT /my_index/my_type/1?refresh
+{
+   "product": "chocolate",
+   "price": [20, 4]
+}
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "term": {"reason.keyword": "劳动争议"}
+  },
+  "sort": ["reason.keyword","_score"],
+  "_source": ["id","reason"]
+
+}
+
+
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": ["party_info.keyword","id"],
+  "_source": ["id","party_info"]
+
+}
+
+
+# lawlist is NULL in mysql
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+      "must_not": {
+        "exists": {
+          "field": "lawlist"
+        }
+      }
+    }
+  },
+  "_source": [
+    "id",
+    "lawlist"
+  ]
+}
+
+#lawlist is not NULL in mysql
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"exists": {
+          "field":"lawlist"
+        }}
+        ]
+    }
+     }
+  , "_source": ["id","lawlist"]
+}
+
+#lawlist is not NULL in mysql
+GET /cdh-doc/civil/_search
+{
+  "query": {
+    "exists": {"field":"lawlist"}
+  },
+     "_source": ["id","lawlist"]
+}
+
+
+#when lawlist is null,the doc don't participate in sorting,
+#and always in the last; when lawlist is not null and
+#lawlist = "" ,lawlist at the first in asc,and the last in desc
+GET /cdh-doc/civil/_search
+{
+  "size": 20,
+  "query": {
+    "constant_score": {
+      "filter": {"range": {
+        "id": {
+          "lte": 20
+        }
+      }}
+    }
+  },
+  "sort": [{"lawlist.keyword":"desc"},"id"],
+  "_source": ["id","lawlist"]
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

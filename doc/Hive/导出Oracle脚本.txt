@@ -1,0 +1,10 @@
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata  --export-dir /opt/user/hive/warehouse/gy_ydkh --input-fields-terminated-by '\001'  --input-null-string '\\N' --input-null-non-string '\\N' --table KH_YDKH ;
+sqoop export --connect jdbc:oracle:thin:@10.164.143.122:1521:GZBDDB --username lspf_csgdata --password lspf_csgdata --export-dir /opt/user/hive/warehouse/zw_ysdfjl_0601 --input-fields-terminated-by '\001' --input-null-string '\\N' --input-null-non-string '\\N'  --table ZW_YSDFJL ;
+
+导出时，默认选择所有列，oracle中与hive字段需对应，脚本仅供参考！
+
+注意：
+ 1）导入的数据不能 违反 KH_YDKH，ZW_YSDFJL 约束。
+ 2）hive中有些字段值为 null字符串，且字段类型与oracle冲突，建议转换为NULL，再导入。
+ 3)null -> NULL: if(column = 'null',NULL,column) as column
+ 4）只能在115上导出。

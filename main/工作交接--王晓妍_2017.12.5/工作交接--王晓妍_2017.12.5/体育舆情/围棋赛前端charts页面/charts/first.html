@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>全网分析</title>
+	<script src="js/echarts.min.js"></script>
+	<script src="js/jquery-1.12.4.js"></script>
+	<style>
+		.charts,.pieCharts{margin-top:100px;}
+		#mainPie1,#mainPie2,#mainPie3{float:left;border:1px solid #cfcfcf;}
+		.tt{color:#214293;font-size:24px;}
+		.sys{width:80%;margin:0 auto;min-width:950px;}
+		.text{margin-left:50px;}
+	</style>
+</head>
+<body>
+	<div class="sys">
+		<p class="tt"><img src="title.png" alt="" style="vertical-align:middle;"> 案例展示1. 全网分析 </p>
+		<ul>
+			<li class="text">赛前和赛中，声量较大的渠道是新闻；赛后，声量较大的渠道则是微信公众号。</li>
+		</ul>
+	</div>
+	<p style="text-align:center;line-height:50px;font-weight:900;font-family:'微软雅黑';">赛前，赛中，赛后信息源分布图</p>
+	<div class="pieCharts" style="width:65%;min-width:950px;height:350px;margin:0 auto 50px auto;">
+		<div id="mainPie1" style="width:33%;height:350px;border-right:0;"></div>
+		<div id="mainPie2" style="width:33%;height:350px;border-right:0;"></div>
+		<div id="mainPie3" style="width:33%;height:350px;"></div>
+	</div>
+	
+	<div class="sys">
+		<ul>
+			<li class="text">从信息走势看，2016年12月24日，“嫘祖杯”第29届中国围棋名人战开幕，报道次数迅速上升。2016年12月24日至2017年1月12日的名人战和2017年3月5日至2017年3月10日挑战赛，关于赛程关注度居高不下。
+</li>
+		</ul>
+	</div>
+	<div class="charts" style="width:65%;min-width:950px;height:520px;margin:50px auto;">
+		<div id="mainLine" style="width:100%;height:520px;"></div>
+	</div>
+	
+	<script>
+         var myChart = echarts.init(document.getElementById('mainLine'));
+        	option = {
+			    title: {
+			        text: '信息走势',
+			        x:'center',
+			      //  bottom:0,
+			        textStyle:{
+			        	//color:'#32d2c9',
+			        	fontSize:16,
+			        }
+			    },
+			    tooltip: {
+			        trigger: 'axis'
+			    },
+			    color:['#e5c890','#b5a0d9','#56b5f7','#3eb9b6'],
+			    legend: {
+			    	right:'3%',
+			    	top:'3%',
+			        data:['\u5fae\u4fe1','贴吧','新闻','微博'],
+			        textStyle:{
+			        	fontSize:12,
+			        },
+			    },
+			    grid: {
+			        x:'left',
+			        right: '1%',
+			        bottom: '9%',
+			        containLabel: true
+			    },
+			    // toolbox: {
+			    //     feature: {
+			    //         saveAsImage: {}
+			    //     }
+			    //},
+			    xAxis: [{
+			        type: 'category',
+			        boundaryGap: false,
+			        data: ["2016-11-28", "2016-11-29", "2016-11-30", "2016-12-01", "2016-12-02", "2016-12-03", "2016-12-04", "2016-12-05", "2016-12-06", "2016-12-07", "2016-12-08", "2016-12-09", "2016-12-10", "2016-12-11", "2016-12-12", "2016-12-13", "2016-12-14", "2016-12-15", "2016-12-16", "2016-12-17", "2016-12-18", "2016-12-19", "2016-12-20", "2016-12-21", "2016-12-22", "2016-12-23", "2016-12-24", "2016-12-25", "2016-12-26", "2016-12-27", "2016-12-28", "2016-12-29", "2016-12-30", "2016-12-31", "2017-01-01", "2017-01-02", "2017-01-03", "2017-01-04", "2017-01-05", "2017-01-06", "2017-01-07", "2017-01-08", "2017-01-09", "2017-01-10", "2017-01-11", "2017-01-12", "2017-01-13", "2017-01-14", "2017-01-15", "2017-01-16", "2017-01-17", "2017-01-18", "2017-01-19", "2017-01-20", "2017-01-21", "2017-01-22", "2017-01-23", "2017-01-24", "2017-01-25", "2017-01-26", "2017-01-27", "2017-01-28", "2017-01-29", "2017-01-30", "2017-01-31", "2017-02-01", "2017-02-02", "2017-02-03", "2017-02-04", "2017-02-05", "2017-02-06", "2017-02-07", "2017-02-08", "2017-02-09", "2017-02-10", "2017-02-11", "2017-02-12", "2017-02-13", "2017-02-14", "2017-02-15", "2017-02-16", "2017-02-17", "2017-02-18", "2017-02-19", "2017-02-20", "2017-02-21", "2017-02-22", "2017-02-23", "2017-02-24", "2017-02-25", "2017-02-26", "2017-02-27", "2017-02-28", "2017-03-01", "2017-03-02", "2017-03-03", "2017-03-04", "2017-03-05", "2017-03-06", "2017-03-07", "2017-03-08", "2017-03-09", "2017-03-10", "2017-03-11", "2017-03-12", "2017-03-13", "2017-03-14", "2017-03-15", "2017-03-16", "2017-03-17", "2017-03-18", "2017-03-19", "2017-03-20", "2017-03-21", "2017-03-22", "2017-03-23", "2017-03-24", "2017-03-25", "2017-03-26", "2017-03-27", "2017-03-28", "2017-03-29", "2017-03-30", "2017-03-31", "2017-04-01", "2017-04-02", "2017-04-03", "2017-04-04", "2017-04-05", "2017-04-06", "2017-04-07", "2017-04-08", "2017-04-09", "2017-04-10", "2017-04-11", "2017-04-12", "2017-04-13", "2017-04-14", "2017-04-15", "2017-04-16", "2017-04-17", "2017-04-18", "2017-04-19", "2017-04-20", "2017-04-21", "2017-04-22", "2017-04-23", "2017-04-24", "2017-04-25", "2017-04-26", "2017-04-27", "2017-04-28", "2017-04-29", "2017-04-30"],
+			        axisLine:{
+			        	lineStyle:{
+			        		width:1,
+			        		color:'#7fb7c8',
+			        	}
+			        },
+			        axisTick:{
+			        	lineStyle:{
+			        		width:1,
+			        	}
+			        },
+			        axisLabel:{
+			        	textStyle:{
+			        		fontSize:12,
+			        	}
+			        }
+			    },
+			    // {
+			       
+			    //     data: ['赛前','赛中','赛后'],
+			    //     position:'bottom',
+			    //     offset:30,
+			    //     axisLine:{
+			    //     	show:false,
+			    //     	onZero:false,
+			        	
+			    //     },
+			    //     axisTick:{
+			    //     	show:true,
+			    //     	length:30,
+			    //     	lineStyle:{
+			    //     		width:1,
+			    //     	}
+			    //     },
+			    //     axisLabel:{
+			    //     	textStyle:{
+			    //     		fontSize:14,
+			    //     	}
+			    //     }
+			    // }
+			    ],
+			    yAxis: {
+			        type: 'value',
+			        axisLine:{
+			        	lineStyle:{
+			        		width:1,
+			        		color:'#7fb7c8',
+			        	}
+			        },
+			        splitLine:{
+			        	show:true,
+			        	lineStyle:{
+			        		color:'#f6f6f6',
+			        	}
+			        },
+			        splitArea:{
+			        	show:true,
+			        },
+			        axisLabel:{
+			        	textStyle:{
+			        		fontSize:12,
+			        	}
+			        },
+			        axisTick:{
+			        	lineStyle:{
+			        		width:1,
+			        	}
+			        }
+			    },
+			    series: [
+			        {
+			            name:'\u5fae\u4fe1',
+			            type:'line',
+			            data:[3.0, 1.0, 6.0, 0.0, 5.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 2.0, 2.0, 0.0, 1.0, 1.0, 15.0, 7.0, 10.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 6.0, 1.0, 2.0, 5.0, 10.0, 1.0, 3.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 3.0, 0.0, 1.0, 0.0, 1.0, 1.0, 2.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 2.0, 2.0, 1.0, 10.0, 10.0, 5.0, 18.0, 14.0, 13.0, 1.0, 0.0, 5.0, 3.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 2.0, 1.0, 0.0, 0.0, 0.0],
+			            markPoint:{
+			            	data:[
+			            		{type:'max',name:'最大值'}
+			            	]
+			            }
+			        },
+			        {
+			            name:'\u8d34\u5427',
+			            type:'line',
+			            data:[0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 4.0, 0.0, 0.0, 10.0, 0.0, 0.0, 3.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.0, 4.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 1.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+			            markPoint:{
+			            	data:[
+			            		{type:'max',name:'最大值'}
+			            	]
+			            }
+			        },
+			        {
+			            name:'\u65b0\u95fb',
+			            type:'line',
+			            data:[7.0, 0.0, 6.0, 0.0, 3.0, 0.0, 1.0, 2.0, 0.0, 6.0, 4.0, 0.0, 1.0, 3.0, 0.0, 1.0, 0.0, 0.0, 2.0, 0.0, 1.0, 7.0, 15.0, 4.0, 3.0, 2.0, 34.0, 11.0, 25.0, 11.0, 0.0, 1.0, 7.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 9.0, 0.0, 2.0, 5.0, 9.0, 3.0, 7.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 10.0, 14.0, 17.0, 6.0, 19.0, 13.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 1.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+				        markPoint:{
+				            	data:[
+				            		{type:'max',name:'最大值'}
+				            	]
+				            }  
+			        },
+			        {
+			            name:'\u5fae\u535a',
+			            type:'line',
+			            data:[2.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 3.0, 1.0, 0.0, 0.0, 1.0, 10.0, 6.0, 13.0, 1.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 1.0, 4.0, 3.0, 2.0, 0.0, 5.0, 2.0, 0.0, 2.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 11.0, 2.0, 8.0, 9.0, 4.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+			            markPoint:{
+			            	data:[
+			            		{type:'max',name:'最大值'}
+			            	]
+			            }
+			            },			           
+			    ]
+			};
+		myChart.setOption(option);	
+		resize(myChart);
+		function resize(obj) {
+	        $(window).resize(function () {
+	            obj.resize()
+	        })
+  		  }
+
+  		var myChart1 = echarts.init(document.getElementById('mainPie1'));
+  			option = {
+			    title : {
+			        text: '赛前',
+			        x:'center',
+			        top:'4%',
+			        textStyle:{
+			            fontSize:16,
+			            fontWeight:400,
+			        }
+			    },
+			    tooltip : {
+			        trigger: 'item',
+			        formatter: "{a} <br/>{b} : {c} ({d}%)"
+			    },
+			    color:['#e5c890','#b5a0d9','#56b5f7','#3eb9b6'],
+			    legend: {
+			        orient: 'horizontal',
+			        left: 'center',
+			        bottom:10,
+			        itemWidth:10,
+			        itemHeight:10,
+			        data: ['\u5fae\u4fe1','\u8d34\u5427','\u65b0\u95fb','\u5fae\u535a']
+			    },
+			    series : [
+			        {
+			            name: '访问来源',
+			            type: 'pie',
+			            radius : '65%',
+			            center: ['50%', '50%'],
+			            data:[
+			            	{value:35, name:'\u5fae\u4fe1'},
+			                {value:16, name:'\u8d34\u5427'},
+			                {value:70, name:'\u65b0\u95fb'},
+			                {value:14, name:'\u5fae\u535a'},
+			                
+			                
+			            ],
+			            label:{
+			                normal:{
+			                    show:true,
+			                    position:'inside',
+			                    formatter: function(param) {
+			                     return param.name + ':\n' + Math.round(param.percent) + '%';
+			                 	},
+			                 	textStyle:{
+			                 		fontSize:12,
+			                 		color:'#000',
+			                 	}
+			                },
+			                
+			            },
+			            itemStyle: {
+			                normal:{
+			                    borderWidth:1,
+			                    borderColor:'#fff',
+			                },
+			                emphasis: {
+			                    shadowBlur: 10,
+			                    shadowOffsetX: 0,
+			                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+			                }
+			            }
+			        }
+			    ]
+			};
+		myChart1.setOption(option);	
+		resize(myChart1);
+
+		var myChart2 = echarts.init(document.getElementById('mainPie2'));
+  			option = {
+			    title : {
+			        text: '赛中',
+			        x:'center',
+			        top:'4%',
+			        textStyle:{
+			            fontSize:16,
+			            fontWeight:400,
+			        }
+			    },
+			    tooltip : {
+			        trigger: 'item',
+			        formatter: "{a} <br/>{b} : {c} ({d}%)"
+			    },
+			    color:['#e5c890','#b5a0d9','#56b5f7','#3eb9b6'],
+			    legend: {
+			        orient: 'horizontal',
+			        left: 'center',
+			        bottom:10,
+			        itemWidth:10,
+			        itemHeight:10,
+			        data: ['\u8d34\u5427','\u65b0\u95fb','\u5fae\u535a','\u5fae\u4fe1']
+			    },
+			    series : [
+			        {
+			            name: '访问来源',
+			            type: 'pie',
+			            radius : '65%',
+			            center: ['50%', '50%'],
+			            data:[
+			                {value:42, name:'\u8d34\u5427'},
+			                {value:200, name:'\u65b0\u95fb'},
+			                {value:92, name:'\u5fae\u535a'},
+			                {value:138, name:'\u5fae\u4fe1'},
+			                
+			            ],
+			            label:{
+			                normal:{
+			                    show:true,
+			                    position:'inside',
+			                    formatter: function(param) {
+			                     return param.name + ':\n' + Math.round(param.percent) + '%';
+			                 	},
+			                 	textStyle:{
+			                 		fontSize:12,
+			                 		color:'#000',
+			                 	}
+			                },
+			                
+			            },
+			            itemStyle: {
+			                normal:{
+			                    borderWidth:1,
+			                    borderColor:'#fff',
+			                },
+			                emphasis: {
+			                    shadowBlur: 10,
+			                    shadowOffsetX: 0,
+			                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+			                }
+			            }
+			        }
+			    ]
+			};
+		myChart2.setOption(option);	
+		resize(myChart2);
+
+		var myChart3 = echarts.init(document.getElementById('mainPie3'));
+  			option = {
+			    title : {
+			        text: '赛后',
+			        x:'center',
+			        top:'4%',
+			        textStyle:{
+			            fontSize:16,
+			            fontWeight:400,
+			        }
+			    },
+			    tooltip : {
+			        trigger: 'item',
+			        formatter: "{a} <br/>{b} : {c} ({d}%)"
+			    },
+			    color:['#e5c890','#b5a0d9','#56b5f7','#3eb9b6'],
+			    legend: {
+			        orient: 'horizontal',
+			        left: 'center',
+			        bottom:10,
+			        itemWidth:10,
+			        itemHeight:10,
+			        data: ['\u8d34\u5427','\u65b0\u95fb','\u5fae\u535a','\u5fae\u4fe1']
+			    },
+			    series : [
+			        {
+			            name: '访问来源',
+			            type: 'pie',
+			            radius : '65%',
+			            center: ['50%', '50%'],
+			            data:[
+			                {value:5, name:'\u8d34\u5427'},
+			                {value:23, name:'\u65b0\u95fb'},
+			                {value:5, name:'\u5fae\u535a'},
+			                {value:30, name:'\u5fae\u4fe1'},
+			                
+			            ],
+			            label:{
+			                normal:{
+			                    show:true,
+			                    position:'inside',
+			                    formatter: function(param) {
+			                     return param.name + ':\n' + Math.round(param.percent) + '%';
+			                 	},
+			                 	textStyle:{
+			                 		fontSize:12,
+			                 		color:'#000',
+			                 	}
+			                },
+			                
+			            },
+			            itemStyle: {
+			                normal:{
+			                    borderWidth:1,
+			                    borderColor:'#fff',
+			                },
+			                emphasis: {
+			                    shadowBlur: 10,
+			                    shadowOffsetX: 0,
+			                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+			                }
+			            }
+			        }
+			    ]
+			};
+		myChart3.setOption(option);	
+		resize(myChart3);
+	</script>
+</body>
+</html>

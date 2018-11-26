@@ -1,0 +1,66 @@
+版本：centos7.3、Python2.7.5(系统自带)、R3.2.0源码编译、rpy2-2.8.5
+说明：系统安装有桌面
+
+安装参考：http://www.cnblogs.com/stevendes1/p/6395974.html
+
+
+以下操作都在root用户下进行：
+
+1、下载R源码，R-3.2.0.tar.gz，https://cran.r-project.org/src/base/R-3/
+1）将R源码，解压到/usr/local/下，tar -zxvf R-3.2.0.tar.gz,解压后目录为：/usr/local/R-3.2.0
+2）安装编译环境（使用了本地挂载镜像）：
+yum install -y readline-devel
+yum install -y wget libXt-devel
+yum install -y fonts-chinese tcl tcl-devel tclx tk tk-devel
+yum install -y mesa-libGLU mesa-libGLU-devel
+yum install -y install bzip2-devel 
+yum install -y install xz-devel.x86_64 
+yum install -y install pcre-devel
+yum install -y install libcurl libcurl-devel
+yum install -y  texinfo.x86_64  texlive-pdftex-doc.noarch texlive
+
+2、编译R
+1）创建/usr/local/R目录。
+2）进入/usr/local/R-3.2.0目录依次执行命令：
+./configure --enable-R-shlib=yes --enable-BLAS-shlib=yes --with-blas=yes  --with-lapack=yes --with-tcltk --prefix=/usr/local/R
+make -I /opt/jdk1.8.0_121/include -I /opt/jdk1.8.0_121/include/linux
+make install
+
+编译安装大约5分钟左右。
+
+3、添加环境变量(root用户下,编辑/etc/profile)：
+export R_HOME=/usr/local/R/lib64/R
+export R_LIBS=$R_HOME/library
+export LD_LIBRARY_PATH=$R_HOME/lib:$LD_LIBRARY_PATH
+export PATH=${PATH}:${JAVA_HOME}/bin:${JRE_HOME}/bin:${SUBLIME_HOME}:$R_HOME/bin
+
+注意切记：R_HOME的路径是：/usr/local/R/lib64/R，而非：/usr/local/R
+否则会报错如下：
+cannot find system Renviron
+/usr/lib64/python2.7/site-packages/rpy2/rinterface/__init__.py:186: RRuntimeWarng: Fatal error: unable to open the base package
+
+4、安装rpy2
+1）source /etc/profile
+2）直接使用命令： pip install rpy2
+3）检查安装是否成功：进入ipython：import rpy2.robjects，没有报错，则安装成功。
+4）python命令行 和 pyspark中都可使用rpy2包。
+
+RPy2-2.8.x API : http://rpy2.readthedocs.io/en/version_2.8.x/ 
+RPy2-2.7.x API : http://rpy2.readthedocs.io/en/version_2.7.x/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+

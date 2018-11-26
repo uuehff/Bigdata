@@ -1,0 +1,731 @@
+
+PUT spark
+{  
+    "mappings": {
+      "docs2": {
+        "properties": {
+          "age_max": {
+            "type": "byte"
+          },
+          "age_min": {
+            "type": "byte"
+          },
+          "age_year": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "all": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "birth_day": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "casedate": {
+            "type": "date"
+          },
+          "casedate_new": {
+            "type": "date"
+          },
+          "caseid": {
+            "type": "keyword"
+          },
+          "city": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "control_date": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "court": {
+            "type": "keyword"
+          },
+          "court_cate": {
+            "type": "keyword"
+          },
+          "court_find": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "court_idea": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "court_new": {
+            "type": "keyword"
+          },
+          "crime": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "crime_reason": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "crml_team": {
+            "type": "byte"
+          },
+          "defendant": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "defendant_new": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "degree": {
+            "type": "integer"
+          },
+          "delay_date": {
+            "type": "short"
+          },
+          "district": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "doc_footer": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "doc_from": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "doc_oriligigation": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "doc_oriligigation_new": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "doc_reason": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "duration": {
+            "type": "short"
+          },
+          "edu": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "edu_new": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "fact_finder": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "fact_finder_new": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "gender": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "history": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "if_accumulate": {
+            "type": "byte"
+          },
+          "if_adult": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "if_delay": {
+            "type": "byte"
+          },
+          "if_nosuccess": {
+            "type": "byte"
+          },
+          "if_right": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "if_surrender": {
+            "type": "byte"
+          },
+          "j_adult": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "judge_chief": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "judge_chief_new": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "judge_member": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "judge_member_new": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "judge_result": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "judge_type": {
+            "type": "keyword"
+          },
+          "law_office": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "lawlist": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "lawlist_1r": {
+            "type": "byte"
+          },
+          "loc": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "lock_date": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "nation": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "native_place": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "new_lawyer": {
+            "type": "keyword"
+          },
+          "new_office": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "new_reason": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "org": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "party_info": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "per": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "plaintiff": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "plaintiff_new": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "province": {
+            "type": "keyword"
+          },
+          "prvs": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "punish_cate": {
+            "type": "keyword"
+          },
+          "punish_date": {
+            "type": "short"
+          },
+          "punish_money": {
+            "type": "float"
+          },
+          "reason": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "reason_type": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "record_time": {
+            "type": "keyword"
+          },
+          "record_time_new": {
+            "type": "keyword"
+          },
+          "result_type": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "right_date": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "role": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "rowkey": {
+            "type": "keyword"
+          },
+          "suspect_num": {
+            "type": "short"
+          },
+          "third": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "time": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "timeline": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "title": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "trial_process": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "trial_reply": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "trial_request": {
+            "type": "text",
+            "term_vector": "with_positions",
+            "similarity": "BM25",
+            "fields": {
+              "length": {
+                "type": "token_count",
+                "analyzer": "jcseg_complex"
+              }
+            },
+            "analyzer": "jcseg_complex"
+          },
+          "type": {
+            "type": "byte"
+          },
+          "update_time": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "uuid": {
+            "type": "keyword"
+          }
+        }
+      }
+    }
+  
+}

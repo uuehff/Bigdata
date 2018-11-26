@@ -1,0 +1,8 @@
+#flask官网：   http://flask.pocoo.org/docs/0.11/
+#参考：    http://blog.csdn.net/yannanxiu/article/details/53116652
+
+启动服务：
+E:\PycharmProjects\data_etl\main\httpApi\serverApi.py
+
+测试请求：
+E:\PycharmProjects\data_etl\main\httpApi\request_test.py
