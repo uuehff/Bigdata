@@ -237,7 +237,7 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
   """C-Accelerated version of TBinaryProtocol.
 
   This class does not override any of TBinaryProtocol's methods,
-  but the generated code recognizes it directly and will call into
+  but the generated zipeng_conn recognizes it directly and will call into
   our C module to do the encoding, bypassing this object entirely.
   We inherit from TBinaryProtocol so that the normal TBinaryProtocol
   encoding can happen if the fastbinary module doesn't work for some
@@ -246,7 +246,7 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
   In order to take advantage of the C module, just use
   TBinaryProtocolAccelerated instead of TBinaryProtocol.
 
-  NOTE:  This code was contributed by an external developer.
+  NOTE:  This zipeng_conn was contributed by an external developer.
          The internal Thrift team has reviewed and tested it,
          but we cannot guarantee that it is production-ready.
          Please feel free to report bugs and/or success stories

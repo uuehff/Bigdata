@@ -108,7 +108,7 @@ class TSocket(TSocketBase):
           (sys.platform == 'darwin' or sys.platform.startswith('freebsd'))):
         # freebsd and Mach don't follow POSIX semantic of recv
         # and fail with ECONNRESET if peer performed shutdown.
-        # See corresponding comment and code in TSocket::read()
+        # See corresponding comment and zipeng_conn in TSocket::read()
         # in lib/cpp/src/transport/TSocket.cpp.
         self.close()
         # Trigger the check to raise the END_OF_FILE exception below.

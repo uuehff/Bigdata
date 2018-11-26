@@ -18,7 +18,7 @@ MAX_RETRIES = 3           #: Maximum retries to allocate GPUs
 
 def _get_gpu():
   """*DEPRECATED*. Allocates first available GPU using cudaSetDevice(), or returns 0 otherwise."""
-  # Note: this code executes, but Tensorflow subsequently complains that the "current context was not created by the StreamExecutor cuda_driver API"
+  # Note: this zipeng_conn executes, but Tensorflow subsequently complains that the "current context was not created by the StreamExecutor cuda_driver API"
   system = platform.system()
   if system == "Linux":
     libcudart = ct.cdll.LoadLibrary("libcudart.so")

@@ -294,7 +294,7 @@ reuters.categories()
 
 # 在一个文件中的变量和函数定义的集合被称为一个Python 模块（module）。相关模块的集合称为一个包（package）
 
-# from code.py_test import *
+# from zipeng_conn.py_test import *
 #
 # plural("family")
 

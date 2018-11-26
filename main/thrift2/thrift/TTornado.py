@@ -111,7 +111,7 @@ class TTornadoStreamTransport(TTransportBase):
         self.stream.close()
 
     def read(self, _):
-        # The generated code for Tornado shouldn't do individual reads -- only
+        # The generated zipeng_conn for Tornado shouldn't do individual reads -- only
         # frames at a time
         assert False, "you're doing it wrong"
 

@@ -90,7 +90,7 @@ class CReadableTransport:
     """Refills cstringio_buf.
 
     Returns the currently used buffer (which can but need not be the same as
-    the old cstringio_buf). partialread is what the C code has read from the
+    the old cstringio_buf). partialread is what the C zipeng_conn has read from the
     buffer, and should be inserted into the buffer before any more reads.  The
     return value must be a new, not borrowed reference.  Something along the
     lines of self._buf should be fine.

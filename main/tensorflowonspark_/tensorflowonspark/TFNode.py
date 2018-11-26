@@ -53,7 +53,7 @@ def hdfs_path(ctx, path):
 def start_cluster_server(ctx, num_gpus=1, rdma=False):
   """Function that wraps the creation of TensorFlow ``tf.train.Server`` for a node in a distributed TensorFlow cluster.
 
-  This is intended to be invoked from within the TF ``map_fun``, replacing explicit code to instantiate ``tf.train.ClusterSpec``
+  This is intended to be invoked from within the TF ``map_fun``, replacing explicit zipeng_conn to instantiate ``tf.train.ClusterSpec``
   and ``tf.train.Server`` objects.
 
   Args:
